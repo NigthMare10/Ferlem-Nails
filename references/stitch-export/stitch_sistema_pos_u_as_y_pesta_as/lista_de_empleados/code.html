@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumière Atelier | Staff Directory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "primary-fixed": "#ffdcbd",
+                "on-tertiary": "#ffffff",
+                "inverse-surface": "#303030",
+                "on-primary-fixed-variant": "#623f18",
+                "on-secondary": "#ffffff",
+                "surface-tint": "#7d562d",
+                "background": "#fcf9f8",
+                "surface-bright": "#fcf9f8",
+                "tertiary": "#605e5c",
+                "surface-container-lowest": "#ffffff",
+                "outline": "#827474",
+                "on-secondary-fixed": "#301216",
+                "tertiary-container": "#c4c0bd",
+                "on-error": "#ffffff",
+                "inverse-primary": "#f0bd8b",
+                "error": "#ba1a1a",
+                "primary-container": "#eab786",
+                "secondary": "#7c5357",
+                "on-primary": "#ffffff",
+                "on-surface-variant": "#504444",
+                "surface-container-highest": "#e4e2e1",
+                "primary": "#7d562d",
+                "surface": "#fcf9f8",
+                "on-error-container": "#93000a",
+                "on-tertiary-fixed-variant": "#484644",
+                "on-primary-container": "#6c471f",
+                "inverse-on-surface": "#f3f0f0",
+                "error-container": "#ffdad6",
+                "on-primary-fixed": "#2c1600",
+                "tertiary-fixed": "#e6e2df",
+                "surface-dim": "#dcd9d9",
+                "tertiary-fixed-dim": "#cac6c3",
+                "on-background": "#1b1c1c",
+                "primary-fixed-dim": "#f0bd8b",
+                "surface-container-high": "#eae7e7",
+                "on-tertiary-fixed": "#1c1b1a",
+                "surface-variant": "#e4e2e1",
+                "on-tertiary-container": "#504e4c",
+                "surface-container": "#f0eded",
+                "on-secondary-fixed-variant": "#623c40",
+                "surface-container-low": "#f6f3f2",
+                "secondary-fixed": "#ffdadc",
+                "secondary-container": "#fdc7cb",
+                "outline-variant": "#d4c2c3",
+                "on-surface": "#1b1c1c",
+                "secondary-fixed-dim": "#eeb9bd",
+                "on-secondary-container": "#795154"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "fontFamily": {
+                "headline": ["Noto Serif"],
+                "body": ["Manrope"],
+                "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .editorial-shadow {
+            box-shadow: 0px 12px 32px rgba(124, 83, 87, 0.06);
+        }
+        .signature-gradient {
+            background: linear-gradient(135deg, #7d562d 0%, #eab786 100%);
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased flex min-h-screen">
+<!-- SideNavBar (The Anchor) -->
+<aside class="fixed left-0 top-0 h-screen flex flex-col p-6 bg-[#f6f3f2] dark:bg-[#1b1c1c] h-full w-64 border-r border-transparent z-50">
+<div class="mb-10">
+<h1 class="font-noto-serif text-lg font-bold text-on-surface">The Curated Canvas</h1>
+<p class="font-manrope uppercase tracking-widest text-[11px] text-[#5c5c5c] dark:text-[#a1a1a1] mt-1">Professional Suite</p>
+</div>
+<nav class="flex-grow space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 font-manrope uppercase tracking-widest text-[11px] text-[#5c5c5c] dark:text-[#a1a1a1] hover:bg-[#ffffff]/50 dark:hover:bg-[#2a2a2a]/50 transition-all rounded-lg ease-in-out duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 font-manrope uppercase tracking-widest text-[11px] text-[#5c5c5c] dark:text-[#a1a1a1] hover:bg-[#ffffff]/50 dark:hover:bg-[#2a2a2a]/50 transition-all rounded-lg ease-in-out duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span>Schedule</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 font-manrope uppercase tracking-widest text-[11px] text-[#7d562d] dark:text-[#eab786] font-bold bg-[#ffffff] dark:bg-[#2a2a2a] rounded-lg ease-in-out duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span>Staff</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 font-manrope uppercase tracking-widest text-[11px] text-[#5c5c5c] dark:text-[#a1a1a1] hover:bg-[#ffffff]/50 dark:hover:bg-[#2a2a2a]/50 transition-all rounded-lg ease-in-out duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="content_cut">content_cut</span>
+<span>Services</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 font-manrope uppercase tracking-widest text-[11px] text-[#5c5c5c] dark:text-[#a1a1a1] hover:bg-[#ffffff]/50 dark:hover:bg-[#2a2a2a]/50 transition-all rounded-lg ease-in-out duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span>Analytics</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1">
+<button class="w-full signature-gradient text-white rounded-md py-3 font-semibold text-sm mb-6 flex items-center justify-center gap-2 editorial-shadow transition-transform active:scale-95">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Book Appointment
+            </button>
+<a class="flex items-center gap-3 px-4 py-2 font-manrope uppercase tracking-widest text-[11px] text-[#5c5c5c] dark:text-[#a1a1a1] hover:bg-[#ffffff]/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+<span>Support</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 font-manrope uppercase tracking-widest text-[11px] text-[#5c5c5c] dark:text-[#a1a1a1] hover:bg-[#ffffff]/50 transition-all rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 flex-1 flex flex-col min-h-screen relative overflow-hidden">
+<!-- Top Navigation Anchor (Manual Integration for Header Area) -->
+<header class="flex justify-between items-center px-12 h-24 w-full bg-surface">
+<div>
+<h2 class="font-headline text-4xl italic tracking-tight text-on-surface leading-none">Lumière Atelier</h2>
+<p class="font-body text-secondary uppercase tracking-[0.2em] text-[10px] mt-1">Employee Directory — Collective Excellence</p>
+</div>
+<div class="flex items-center gap-6">
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant/20">
+<img alt="Manager Profile" class="w-full h-full object-cover" data-alt="professional portrait of a creative manager in a minimalist studio setting with soft warm light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4_5VO6LOsTIise03LZW-MLvfhvp3B6zjoe9Nj59TIiqSoKK3Z9FzAhbZbagZgUF3ZlKbjUXdzNn6N9ViP_Jw-7U0yu0X4jcYd4e6Iuz6iYyYgP9xuiRRJwd9CRA5YbzBuiyJsUE6J41c5RHH_TonzoA7JvmEH8PSREjJGVRHnpfAsVdkANenPtzsEc7plDicQbTVJnmQdX6vtls6NdAArCJ_tFxdR9R6h1pkQv5v9IuwJXhFrdUWDU2B5QGoqX0xn-DSxP3QI37xg"/>
+</div>
+</div>
+</header>
+<!-- Content Section -->
+<section class="px-12 py-8 flex flex-col flex-1">
+<!-- Filters & Actions Row -->
+<div class="flex flex-col md:flex-row justify-between items-end gap-6 mb-12">
+<div class="w-full md:max-w-xl">
+<div class="relative flex items-center group">
+<span class="absolute left-0 material-symbols-outlined text-outline group-focus-within:text-primary transition-colors" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-3 bg-transparent border-b-2 border-surface-container-highest focus:border-primary focus:ring-0 font-body text-on-surface transition-all placeholder:text-outline/60" placeholder="Filter by name, role or expertise..." type="text"/>
+</div>
+</div>
+<button class="signature-gradient text-on-primary px-8 py-4 rounded-md font-bold tracking-tight editorial-shadow flex items-center gap-3 transition-transform active:scale-[0.98]">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+                    Add New Employee
+                </button>
+</div>
+<!-- Directory Grid: Asymmetrical/Editorial Layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
+<!-- Staff Card 1 -->
+<div class="group flex flex-col bg-surface-container-lowest p-5 rounded-xl editorial-shadow transition-all hover:-translate-y-1">
+<div class="relative w-full aspect-[4/5] rounded-xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="Close up portrait of a professional aesthetic consultant in a bright modern workspace with neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBT33ROtymREnlLK3qLQwObHz64wmiKtj6M8uJfaX4v309F3Pc8ZBb9-bJSegF2xG1TBOM-f9MqZ4egUnjoQgBMiziPIT13-_3-SnyCACmuBFoW_MnuQTTFITHaJ2VA8r_1FXSzxgm8et_L2mcdpnBUZMmlkJrgMOdN9jYlZkvKOnXwmeG9qSz5_e6FWXi8TmH3lTxhV56notTZ2G3LbDZyIrbAB4qCRTovC6k35dw5RBTSJH3kVhNMRxD9Cq_GFUQJk_azNN408Y51"/>
+<div class="absolute top-4 right-4">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline text-2xl text-on-surface">Elena Vance</h3>
+<p class="font-body text-primary text-xs font-semibold uppercase tracking-widest mt-1">Master Lash Technician</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-6 flex gap-2 overflow-hidden">
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Volume</span>
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Classic</span>
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Hybrid</span>
+</div>
+</div>
+<!-- Staff Card 2 (Asymmetric Shift) -->
+<div class="group flex flex-col bg-surface-container-lowest p-5 rounded-xl editorial-shadow transition-all hover:-translate-y-1 lg:mt-8">
+<div class="relative w-full aspect-[4/5] rounded-xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="Elegant woman posing with artistic flair for a professional hair stylist portfolio, warm natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9n9IReEETWaAKiMV7HmpQ9h9m6j5Zs7H5-cBcMnzLnM3P4sp2mYQ0Jky8oQnkmjyzDOuH9pGXsyEn5QPG5O9vq2szzor4Lx7rCN1E3tVwUim_hGv_vbCfDXw2Oefy1Y9Q5TG93lqmrKnlCMgmgW2lV4Zoa56l7PZjVwDNgQGKvcn7UXPnWrHE1rRnHrEqjKebqV_qFlhGGft7HHc2w4WoM2pFte4wIV4RE5p9lvt0Oi79xl-5ms4gJctrjeFJQyf_i6fPRtFGezue"/>
+<div class="absolute top-4 right-4">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline text-2xl text-on-surface">Julianne Moore</h3>
+<p class="font-body text-primary text-xs font-semibold uppercase tracking-widest mt-1">Senior Nail Artist</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-6 flex gap-2 overflow-hidden">
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Gel-X</span>
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Nail Art</span>
+</div>
+</div>
+<!-- Staff Card 3 -->
+<div class="group flex flex-col bg-surface-container-lowest p-5 rounded-xl editorial-shadow transition-all hover:-translate-y-1">
+<div class="relative w-full aspect-[4/5] rounded-xl overflow-hidden mb-6 grayscale hover:grayscale-0 transition-all duration-700">
+<img class="w-full h-full object-cover" data-alt="Portrait of a sophisticated man in a minimalist professional attire against a beige background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6qVDtYhSQMJRefHXwnxzknjOx-hdW2IN53XKXtKg2YUTPCM2kF6su6F4UJ-P4Va7hz08qSUg02R4ZRmKLAH6WoDU5jL50awLvZX3UK-Fn7H38UxCD-P5V8atoWPbUdCTVYVeUzDziPubNlsOSyqRWs8nes8whIhJx63hv8K2bqKWO0Xuw1FpvoQ_A0aofSh7aziFWM-B4-BRObtbfRyacWB8Ti8G2qLy79KPXqprTPND_ZFn9IyzShbsKhfJ4OZAIOVbcy_lToMql"/>
+<div class="absolute top-4 right-4">
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">On Leave</span>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline text-2xl text-on-surface">Marcus Thorne</h3>
+<p class="font-body text-primary text-xs font-semibold uppercase tracking-widest mt-1">Aesthetic Consultant</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-6 flex gap-2 overflow-hidden">
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Skin Therapy</span>
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Consult</span>
+</div>
+</div>
+<!-- Staff Card 4 (Asymmetric Shift) -->
+<div class="group flex flex-col bg-surface-container-lowest p-5 rounded-xl editorial-shadow transition-all hover:-translate-y-1 lg:mt-8">
+<div class="relative w-full aspect-[4/5] rounded-xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="Professional stylist with organized hair tools in a high-end salon background, soft bokeh lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwCj4Exf3h7a5VFlHKSugoZ7l6z1tX3gk4tcvHpzwL9CtVE_Oqf906fMwhujKmcxEjViFBNBR2eRNziYy2UFWIDiJ3AdbLsWgMfHOEJuCOKbXoKnXYtbupB4Mp9LwD-ZQtkP2R5z4nYr2wKtgvqRBXxBjj1UX67fPZEotCe9snGT-_Bb5EywGaCiB1deU3Ju_L8ms2GZmYUbEIk5VlBxD8WKisggWsZL5kWwrgUtylElu3MyBveNlrX91y_yLZ25emmmItWS2rxczD"/>
+<div class="absolute top-4 right-4">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline text-2xl text-on-surface">Sienna West</h3>
+<p class="font-body text-primary text-xs font-semibold uppercase tracking-widest mt-1">Color Specialist</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-6 flex gap-2 overflow-hidden">
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Balayage</span>
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Glaze</span>
+</div>
+</div>
+<!-- Staff Card 5 -->
+<div class="group flex flex-col bg-surface-container-lowest p-5 rounded-xl editorial-shadow transition-all hover:-translate-y-1">
+<div class="relative w-full aspect-[4/5] rounded-xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="Creative artist in a minimal studio setting, soft daylight across facial features, serene mood" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpNW0OCN_KOQLiZoNYZMIuCEmIH-1bdFm6MBdJwTfbHbTK-INwsZUYec65eZoz0Vhx4HSYyCdJfgelues-5vvCLd6kG7LPEB1K3NKhbWpBQBjKaSfx1UwcgH0OorCFoUd0KOA9lyZXyaq9FHjIn7Dd7wNcKDNkD5ehiG3Dc_Z7DweRXXVJT6eHiyteynmU6xGpx4reikFKgsxXeyJRHvrtbHay1FupN-UTa-ku0twcoNFZllELvUhmMoTbOs9FZDA8dCUMMQHL2kdp"/>
+<div class="absolute top-4 right-4">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline text-2xl text-on-surface">Aria Chen</h3>
+<p class="font-body text-primary text-xs font-semibold uppercase tracking-widest mt-1">Brow Architect</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-6 flex gap-2 overflow-hidden">
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Lamination</span>
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Thread</span>
+</div>
+</div>
+<!-- Staff Card 6 (Asymmetric Shift) -->
+<div class="group flex flex-col bg-surface-container-lowest p-5 rounded-xl editorial-shadow transition-all hover:-translate-y-1 lg:mt-8">
+<div class="relative w-full aspect-[4/5] rounded-xl overflow-hidden mb-6">
+<img class="w-full h-full object-cover" data-alt="Close up of a professional male skincare expert in a clean medical spa environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJzsbQHu3vKDWuuO2nw-JoDGe7lNtrHkSqpLVKqWtMA16ZVOiKd576uU1_IaTzGDnpMal5C7QoIhwd7EvXqBsf-qFavo3YorUVZX_Svhvrlb3yj_Q_PuZ-GhJY7_Eej4OKTBh80UfBkOWdVsP48NETqEXglTiUON5l8f_Pf1hzIF3L-VO7sabbJlg50OAsPKr48IO60PP0RroBV9ms3R1z7AN6EQWCfyfvVytYckXPkiQYff8nTq3YPVsocwtcW9XXvGMPdadjRbS2"/>
+<div class="absolute top-4 right-4">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">Active</span>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline text-2xl text-on-surface">Liam Foster</h3>
+<p class="font-body text-primary text-xs font-semibold uppercase tracking-widest mt-1">Dermal Therapist</p>
+</div>
+<button class="text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+<div class="mt-6 flex gap-2 overflow-hidden">
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Hydrafacial</span>
+<span class="text-[9px] px-2 py-1 rounded-sm bg-surface-container-low text-tertiary-container uppercase font-bold">Laser</span>
+</div>
+</div>
+</div>
+<!-- Empty Space for Design Balance -->
+<div class="h-24"></div>
+</section>
+<!-- Signature Branding (Floating Backdrop) -->
+<div class="fixed bottom-[-5%] right-[-5%] opacity-[0.03] select-none pointer-events-none transform -rotate-12">
+<h1 class="font-headline text-[25vw] italic leading-none whitespace-nowrap">Lumière</h1>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-serif { font-family: 'Noto Serif', serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "surface-variant": "#e4e2e1",
+                        "on-error": "#ffffff",
+                        "tertiary": "#605e5c",
+                        "tertiary-fixed": "#e6e2df",
+                        "on-primary-container": "#6c471f",
+                        "on-tertiary-fixed-variant": "#484644",
+                        "secondary-container": "#fdc7cb",
+                        "surface-dim": "#dcd9d9",
+                        "outline": "#827474",
+                        "inverse-on-surface": "#f3f0f0",
+                        "error-container": "#ffdad6",
+                        "secondary": "#7c5357",
+                        "primary": "#7d562d",
+                        "primary-container": "#eab786",
+                        "on-primary-fixed": "#2c1600",
+                        "on-background": "#1b1c1c",
+                        "on-surface-variant": "#504444",
+                        "surface-tint": "#7d562d",
+                        "surface": "#fcf9f8",
+                        "on-tertiary-container": "#504e4c",
+                        "surface-container": "#f0eded",
+                        "inverse-surface": "#303030",
+                        "secondary-fixed": "#ffdadc",
+                        "outline-variant": "#d4c2c3",
+                        "background": "#fcf9f8",
+                        "surface-container-low": "#f6f3f2",
+                        "on-secondary-fixed-variant": "#623c40",
+                        "on-tertiary-fixed": "#1c1b1a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e4e2e1",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#795154",
+                        "inverse-primary": "#f0bd8b",
+                        "tertiary-container": "#c4c0bd",
+                        "secondary-fixed-dim": "#eeb9bd",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#ffdcbd",
+                        "primary-fixed-dim": "#f0bd8b",
+                        "surface-bright": "#fcf9f8",
+                        "on-secondary-fixed": "#301216",
+                        "surface-container-high": "#eae7e7",
+                        "on-primary-fixed-variant": "#623f18",
+                        "tertiary-fixed-dim": "#cac6c3",
+                        "on-surface": "#1b1c1c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col overflow-x-hidden">
+<!-- TopAppBar Fragment (Execution of JSON Protocol) -->
+<header class="bg-[#fcf9f8] dark:bg-stone-950 docked full-width top-0 sticky z-50">
+<div class="flex justify-between items-center w-full px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-serif italic text-[#1b1c1c] dark:text-[#fcf9f8]">L'Artiste Salon</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-[#1b1c1c]/60 dark:text-[#fcf9f8]/60 font-medium hover:text-[#7d562d] dark:hover:text-[#eab786] transition-colors duration-300" href="#">Appointments</a>
+<a class="text-[#1b1c1c]/60 dark:text-[#fcf9f8]/60 font-medium hover:text-[#7d562d] dark:hover:text-[#eab786] transition-colors duration-300" href="#">Clients</a>
+<a class="text-[#1b1c1c]/60 dark:text-[#fcf9f8]/60 font-medium hover:text-[#7d562d] dark:hover:text-[#eab786] transition-colors duration-300" href="#">Services</a>
+<a class="text-[#1b1c1c]/60 dark:text-[#fcf9f8]/60 font-medium hover:text-[#7d562d] dark:hover:text-[#eab786] transition-colors duration-300" href="#">Inventory</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#7d562d] scale-95 active:opacity-80 transition-all" data-icon="print">print</button>
+<button class="material-symbols-outlined text-[#7d562d] scale-95 active:opacity-80 transition-all" data-icon="share">share</button>
+<button class="material-symbols-outlined text-[#7d562d] scale-95 active:opacity-80 transition-all" data-icon="more_vert">more_vert</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant/30">
+<img alt="Manager Profile" class="w-full h-full object-cover" data-alt="professional portrait of a salon manager with a warm smile and elegant professional attire in a modern studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSRvy_MUAbFPo5UsWOYLUClXUAixC9uNWa3UtX4I5klBfk9MIFqi9QBHM__FCKvWQp2xUl97wZk3EFVUeLmNBYs0Ji2SW5MjnuOUawU5asil1TFMiFtFMX6D_Z_O6yJD3TX-Dg31KX4obVS1djLxWSM14gBoMmQx5LdaleHQJpmzeIMhPGCGDHuW7RDDND33StLAZQr2tV2PMRBNxhmo2t8e20LvmQshFJdTh25KkypD4T_AXZl2qkrJ0ZfH1RJZTV_UAaKHHDTHRe"/>
+</div>
+</div>
+</div>
+</header>
+<main class="flex-grow flex items-center justify-center p-6 md:p-12 lg:p-24 bg-surface-container-low relative">
+<!-- Abstract background elements for "Editorial" feel -->
+<div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none overflow-hidden">
+<div class="absolute -top-24 -left-24 w-96 h-96 bg-primary-container rounded-full blur-3xl"></div>
+<div class="absolute top-1/2 right-0 w-64 h-64 bg-secondary-container rounded-full blur-3xl"></div>
+</div>
+<!-- Premium Invoice Document -->
+<article class="relative w-full max-w-3xl bg-surface-container-lowest shadow-[0px_12px_32px_rgba(124,83,87,0.06)] rounded-xl overflow-hidden border border-outline-variant/10">
+<!-- Header Section with Asymmetrical Design -->
+<div class="p-8 md:p-16 flex flex-col md:flex-row justify-between items-start gap-8">
+<div class="space-y-4">
+<div class="font-serif italic text-3xl tracking-tight text-primary">Lumière Atelier</div>
+<div class="space-y-1">
+<p class="text-on-surface-variant text-sm font-medium">Calle de la Seda 12</p>
+<p class="text-on-surface-variant text-sm font-medium">Madrid, ES 28001</p>
+<p class="text-on-surface-variant text-sm font-medium">hola@lumiereatelier.com</p>
+</div>
+</div>
+<div class="text-right flex flex-col items-end">
+<span class="text-xs font-bold tracking-widest text-secondary uppercase mb-2">Factura Electrónica</span>
+<h1 class="font-serif text-2xl text-on-surface">INV-2023-0842</h1>
+<div class="mt-4 text-sm text-on-surface-variant space-y-1">
+<p><span class="font-semibold text-on-surface">Fecha:</span> 24 Octubre, 2023</p>
+<p><span class="font-semibold text-on-surface">Hora:</span> 16:45 PM</p><p><span class="font-semibold text-on-surface">Atendido por:</span> Elena Vance</p>
+</div>
+</div>
+</div>
+<!-- Client Info -->
+<div class="px-8 md:px-16 pb-12 grid grid-cols-1 md:grid-cols-2 gap-8 border-b border-surface-container-highest/30">
+<div>
+<span class="text-[10px] font-bold tracking-[0.2em] text-secondary/60 uppercase">Facturar a</span>
+<h2 class="font-serif text-xl mt-2 text-on-surface">Elena Rodriguez</h2>
+<p class="text-on-surface-variant text-sm mt-1">elena.rod@example.com</p>
+</div>
+<div class="flex flex-col md:items-end">
+<span class="text-[10px] font-bold tracking-[0.2em] text-secondary/60 uppercase">Estado del Pago</span>
+<div class="mt-2 inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold">
+                        CONFIRMADO
+                    </div>
+</div>
+</div>
+<!-- Services List (The Editorial Feed) -->
+<div class="px-8 md:px-16 py-12">
+<div class="flex justify-between border-b border-surface-container-highest pb-4 mb-8">
+<span class="text-[10px] font-bold tracking-[0.2em] text-on-surface-variant uppercase">Descripción del Servicio</span>
+<span class="text-[10px] font-bold tracking-[0.2em] text-on-surface-variant uppercase">Importe</span>
+</div>
+<div class="space-y-8">
+<!-- Service Item 1 -->
+<div class="flex justify-between items-center group">
+<div class="flex items-center">
+<div>
+<h3 class="font-serif text-lg text-on-surface">Manicura Rusa</h3>
+<p class="text-on-surface-variant text-xs font-medium">Limpieza profunda y esmaltado premium</p>
+</div>
+</div>
+<span class="font-serif text-lg text-on-surface">45.00€</span>
+</div>
+<!-- Service Item 2 -->
+<div class="flex justify-between items-center group">
+<div class="flex items-center">
+<div>
+<h3 class="font-serif text-lg text-on-surface">Extensión de Pestañas 1x1</h3>
+<p class="text-on-surface-variant text-xs font-medium">Look natural curvatura C Silk</p>
+</div>
+</div>
+<span class="font-serif text-lg text-on-surface">75.00€</span>
+</div>
+</div>
+</div>
+<!-- Totals Section -->
+<div class="bg-surface-container-low/50 px-8 md:px-16 py-12 space-y-4">
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">Subtotal</span>
+<span class="font-medium text-on-surface">120.00€</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="text-on-surface-variant">IVA (21%)</span>
+<span class="font-medium text-on-surface">25.20€</span>
+</div>
+<div class="pt-6 mt-6 border-t border-outline-variant/20 flex justify-between items-baseline">
+<span class="font-serif text-xl italic text-primary">Total Factura</span>
+<div class="text-right">
+<span class="block font-serif text-5xl font-bold tracking-tight text-on-surface">145.20€</span>
+</div>
+</div>
+</div>
+<!-- Actions Footer -->
+<div class="p-8 md:px-16 md:pb-16 flex flex-col md:flex-row items-center justify-between gap-6">
+<p class="text-xs text-on-surface-variant/70 italic max-w-xs text-center md:text-left">
+                    Gracias por confiar en Lumière Atelier. Esta factura sirve como comprobante de servicios realizados.
+                </p>
+<button class="group relative flex items-center gap-3 bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-4 rounded-md shadow-md transition-all active:scale-95 hover:opacity-90">
+<span class="material-symbols-outlined text-xl" data-icon="print">print</span>
+<span class="font-bold tracking-wide uppercase text-sm">Imprimir Factura</span>
+<div class="absolute inset-0 border border-white/10 rounded-md pointer-events-none"></div>
+</button>
+</div>
+</article>
+<!-- Decorative Floating Label (Editorial Style) -->
+<div class="hidden lg:block absolute right-12 top-1/2 -rotate-90 origin-right">
+<span class="text-[80px] font-serif font-black text-on-surface/[0.03] uppercase select-none leading-none">DOCUMENTO</span>
+</div>
+</main>
+<!-- SideNavBar Fragment (Execution of JSON Protocol - Filter applied: Hidden on focus screens) -->
+<!-- The SideNav is suppressed here to focus on the premium invoice transaction/document view -->
+</body></html>

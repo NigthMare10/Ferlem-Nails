@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Employee Performance | Lumière Atelier</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "background": "#fcf9f8",
+                    "outline-variant": "#d4c2c3",
+                    "primary-container": "#eab786",
+                    "secondary-fixed-dim": "#eeb9bd",
+                    "surface": "#fcf9f8",
+                    "surface-bright": "#fcf9f8",
+                    "on-primary-fixed-variant": "#623f18",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed": "#e6e2df",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#e4e2e1",
+                    "on-primary-fixed": "#2c1600",
+                    "outline": "#827474",
+                    "inverse-surface": "#303030",
+                    "primary-fixed": "#ffdcbd",
+                    "primary-fixed-dim": "#f0bd8b",
+                    "surface-dim": "#dcd9d9",
+                    "surface-container-low": "#f6f3f2",
+                    "secondary-container": "#fdc7cb",
+                    "primary": "#7d562d",
+                    "tertiary-fixed-dim": "#cac6c3",
+                    "on-primary-container": "#6c471f",
+                    "surface-container": "#f0eded",
+                    "on-primary": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#c4c0bd",
+                    "surface-tint": "#7d562d",
+                    "tertiary": "#605e5c",
+                    "on-secondary-fixed-variant": "#623c40",
+                    "on-secondary-container": "#795154",
+                    "error-container": "#ffdad6",
+                    "on-background": "#1b1c1c",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed": "#1c1b1a",
+                    "on-tertiary-fixed-variant": "#484644",
+                    "on-surface-variant": "#504444",
+                    "inverse-primary": "#f0bd8b",
+                    "secondary-fixed": "#ffdadc",
+                    "on-tertiary": "#ffffff",
+                    "on-surface": "#1b1c1c",
+                    "surface-container-highest": "#e4e2e1",
+                    "secondary": "#7c5357",
+                    "inverse-on-surface": "#f3f0f0",
+                    "on-tertiary-container": "#504e4c",
+                    "surface-container-high": "#eae7e7",
+                    "on-secondary-fixed": "#301216",
+                    "error": "#ba1a1a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Noto Serif"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-serif { font-family: 'Noto Serif', serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .chart-gradient {
+            background: linear-gradient(180deg, rgba(234, 183, 134, 0.2) 0%, rgba(234, 183, 134, 0) 100%);
+        }
+        .gold-shimmer {
+            background: linear-gradient(135deg, #7d562d 0%, #eab786 100%);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex">
+<!-- SideNavBar (Execution from JSON) -->
+<aside class="h-screen w-64 left-0 sticky bg-[#f6f3f2] dark:bg-stone-900 flex flex-col py-8 px-4 border-r border-stone-200/20 z-50">
+<div class="mb-10 px-4">
+<h1 class="font-serif text-lg text-[#1b1c1c] dark:text-stone-100 italic">Lumière Atelier</h1>
+</div>
+<div class="flex flex-col gap-1 flex-1">
+<div class="mb-4 px-4">
+<p class="text-xs font-bold uppercase tracking-widest text-stone-400">Employee Suite</p>
+</div>
+<a class="text-stone-600 dark:text-stone-400 py-3 px-4 hover:bg-[#ffffff]/50 dark:hover:bg-stone-800/50 transition-all duration-200 ease-in-out flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-sans text-sm tracking-tight">Overview</span>
+</a>
+<a class="bg-[#ffffff] dark:bg-stone-800 text-[#7d562d] dark:text-[#eab786] rounded-md font-bold shadow-sm py-3 px-4 flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">trending_up</span>
+<span class="font-sans text-sm tracking-tight">Performance</span>
+</a>
+<a class="text-stone-600 dark:text-stone-400 py-3 px-4 hover:bg-[#ffffff]/50 dark:hover:bg-stone-800/50 transition-all duration-200 ease-in-out flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="font-sans text-sm tracking-tight">Schedule</span>
+</a>
+<a class="text-stone-600 dark:text-stone-400 py-3 px-4 hover:bg-[#ffffff]/50 dark:hover:bg-stone-800/50 transition-all duration-200 ease-in-out flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">face_3</span>
+<span class="font-sans text-sm tracking-tight">Clients</span>
+</a>
+<a class="text-stone-600 dark:text-stone-400 py-3 px-4 hover:bg-[#ffffff]/50 dark:hover:bg-stone-800/50 transition-all duration-200 ease-in-out flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-sans text-sm tracking-tight">Earnings</span>
+</a>
+</div>
+<div class="mt-auto px-4 py-6 border-t border-stone-200/20">
+<button class="w-full py-2 px-4 gold-shimmer text-white rounded-md text-sm font-medium transition-opacity active:opacity-70">
+                Export Report
+            </button>
+</div>
+</aside>
+<main class="flex-1 min-w-0">
+<!-- TopNavBar (Execution from JSON) -->
+<header class="w-full top-0 sticky z-40 bg-[#fcf9f8] dark:bg-stone-950 flex justify-between items-center px-8 py-4 w-full max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<div class="hidden lg:flex items-center gap-6">
+<a class="text-stone-500 dark:text-stone-400 hover:text-[#7d562d] font-serif transition-colors duration-300" href="#">Dashboard</a>
+<a class="text-stone-500 dark:text-stone-400 hover:text-[#7d562d] font-serif transition-colors duration-300" href="#">Team</a>
+<a class="text-stone-500 dark:text-stone-400 hover:text-[#7d562d] font-serif transition-colors duration-300" href="#">Schedule</a>
+<a class="text-stone-500 dark:text-stone-400 hover:text-[#7d562d] font-serif transition-colors duration-300" href="#">Inventory</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-[#f6f3f2] dark:hover:bg-stone-800 transition-colors duration-300 rounded-full">
+<span class="material-symbols-outlined text-stone-600">notifications</span>
+</button>
+<button class="p-2 hover:bg-[#f6f3f2] dark:hover:bg-stone-800 transition-colors duration-300 rounded-full">
+<span class="material-symbols-outlined text-stone-600">settings</span>
+</button>
+<img alt="Manager profile" class="w-8 h-8 rounded-full object-cover border border-outline-variant/20" data-alt="Professional studio portrait of a salon manager with a warm smile, wearing a minimalist black blazer in a bright, modern studio" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDm68BuJkhDS4_rTMAvTR333lgMIVi-aP4NaAHTzbZfXQbOUL1zPoa-uLy-wKbJ57ixlphRV8ev5CKxdeXKdZmHUh0WIC4TToTfspKmv78f5hhI5OaXMaYWQ33uFwN63QLSmhlPTzYagqyyUotglzJGiwrM160JmxcQStlSzlzDER0YbJHfa8fRqSlWab4OpiUAKoDAFiH2_R6McJ-7k6xvZEHBCHhpFC-okPU1UZuKsuRmTsemk0xof5KoNXWsvartoyfFhNtPtXG"/>
+</div>
+</header>
+<div class="p-8 max-w-screen-xl mx-auto space-y-12">
+<!-- Profile Header Section -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b-0">
+<div class="flex gap-8 items-start">
+<div class="relative">
+<img alt="Camille Laurent profile" class="w-48 h-64 object-cover rounded-xl shadow-lg" data-alt="Close-up artistic portrait of a professional lash technician with elegant styling in a brightly lit, high-end beauty atelier" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBV1dZuoEn1LG-OfTHLlSJBIs17D0_m8fTEoxSEmC_HYrTRyxV3uK1jYpVQwdiRAKd2ydNdiDubqzNH4C0hjH2mtHW1ydxrMOjxb-WteyiY2sMgxZBlyumE5icWJrIY81tOeN5bxvlGHHB3dqGrThRBiJFDMfBA246Ke1_ZbYx6avTldF-GegZhXArnN05xnL9g4RlfKf5yFpqbefRfjJjsbHPUrNeLL3DnV3tji9wozO114dpE2unPOtbTMj5NB_cFLZ9g9FlL2iTN"/>
+<div class="absolute -bottom-4 -right-4 bg-primary text-white p-3 rounded-xl shadow-xl flex flex-col items-center justify-center">
+<span class="text-xs uppercase tracking-tighter">Level</span>
+<span class="text-xl font-serif font-bold">V</span>
+</div>
+</div>
+<div class="space-y-2 max-w-md pt-4">
+<span class="text-secondary font-medium tracking-[0.2em] text-xs uppercase">Senior Artistry Team</span>
+<h2 class="text-5xl font-serif font-bold text-on-surface leading-tight tracking-tight">Camille Laurent</h2>
+<p class="text-xl font-serif italic text-outline">Master Lash Technician</p>
+<div class="flex gap-4 pt-6">
+<button class="px-6 py-2 bg-surface-container-low text-secondary border border-outline-variant/30 rounded-md text-sm font-medium hover:bg-surface-container-high transition-colors">Contact Employee</button>
+<button class="px-6 py-2 bg-surface-container-low text-secondary border border-outline-variant/30 rounded-md text-sm font-medium hover:bg-surface-container-high transition-colors">Edit Schedule</button>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2 text-right">
+<span class="text-outline text-xs uppercase tracking-widest">Employee Since</span>
+<span class="font-serif text-lg">March 2021</span>
+<div class="flex items-center gap-1 mt-2 text-secondary">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star_half</span>
+<span class="ml-1 text-sm font-bold">4.9 / 5.0</span>
+</div>
+</div>
+</section>
+<!-- Key Performance Metrics (Editorial Bento-ish) -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+<span class="text-outline text-xs uppercase tracking-widest font-bold">Total Revenue</span>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-serif text-on-surface">$14,820</span>
+<span class="text-xs text-green-600 font-bold">+12%</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+<span class="text-outline text-xs uppercase tracking-widest font-bold">Service Time</span>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-serif text-on-surface">52m</span>
+<span class="text-xs text-stone-400 font-bold">avg.</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+<span class="text-outline text-xs uppercase tracking-widest font-bold">Client Rating</span>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-serif text-on-surface">4.98</span>
+<span class="material-symbols-outlined text-secondary text-lg" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant/10 shadow-sm flex flex-col justify-between h-32">
+<span class="text-outline text-xs uppercase tracking-widest font-bold">Appointments</span>
+<div class="flex items-baseline gap-2">
+<span class="text-3xl font-serif text-on-surface">124</span>
+<span class="text-xs text-on-surface-variant font-medium">this month</span>
+</div>
+</div>
+</section>
+<!-- Revenue Chart & Top Services Breakdown -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<!-- Revenue Chart Simulation -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-8 rounded-xl border border-outline-variant/10 shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<div>
+<h3 class="font-serif text-2xl text-on-surface">Revenue Trend</h3>
+<p class="text-sm text-outline">Projected vs Actual Earnings (Monthly)</p>
+</div>
+<div class="flex gap-2">
+<span class="inline-block w-3 h-3 bg-primary-container rounded-full"></span>
+<span class="text-xs text-outline-variant">This Month</span>
+</div>
+</div>
+<div class="h-64 flex items-end justify-between gap-2 relative">
+<!-- Simulated Chart Grid -->
+<div class="absolute inset-0 border-b border-outline-variant/20 flex flex-col justify-between">
+<div class="w-full border-t border-outline-variant/10"></div>
+<div class="w-full border-t border-outline-variant/10"></div>
+<div class="w-full border-t border-outline-variant/10"></div>
+<div class="w-full border-t border-outline-variant/10"></div>
+</div>
+<!-- Simulated Bars / Line points -->
+<div class="flex-1 flex flex-col justify-end items-center gap-2 group">
+<div class="w-12 bg-surface-container-high rounded-t-lg transition-all h-24 group-hover:h-32"></div>
+<span class="text-[10px] text-outline font-bold">WK 1</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center gap-2 group">
+<div class="w-12 bg-surface-container-high rounded-t-lg transition-all h-40 group-hover:h-48"></div>
+<span class="text-[10px] text-outline font-bold">WK 2</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center gap-2 group">
+<div class="w-12 gold-shimmer rounded-t-lg transition-all h-56 group-hover:h-64 shadow-lg"></div>
+<span class="text-[10px] text-primary font-bold">WK 3</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center gap-2 group opacity-50">
+<div class="w-12 bg-surface-container-high border-2 border-dashed border-outline-variant/30 rounded-t-lg transition-all h-44"></div>
+<span class="text-[10px] text-outline font-bold">WK 4</span>
+</div>
+</div>
+</div>
+<!-- Top Services Breakdown -->
+<div class="bg-surface-container-low p-8 rounded-xl border border-outline-variant/10 flex flex-col">
+<h3 class="font-serif text-2xl text-on-surface mb-6">Top Specialties</h3>
+<div class="space-y-6 flex-1">
+<div class="space-y-2">
+<div class="flex justify-between text-sm">
+<span class="font-bold text-on-surface">Russian Volume Fill</span>
+<span class="text-outline">45%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 45%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-sm">
+<span class="font-bold text-on-surface">Hybrid Full Set</span>
+<span class="text-outline">30%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary-container" style="width: 30%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-sm">
+<span class="font-bold text-on-surface">Lash Lift &amp; Tint</span>
+<span class="text-outline">15%</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary-container" style="width: 15%;"></div>
+</div>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-outline-variant/20">
+<p class="text-xs text-outline leading-relaxed italic">Camille's precision in volume techniques has increased the shop's retention rate by 8% this quarter.</p>
+</div>
+</div>
+</section>
+<!-- Recent Services List -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<div>
+<h3 class="font-serif text-3xl text-on-surface leading-none">Recent Appointments</h3>
+<p class="text-outline text-sm mt-2">Latest services performed by Camille</p>
+</div>
+<a class="text-secondary text-sm font-bold underline underline-offset-4 tracking-tighter" href="#">View Full Ledger</a>
+</div>
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/10 overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 border-b border-outline-variant/10">
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-outline">Date</th>
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-outline">Service</th>
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-outline">Client</th>
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-outline">Status</th>
+<th class="px-6 py-4 text-xs uppercase tracking-widest font-bold text-outline text-right">Revenue</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5 text-sm font-medium">Oct 12, 14:00</td>
+<td class="px-6 py-5 font-serif text-lg">Russian Volume Fill</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Sienna Miller</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container text-on-secondary-container">CONFIRMED</span>
+</td>
+<td class="px-6 py-5 text-right font-serif text-lg">$145.00</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5 text-sm font-medium">Oct 12, 11:30</td>
+<td class="px-6 py-5 font-serif text-lg">Lash Lift &amp; Tint</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Grace Chen</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container text-on-secondary-container">CONFIRMED</span>
+</td>
+<td class="px-6 py-5 text-right font-serif text-lg">$95.00</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5 text-sm font-medium">Oct 11, 16:45</td>
+<td class="px-6 py-5 font-serif text-lg">Hybrid Full Set</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Eleanor Rigby</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container text-on-secondary-container">CONFIRMED</span>
+</td>
+<td class="px-6 py-5 text-right font-serif text-lg">$210.00</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-6 py-5 text-sm font-medium">Oct 11, 09:00</td>
+<td class="px-6 py-5 font-serif text-lg">Classic Refill</td>
+<td class="px-6 py-5 text-sm text-on-surface-variant">Marcus Thorne</td>
+<td class="px-6 py-5">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary-container text-on-secondary-container">CONFIRMED</span>
+</td>
+<td class="px-6 py-5 text-right font-serif text-lg">$85.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<footer class="mt-20 border-t border-outline-variant/10 py-12 px-8 flex justify-between items-center bg-surface-container-low/30">
+<div class="flex items-center gap-4">
+<div class="h-10 w-10 gold-shimmer rounded-lg flex items-center justify-center text-white font-serif italic text-xl">L</div>
+<div class="flex flex-col">
+<span class="font-serif text-sm font-bold">Lumière Atelier</span>
+<span class="text-[10px] uppercase tracking-widest text-outline">Internal Performance Dashboard © 2024</span>
+</div>
+</div>
+<div class="flex gap-8 text-xs font-bold text-outline uppercase tracking-widest">
+<a class="hover:text-primary transition-colors" href="#">Support</a>
+<a class="hover:text-primary transition-colors" href="#">Privacy</a>
+<a class="hover:text-primary transition-colors" href="#">Terminal</a>
+</div>
+</footer>
+</main>
+</body></html>

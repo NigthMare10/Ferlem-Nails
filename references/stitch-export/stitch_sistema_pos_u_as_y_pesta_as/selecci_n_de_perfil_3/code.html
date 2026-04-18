@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface-variant": "#504444",
+                    "surface-variant": "#e4e2e1",
+                    "surface-container-highest": "#e4e2e1",
+                    "surface-container": "#f0eded",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-tertiary-container": "#504e4c",
+                    "primary-fixed": "#ffdcbd",
+                    "on-primary-fixed": "#2c1600",
+                    "surface-bright": "#fcf9f8",
+                    "outline": "#827474",
+                    "surface-container-high": "#eae7e7",
+                    "on-secondary-fixed": "#301216",
+                    "secondary": "#7c5357",
+                    "on-error": "#ffffff",
+                    "inverse-on-surface": "#f3f0f0",
+                    "on-primary-fixed-variant": "#623f18",
+                    "on-surface": "#1b1c1c",
+                    "surface-dim": "#dcd9d9",
+                    "surface": "#fcf9f8",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-fixed-variant": "#623c40",
+                    "tertiary-container": "#c4c0bd",
+                    "primary": "#7d562d",
+                    "tertiary-fixed": "#e6e2df",
+                    "surface-container-low": "#f6f3f2",
+                    "inverse-primary": "#f0bd8b",
+                    "primary-container": "#eab786",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#7d562d",
+                    "on-primary-container": "#6c471f",
+                    "on-tertiary-fixed-variant": "#484644",
+                    "tertiary": "#605e5c",
+                    "primary-fixed-dim": "#f0bd8b",
+                    "error": "#ba1a1a",
+                    "background": "#fcf9f8",
+                    "on-tertiary-fixed": "#1c1b1a",
+                    "secondary-fixed-dim": "#eeb9bd",
+                    "on-secondary-container": "#795154",
+                    "on-error-container": "#93000a",
+                    "on-secondary": "#ffffff",
+                    "secondary-fixed": "#ffdadc",
+                    "outline-variant": "#d4c2c3",
+                    "inverse-surface": "#303030",
+                    "secondary-container": "#fdc7cb",
+                    "tertiary-fixed-dim": "#cac6c3",
+                    "on-background": "#1b1c1c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Noto Serif"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .profile-card-glow:hover {
+            box-shadow: 0px 12px 32px rgba(124, 83, 87, 0.08);
+        }
+        .editorial-gradient {
+            background: linear-gradient(135deg, #7d562d 0%, #eab786 100%);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased overflow-x-hidden">
+<!-- Top Navigation Anchor (Suppressed in transactional/selection context but brand identity preserved) -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md">
+<div class="flex justify-between items-center px-8 py-8 w-full max-w-7xl mx-auto">
+<h1 class="text-2xl font-headline italic font-bold tracking-tight text-on-surface">Lumière Atelier</h1>
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">help</span>
+</div>
+</div>
+</header>
+<main class="min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-12">
+<!-- Header Section -->
+<div class="text-center mb-16 max-w-2xl">
+<h2 class="font-headline text-5xl md:text-6xl text-on-surface font-bold tracking-tighter mb-4">Seleccione su Perfil</h2>
+<p class="font-body text-on-surface-variant tracking-wide uppercase text-xs tracking-[0.2em]">Bienvenido al Santuario de Gestión</p>
+</div>
+<!-- Profile Selection Grid -->
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 md:gap-12 w-full max-w-5xl">
+<!-- Profile Card: Elena -->
+<button class="group flex flex-col items-center space-y-4 focus:outline-none">
+<div class="relative w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden bg-surface-container-low transition-transform duration-500 group-hover:scale-105 profile-card-glow">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="Close-up professional headshot of a woman with elegant jewelry and soft studio lighting, high-end editorial photography style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBm-oMotRAJP7h_LbbVpc9t9m4EMFHjSbDd5yyYR0-zAWmclAXuBv2Fhic3padCyG-TZU0Blk5Hzjt-BN19p2qw9u6s81BwWhWpeSKVJdG-LZW0f261ohhzoaoAnzz6ghW_Z3qAcQf0rZT7erZ6sgE9Pi3xtYhxmYmRWgmItEXw9f0DfXhQsSrS4WoTbnjxvNamyIjwe2aHk09kp0SigSd3Imt3KR7fEC2uuMwuEiAYJJUz7UF8biPubRMx_1p0pgbqYYm8USwxr-2r"/>
+<div class="absolute inset-0 border border-on-surface-variant/10 rounded-xl pointer-events-none"></div>
+</div>
+<div class="text-center">
+<p class="font-headline text-lg font-bold text-on-surface">Elena</p>
+<p class="font-label text-[10px] uppercase tracking-[0.15em] text-on-surface-variant">Admin</p>
+</div>
+</button>
+<!-- Profile Card: Julian -->
+<button class="group flex flex-col items-center space-y-4 focus:outline-none">
+<div class="relative w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden bg-surface-container-low transition-transform duration-500 group-hover:scale-105 profile-card-glow">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="Professional portrait of a male stylist in a minimalist studio, warm tonal colors and sharp focus on eyes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmuZyLTSTZEzHZvoB2Wlm2uHLLtlqvYDzxR2M7RSLEGWq84i4O1yhBAO3frG_9bxwaIEYsa5UUrGUFZlYZmOqq6PaOxgAqEXWrHyCGdyfCETKYWX6cT_KESsynKgbGp2J5BNziNjELkUdj1l3bHRQWRUzAT7ggehnZkJrSnxlLnyQizITs5lmq6zUsfuPEjOjsCyHZsZdnWtMlrtRH11ic89L-tiJsLTpa3JnGrSNMg6-CZdrZ6eJo9d30f_jkIihMUKYrhJIMrN-9"/>
+<div class="absolute inset-0 border border-on-surface-variant/10 rounded-xl pointer-events-none"></div>
+</div>
+<div class="text-center">
+<p class="font-headline text-lg font-bold text-on-surface">Julian</p>
+<p class="font-label text-[10px] uppercase tracking-[0.15em] text-on-surface-variant">Stylist</p>
+</div>
+</button>
+<!-- Profile Card: Sofia -->
+<button class="group flex flex-col items-center space-y-4 focus:outline-none">
+<div class="relative w-32 h-32 md:w-40 md:h-40 rounded-xl overflow-hidden bg-surface-container-low transition-transform duration-500 group-hover:scale-105 profile-card-glow">
+<img class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" data-alt="Minimalist headshot of a creative director, soft natural window light, muted beige and cream background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDplYkpjx9hjh5FztR7v0OZ8o0Xneew4Hp9F_ORXnzi4J4qDDBtR7gWUeY4Bz1J7_Ylvsbskat16GfDviL48sKJgTKIAyz98mBNkH3Rv3P_IrxG_ZFB4ohC-iGKu4a1sYdNYJNdGdYpT95nKB4SY36FBKr5654LkhZ1mi5IGHtqPadZ3TbD8EUCSHeV9r7OUUMkAO-K70g23RINmkz-XOzsr5ViaLtQBGDgRnUMD09i83PO1ZBD9G0EQEc2Dv5-ILrckEKTUNMfGHs"/>
+<div class="absolute inset-0 border border-on-surface-variant/10 rounded-xl pointer-events-none"></div>
+</div>
+<div class="text-center">
+<p class="font-headline text-lg font-bold text-on-surface">Sofia</p>
+<p class="font-label text-[10px] uppercase tracking-[0.15em] text-on-surface-variant">Colorist</p>
+</div>
+</button>
+<!-- Add Profile Card -->
+</div>
+<!-- Footer Subtle Brand Link -->
+<div class="mt-24 text-center">
+<p class="text-[10px] font-label uppercase tracking-[0.3em] text-on-surface-variant mb-6">Aura Management System</p>
+<div class="flex items-center justify-center gap-1">
+<div class="h-[1px] w-8 bg-outline-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-primary-container"></div>
+<div class="h-[1px] w-8 bg-outline-variant"></div>
+</div>
+</div>
+</main>
+<!-- Decorative Element: Bottom Corner Texture -->
+<div class="fixed bottom-0 right-0 p-12 pointer-events-none opacity-20">
+<p class="font-headline italic text-8xl text-surface-container-highest select-none">L'Artiste</p>
+</div>
+<div class="fixed top-0 left-0 p-12 pointer-events-none opacity-20 hidden md:block">
+<div class="w-32 h-[1px] bg-outline rotate-45 transform origin-left"></div>
+</div>
+</body></html>

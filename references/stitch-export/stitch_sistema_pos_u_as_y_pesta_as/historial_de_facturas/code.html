@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-container": "#fdc7cb",
+                        "on-tertiary-fixed-variant": "#484644",
+                        "surface-dim": "#dcd9d9",
+                        "on-primary-container": "#6c471f",
+                        "tertiary-fixed": "#e6e2df",
+                        "tertiary": "#605e5c",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e4e2e1",
+                        "surface-container": "#f0eded",
+                        "secondary-fixed": "#ffdadc",
+                        "outline-variant": "#d4c2c3",
+                        "inverse-surface": "#303030",
+                        "surface-tint": "#7d562d",
+                        "on-surface-variant": "#504444",
+                        "on-tertiary-container": "#504e4c",
+                        "surface": "#fcf9f8",
+                        "on-primary-fixed": "#2c1600",
+                        "on-background": "#1b1c1c",
+                        "secondary": "#7c5357",
+                        "primary": "#7d562d",
+                        "outline": "#827474",
+                        "inverse-on-surface": "#f3f0f0",
+                        "error-container": "#ffdad6",
+                        "primary-container": "#eab786",
+                        "tertiary-container": "#c4c0bd",
+                        "secondary-fixed-dim": "#eeb9bd",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#795154",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#f0bd8b",
+                        "surface-container-low": "#f6f3f2",
+                        "on-secondary-fixed-variant": "#623c40",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e4e2e1",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#1c1b1a",
+                        "background": "#fcf9f8",
+                        "surface-container-high": "#eae7e7",
+                        "on-primary-fixed-variant": "#623f18",
+                        "on-surface": "#1b1c1c",
+                        "tertiary-fixed-dim": "#cac6c3",
+                        "on-secondary-fixed": "#301216",
+                        "surface-bright": "#fcf9f8",
+                        "primary-fixed-dim": "#f0bd8b",
+                        "primary-fixed": "#ffdcbd"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .editorial-shadow {
+            box-shadow: 0px 12px 32px rgba(124, 83, 87, 0.06);
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e4e2e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body selection:bg-secondary-container">
+<!-- Sidebar Navigation (Predicted Component: SideNavBar) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low flex flex-col p-6 space-y-4 font-['Manrope'] tracking-wide z-40">
+<div class="mb-8 px-2">
+<h1 class="text-xl font-serif text-primary">Lustre Salon</h1>
+<p class="text-xs text-stone-500 uppercase tracking-[0.2em]">Management Portal</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 p-3 text-stone-500 hover:bg-white/50 transition-all scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="flex items-center gap-3 p-3 bg-surface-container-lowest text-on-surface rounded-lg font-semibold transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span>All Invoices</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-stone-500 hover:bg-white/50 transition-all scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="pending_actions">pending_actions</span>
+<span>Pending</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-stone-500 hover:bg-white/50 transition-all scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="check_circle">check_circle</span>
+<span>Settled</span>
+</a>
+<a class="flex items-center gap-3 p-3 text-stone-500 hover:bg-white/50 transition-all scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings_backup_restore">settings_backup_restore</span>
+<span>Refunds</span>
+</a>
+</nav>
+<button class="mt-auto bg-gradient-to-br from-primary to-primary-container text-white p-4 rounded-xl font-medium tracking-tight editorial-shadow active:opacity-90 transition-opacity">
+            Create New Invoice
+        </button>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 min-h-screen">
+<!-- Top Navigation (Predicted Component: TopNavBar) -->
+<header class="fixed top-0 right-0 left-64 h-20 bg-surface/70 backdrop-blur-md z-30 flex justify-between items-center px-8 border-none">
+<h2 class="text-2xl font-headline italic text-on-surface">Historial de Facturas</h2>
+<div class="flex items-center gap-6">
+<div class="relative flex items-center bg-surface-container-low px-4 py-2 rounded-full border border-outline-variant/20 focus-within:border-primary transition-all">
+<span class="material-symbols-outlined text-stone-400 text-sm">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-48 placeholder:text-stone-400" placeholder="Buscar folio o cliente..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-stone-500">
+<button class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined cursor-pointer hover:text-primary transition-colors" data-icon="settings">settings</button>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant/30">
+<img class="w-full h-full object-cover" data-alt="Portrait of a professional female admin manager with a clean, minimal aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTvG7i-YWryTZnHnIk-0VxjDBPfF4ZN3Ra2ox1SNft1ok__fZ-3GUvuSOjroJFz3Q6EiyEHxVjI9I1oFbk7CODxPTY2Kr94OeIAe3FSoL5hWtcvpZwqZM61lh54qdG5YqdUGbjEYiFX9R7inAaoQV6QSrnqpZCbqfSuaBPI5RSX6DCxBfp9GX9hEv_X2Bjpva01qCcsctp36psFv6ebrohaBM24la9lIgZt8nYQA5SFg29mIWYFxz_KMNHqNA0gKC-RrGW2R8zCmhQ"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Content Area -->
+<div class="pt-32 px-10 pb-16 max-w-7xl mx-auto">
+<!-- Summary Bento Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+<!-- Total Facturas Card -->
+<div class="bg-surface-container-lowest p-8 rounded-xl editorial-shadow relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-9xl" style="font-variation-settings: 'wght' 100;">receipt</span>
+</div>
+<p class="text-xs uppercase tracking-[0.2em] text-stone-500 mb-2">Total Facturas</p>
+<h3 class="text-4xl font-headline font-bold text-on-surface tracking-tighter">1,284</h3>
+<div class="mt-4 flex items-center gap-2 text-xs text-green-600">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>+12% vs mes anterior</span>
+</div>
+</div>
+<!-- Recaudación Total Card -->
+<div class="bg-surface-container-lowest p-8 rounded-xl editorial-shadow relative overflow-hidden group md:col-span-2">
+<div class="absolute right-0 top-0 w-1/2 h-full opacity-10 bg-gradient-to-l from-primary-container to-transparent"></div>
+<p class="text-xs uppercase tracking-[0.2em] text-stone-500 mb-2">Recaudación Total</p>
+<div class="flex items-baseline gap-2">
+<h3 class="text-4xl font-headline font-bold text-on-surface tracking-tighter">$45,920.00</h3>
+<span class="text-stone-400 font-serif italic">MXN</span>
+</div>
+<div class="mt-4 flex items-center gap-6">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase text-stone-400 tracking-widest">Promedio Ticket</span>
+<span class="font-semibold text-primary">$842.00</span>
+</div>
+<div class="w-px h-8 bg-outline-variant/30"></div>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase text-stone-400 tracking-widest">Servicios Realizados</span>
+<span class="font-semibold text-on-surface">3,120</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Filtering & Actions -->
+<section class="bg-surface-container-low rounded-xl p-4 mb-8 flex flex-wrap items-center justify-between gap-4">
+<div class="flex flex-wrap items-center gap-4">
+<!-- Date Picker Placeholder -->
+<div class="relative group">
+<label class="absolute -top-2 left-3 px-1 bg-surface-container-low text-[10px] font-bold text-primary uppercase tracking-tighter">Rango de Fecha</label>
+<div class="flex items-center gap-2 bg-surface-container-lowest px-4 py-2.5 rounded-lg border-b-2 border-surface-container-highest group-focus-within:border-primary transition-all cursor-pointer">
+<span class="material-symbols-outlined text-stone-400 text-sm">calendar_month</span>
+<span class="text-sm font-medium">01 Oct - 31 Oct 2023</span>
+</div>
+</div>
+<!-- Employee Dropdown Placeholder -->
+<div class="relative group">
+<label class="absolute -top-2 left-3 px-1 bg-surface-container-low text-[10px] font-bold text-primary uppercase tracking-tighter">Atendido por</label>
+<select class="appearance-none bg-surface-container-lowest px-4 py-2.5 pr-10 rounded-lg border-none border-b-2 border-surface-container-highest focus:ring-0 focus:border-primary text-sm font-medium transition-all cursor-pointer">
+<option>Todos los empleados</option>
+<option>Adriana Lopez</option>
+<option>Marco Polo</option>
+<option>Sofia Ricci</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-3 text-stone-400 pointer-events-none text-sm">expand_more</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-secondary hover:bg-secondary/5 transition-colors rounded-lg">
+<span class="material-symbols-outlined text-sm">download</span>
+                        Exportar CSV
+                    </button>
+</div>
+</section>
+<!-- Invoices Table -->
+<section class="bg-surface-container-lowest rounded-xl editorial-shadow overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low/50 border-b border-outline-variant/10">
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">Folio</th>
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">Fecha y Hora</th>
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">Atendido Por</th>
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400">Estado</th>
+<th class="px-8 py-5 text-[11px] font-bold uppercase tracking-[0.2em] text-stone-400 text-right">Monto Total</th>
+<th class="px-8 py-5"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/10">
+<!-- Table Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-headline font-semibold text-on-surface">#LST-4921</td>
+<td class="px-8 py-6">
+<div class="flex flex-col">
+<span class="text-sm font-medium">24 Oct, 2023</span>
+<span class="text-xs text-stone-400">14:30 PM</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a young male hairstylist with professional salon lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9XMCRkWmGN88xjM9a0rNKStoEX8fCxxLDl6eFO-uHmRD3U9m_Ro8HAbFAa0LRu7i2RVxjQbkf9gwArdu79QtYWLYJRIvkrWsklIqRpkaBmySBABeDcEP3YH5a7FDI6hDlKv8ysZr8SlSHplNhp4j43gvP3w3kTXTcKQOuuCRuth9f38lvDDlZP2062-JMGHqr4iCa-xCfWW3KSjJ2waEBPozr6cYbWCILu_Gn-Pn_rqR_Nmx9BgjP8BSxtLigeWnYOCdQB4lpmNq4"/>
+</div>
+<span class="text-sm">Marco Polo</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-secondary-container/30 text-on-secondary-container text-[10px] font-bold uppercase tracking-widest rounded-full border border-secondary-container">Completado</span>
+</td>
+<td class="px-8 py-6 text-right font-headline font-bold text-on-surface">$1,450.00</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-stone-400 hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+<!-- Table Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-headline font-semibold text-on-surface">#LST-4920</td>
+<td class="px-8 py-6">
+<div class="flex flex-col">
+<span class="text-sm font-medium">24 Oct, 2023</span>
+<span class="text-xs text-stone-400">12:15 PM</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Female beauty therapist with serene expression and professional styling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBf4fwvNjoyt1lciTR82SHW3m8sDxNwlKvB8Be3RxQsw8qGmzlKmjTA26L8G0Rb4C_eNybDg10Uws1uk0ILenhNML_6H5a8bzB0KLqYCfaVgG6HbEFsM2UrLzBObHqzkHgkNKBbqLtfN4JPFlRMHI98iy8-hOdC3VbiozxlzGNRbPxpO2XuCv7vIKT9YOUGXSPrD4IMtsJFhAFwsfh_5HHnphJ1aHQmClZbT5PYNpvMdIxLZuo_fYE29PZivi3ZaeJAcDm62Ef2L9DF"/>
+</div>
+<span class="text-sm">Sofia Ricci</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-secondary-container/30 text-on-secondary-container text-[10px] font-bold uppercase tracking-widest rounded-full border border-secondary-container">Completado</span>
+</td>
+<td class="px-8 py-6 text-right font-headline font-bold text-on-surface">$890.00</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-stone-400 hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+<!-- Table Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-headline font-semibold text-on-surface">#LST-4919</td>
+<td class="px-8 py-6">
+<div class="flex flex-col">
+<span class="text-sm font-medium">24 Oct, 2023</span>
+<span class="text-xs text-stone-400">10:00 AM</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Elegant professional woman with minimalist aesthetic in a salon setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDO5cl80qqg4453beFxY90NKvOjQC7BNmR4uEE_iYI1LoVqDD2z6Z41sSLFUk1WXyE9rU7krwEJKmH_35kO-rYIeWHVt0nlh_YLDGmOjf8smeSGF_cn9cKjbsdAzH_MYWkDN8-BquSG1wLjsjuR5FY8jHoOVm7QNk2fTQuhWdnnh7zNYBK1EFvpuyTKkXNT1kkIFpuIj5itafU6jDaBA8U0xsoCruZCuBDM28GrVfYByQDvuKkkfhwVYwDAo6GPfE6YBOEaESHcg4Y6"/>
+</div>
+<span class="text-sm">Adriana Lopez</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-surface-container-highest/50 text-stone-500 text-[10px] font-bold uppercase tracking-widest rounded-full border border-outline-variant/30">Cancelado</span>
+</td>
+<td class="px-8 py-6 text-right font-headline font-bold text-stone-400 line-through">$2,100.00</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-stone-400 hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+<!-- Table Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-headline font-semibold text-on-surface">#LST-4918</td>
+<td class="px-8 py-6">
+<div class="flex flex-col">
+<span class="text-sm font-medium">23 Oct, 2023</span>
+<span class="text-xs text-stone-400">17:45 PM</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-fixed flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a modern male stylist with sharp haircut and neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtqazdcobm1bqQs2xv9UId5n_CKnCrND9Q7l_xCt6ZeljirjYte33sITp_2sQIiKv9k_XfHEvQHhvBm0NEZx1nj8psuEhnJtp9XX_Fh8ytd9m_Yn7PXqAz_lTtXq0lNuoSXonBnt28plRTMq1wezQKD6O4U1817JJNuUvMesWRdwj-mgAbc6wcdS9oLcTcurictX8zlCOZMknSGYZphGQuelFojMxF_1YYKSX8fd_UE26s1XCpGbWGl8HviKh_RIhBnSbexAHFVNvN"/>
+</div>
+<span class="text-sm">Marco Polo</span>
+</div>
+</td>
+<td class="px-8 py-6">
+<span class="px-3 py-1 bg-secondary-container/30 text-on-secondary-container text-[10px] font-bold uppercase tracking-widest rounded-full border border-secondary-container">Completado</span>
+</td>
+<td class="px-8 py-6 text-right font-headline font-bold text-on-surface">$3,420.00</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-stone-400 hover:text-primary transition-colors" data-icon="more_vert">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination -->
+<div class="px-8 py-6 bg-surface-container-low/30 border-t border-outline-variant/10 flex items-center justify-between">
+<span class="text-xs text-stone-500 font-medium">Mostrando 1 a 10 de 1,284 facturas</span>
+<div class="flex items-center gap-2">
+<button class="p-2 text-stone-400 hover:text-primary transition-colors rounded-lg">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center text-xs font-bold bg-primary text-white rounded-lg">1</button>
+<button class="w-8 h-8 flex items-center justify-center text-xs font-bold text-stone-500 hover:bg-surface-container-high rounded-lg transition-colors">2</button>
+<button class="w-8 h-8 flex items-center justify-center text-xs font-bold text-stone-500 hover:bg-surface-container-high rounded-lg transition-colors">3</button>
+<span class="text-stone-300">...</span>
+<button class="w-8 h-8 flex items-center justify-center text-xs font-bold text-stone-500 hover:bg-surface-container-high rounded-lg transition-colors">128</button>
+<button class="p-2 text-stone-400 hover:text-primary transition-colors rounded-lg">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Floating Action for Quick Add (Editorial Touch) -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-on-surface text-surface rounded-full editorial-shadow flex items-center justify-center group hover:scale-110 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined group-hover:rotate-90 transition-transform">add</span>
+</button>
+</body></html>

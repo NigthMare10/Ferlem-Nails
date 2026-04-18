@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#504e4c",
+                        "inverse-on-surface": "#f3f0f0",
+                        "tertiary-container": "#c4c0bd",
+                        "primary-fixed-dim": "#f0bd8b",
+                        "primary": "#7d562d",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#d4c2c3",
+                        "on-primary-container": "#6c471f",
+                        "secondary": "#7c5357",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#623c40",
+                        "surface-variant": "#e4e2e1",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "surface": "#fcf9f8",
+                        "secondary-fixed": "#ffdadc",
+                        "background": "#fcf9f8",
+                        "on-background": "#1b1c1c",
+                        "on-tertiary-fixed-variant": "#484644",
+                        "on-primary-fixed-variant": "#623f18",
+                        "primary-container": "#eab786",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#7d562d",
+                        "primary-fixed": "#ffdcbd",
+                        "surface-container-low": "#f6f3f2",
+                        "surface-bright": "#fcf9f8",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#2c1600",
+                        "surface-container-high": "#eae7e7",
+                        "outline": "#827474",
+                        "inverse-surface": "#303030",
+                        "on-error": "#ffffff",
+                        "tertiary": "#605e5c",
+                        "on-tertiary-fixed": "#1c1b1a",
+                        "on-surface": "#1b1c1c",
+                        "secondary-container": "#fdc7cb",
+                        "on-secondary-fixed": "#301216",
+                        "surface-container-highest": "#e4e2e1",
+                        "surface-container": "#f0eded",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#eeb9bd",
+                        "on-secondary-container": "#795154",
+                        "tertiary-fixed-dim": "#cac6c3",
+                        "tertiary-fixed": "#e6e2df",
+                        "on-surface-variant": "#504444",
+                        "inverse-primary": "#f0bd8b",
+                        "surface-dim": "#dcd9d9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; }
+        .font-serif { font-family: 'Noto Serif', serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex">
+<!-- SideNavBar Component -->
+<nav class="fixed left-0 top-0 h-full flex flex-col py-8 px-6 bg-[#f6f3f2] dark:bg-stone-900 w-64 border-r-0 transition-all duration-300 ease-in-out">
+<div class="mb-12">
+<h1 class="font-serif text-xl text-stone-800 dark:text-stone-200">L'Élégance</h1>
+<p class="text-stone-500 text-[10px] uppercase tracking-widest mt-1">Professional Wellness</p>
+</div>
+<div class="flex-1 space-y-2">
+<!-- Checkout Tab -->
+<a class="flex items-center gap-4 px-4 py-3 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span>
+<span class="text-xs font-label uppercase tracking-widest">Checkout</span>
+</a>
+<!-- Employee Management Tab (Active) -->
+<a class="flex items-center gap-4 px-4 py-3 text-[#7d562d] dark:text-[#eab786] font-bold border-r-2 border-[#7d562d]" href="#">
+<span class="material-symbols-outlined" data-icon="badge">badge</span>
+<span class="text-xs font-label uppercase tracking-widest">Employee Management</span>
+</a>
+<!-- Price Settings Tab -->
+<a class="flex items-center gap-4 px-4 py-3 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="text-xs font-label uppercase tracking-widest">Price Settings</span>
+</a>
+<!-- Analytics Tab -->
+<a class="flex items-center gap-4 px-4 py-3 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span class="text-xs font-label uppercase tracking-widest">Analytics</span>
+</a>
+</div>
+<div class="mt-auto space-y-4 pt-8">
+<button class="w-full py-3 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-md text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                New Appointment
+            </button>
+<div class="pt-6 border-t border-outline-variant/20 space-y-1">
+<a class="flex items-center gap-4 px-4 py-2 text-stone-500 text-xs font-label uppercase tracking-widest hover:text-stone-900 transition-all" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="settings">settings</span>
+                    Settings
+                </a>
+<a class="flex items-center gap-4 px-4 py-2 text-stone-500 text-xs font-label uppercase tracking-widest hover:text-stone-900 transition-all" href="#">
+<span class="material-symbols-outlined text-lg" data-icon="logout">logout</span>
+                    Logout
+                </a>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 ml-64 min-h-screen">
+<!-- TopAppBar Component -->
+<header class="flex justify-between items-center w-full px-8 py-6 bg-[#fcf9f8] dark:bg-stone-950">
+<div class="flex flex-col">
+<h2 class="text-2xl font-serif italic text-stone-900 dark:text-stone-100">Employee Management</h2>
+<span class="text-xs font-label text-stone-500 tracking-widest uppercase mt-1">L'Élégance Salon Administrator</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-stone-500">
+<button class="material-symbols-outlined p-2 hover:bg-[#f6f3f2] rounded-full transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined p-2 hover:bg-[#f6f3f2] rounded-full transition-colors" data-icon="account_circle">account_circle</button>
+</div>
+<div class="h-10 w-10 rounded-full overflow-hidden border border-primary/20">
+<img alt="Administrator profile" data-alt="professional headshot of a female salon manager with a friendly smile in a bright airy studio environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcQrO6sORR9dpwsKknnkBP1vrQI9TBIUopEb37jPeN_D6qTIH-7sKFLexMULsPJBygzcBr9UdOr1tFARC0XZwVg4jYF5oGZ1qD2d-kpAG3CSfNMn5Ha2s5BDeLYF1v9oOVtP5I_OhW3amIOddmyRaTjrMWeD5fFGPtl58HIPt4xIXUx3kX1p5mJq6av0sUHuhQz0Jx8qTr8fzgwR0IIBtRYzeey-rzJ4KIGj4t4OKS6_K1AfEka_-pwIboXV8xPDXrS80vL8pDVcY1"/>
+</div>
+</div>
+</header>
+<!-- Editorial Content -->
+<div class="px-8 py-10 space-y-12">
+<!-- Header Section with FAB -->
+<section class="flex justify-between items-end">
+<div class="max-w-xl">
+<h3 class="text-4xl font-serif text-on-surface leading-tight">Our Curated Collective</h3>
+<p class="mt-4 text-on-surface-variant font-body leading-relaxed">
+                        Manage the artists and specialists who define the L'Élégance experience. From master technicians to aesthetic consultants, your team is the heart of the salon.
+                    </p>
+</div>
+<!-- Prominent Add Button -->
+<button class="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-primary to-primary-container text-on-primary rounded-md shadow-lg transition-transform hover:scale-105 active:scale-95">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+<span class="font-label text-sm font-bold uppercase tracking-widest">Add New Employee</span>
+</button>
+</section>
+<!-- Employee Grid (Editorial Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Staff Card 1 -->
+<div class="group relative bg-surface-container-low p-6 rounded-xl transition-all duration-300 hover:bg-surface-container-lowest">
+<div class="aspect-[4/5] overflow-hidden rounded-xl mb-6 grayscale group-hover:grayscale-0 transition-all duration-500">
+<img alt="Staff member" class="w-full h-full object-cover" data-alt="elegant portrait of a professional lash artist with focused expression in a minimalist modern salon setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTboIwz6A2v6TLDBuuryNg0h38xLCEb7-4KaH4GOoz9YuIbHPjK-yYa08v89j5i3JcK06v6VlH_VCIGIi7GA-X7L5WzXsnvIazXQDVeJk2jyOVLWSL7smW3Y3fyGCHhd4CpA0q3EC4nVI3MUz8u3xkHAP3VPARK-HlKwUGx_i_FGUE_MOTUrULp1gXzQhzoS2sFIyy26uXKnKZc6RD64HBCIVSiXPAaipDtQYsoZwBDvCeaQPy76lE9hTa2Lx_c9Vgw5QcwXkUQI7w"/>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="text-xl font-serif text-on-surface">Camille Laurent</h4>
+<p class="text-xs font-label uppercase tracking-widest text-primary mt-1">Master Lash Technician</p>
+</div>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase tracking-tighter">Active</span>
+</div>
+<div class="mt-6 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-xs font-label text-stone-500 uppercase tracking-widest hover:text-stone-900 flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+                            Edit Details
+                        </button>
+<button class="text-xs font-label text-error uppercase tracking-widest hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+                            Remove
+                        </button>
+</div>
+</div>
+<!-- Staff Card 2 -->
+<div class="group relative bg-surface-container-low p-6 rounded-xl transition-all duration-300 hover:bg-surface-container-lowest">
+<div class="aspect-[4/5] overflow-hidden rounded-xl mb-6 grayscale group-hover:grayscale-0 transition-all duration-500">
+<img alt="Staff member" class="w-full h-full object-cover" data-alt="charming male manicurist working with professional tools in a clean high-end boutique environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzdSsrvxEwCMTn_GfbDS4qcOyjFcTn95iv3yVsS12QtTOwariuTM5vxdVd42BKlFo8uQIVIXFksD9YbhKzU-r0eglHT_c5azbOhT0-rmMxRJ6BBGU8B1qKD6Qow-IEQPAZ4Jv7NB6VndGkdHI2Ts1C4TeNaNlbnMMsPZxJQQfHFlMqCR1GAlQeosZRpJuBIup4rjUoUo6cob4wIzAn6j7C9agMKY1nlzqv9d1pAOe-Xq7H1o6kDeI3jZbbt3uyO1Rt2BcbstpiAbI_"/>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="text-xl font-serif text-on-surface">Julian Vance</h4>
+<p class="text-xs font-label uppercase tracking-widest text-primary mt-1">Senior Nail Artist</p>
+</div>
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full uppercase tracking-tighter">Active</span>
+</div>
+<div class="mt-6 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-xs font-label text-stone-500 uppercase tracking-widest hover:text-stone-900 flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+                            Edit Details
+                        </button>
+<button class="text-xs font-label text-error uppercase tracking-widest hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+                            Remove
+                        </button>
+</div>
+</div>
+<!-- Staff Card 3 -->
+<div class="group relative bg-surface-container-low p-6 rounded-xl transition-all duration-300 hover:bg-surface-container-lowest">
+<div class="aspect-[4/5] overflow-hidden rounded-xl mb-6 grayscale group-hover:grayscale-0 transition-all duration-500">
+<img alt="Staff member" class="w-full h-full object-cover" data-alt="vibrant portrait of a beauty consultant with warm smile and natural lighting in a contemporary wellness space" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdt24FkfGKH_WfLiRhl8KzFkyULUCMvxtlLI4AGUtIbzw2c027dzNU9CO0FGYR31Culhr2-jruZWgHdc9Xoxx8NMpKk1eZfitYjCASHIRgl5rRQ_mlKiARfG2t_NAIHz3gBU1690_sLQCc8DeMTBbh3n3743djNn9cRHh3cgUlggOLZudCG4gbCs72bnIVpkXT1K864-c2dOO2qiy2ZCI03BeP9t-58Ef3q1cpdIKCPsUZvNDOzrZ2u0nYyiVL3B61wohsoHbVIAIp"/>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h4 class="text-xl font-serif text-on-surface">Sienna Brooks</h4>
+<p class="text-xs font-label uppercase tracking-widest text-primary mt-1">Esthetician</p>
+</div>
+<span class="px-3 py-1 bg-surface-dim text-on-surface-variant text-[10px] font-bold rounded-full uppercase tracking-tighter">On Leave</span>
+</div>
+<div class="mt-6 flex justify-between items-center opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-xs font-label text-stone-500 uppercase tracking-widest hover:text-stone-900 flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="edit">edit</span>
+                            Edit Details
+                        </button>
+<button class="text-xs font-label text-error uppercase tracking-widest hover:underline flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="delete">delete</span>
+                            Remove
+                        </button>
+</div>
+</div>
+</section>
+<!-- Add Employee Form / Inline Section -->
+<section class="bg-surface-container-lowest rounded-xl p-12 border border-outline-variant/10 max-w-4xl mx-auto shadow-sm">
+<div class="text-center mb-10">
+<h3 class="text-2xl font-serif text-on-surface italic">Onboard New Talent</h3>
+<div class="w-12 h-[2px] bg-primary-container mx-auto mt-4"></div>
+</div>
+<form class="space-y-8">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-1">
+<label class="text-[10px] font-label uppercase tracking-widest text-stone-500 px-1">Full Professional Name</label>
+<input class="w-full bg-surface-container-low border-0 border-b-2 border-surface-container-highest focus:border-primary focus:ring-0 text-on-surface placeholder:text-stone-300 font-body transition-all py-3 px-1" placeholder="e.g. Elena Rossi" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-label uppercase tracking-widest text-stone-500 px-1">Specialization</label>
+<select class="w-full bg-surface-container-low border-0 border-b-2 border-surface-container-highest focus:border-primary focus:ring-0 text-on-surface font-body py-3 px-1">
+<option>Lash Technician</option>
+<option>Nail Artist</option>
+<option>Esthetician</option>
+<option>Salon Lead</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-label uppercase tracking-widest text-stone-500 px-1">Work Email</label>
+<input class="w-full bg-surface-container-low border-0 border-b-2 border-surface-container-highest focus:border-primary focus:ring-0 text-on-surface placeholder:text-stone-300 font-body py-3 px-1" placeholder="elena@lelegance.com" type="email"/>
+</div>
+<div class="space-y-1">
+<label class="text-[10px] font-label uppercase tracking-widest text-stone-500 px-1">Start Date</label>
+<input class="w-full bg-surface-container-low border-0 border-b-2 border-surface-container-highest focus:border-primary focus:ring-0 text-on-surface font-body py-3 px-1" type="date"/>
+</div>
+</div>
+<div class="pt-6 flex justify-end gap-6 items-center">
+<button class="text-xs font-label uppercase tracking-widest text-stone-500 hover:text-stone-900 transition-colors" type="button">Discard Draft</button>
+<button class="px-10 py-4 bg-primary text-on-primary rounded-md font-bold uppercase text-xs tracking-widest shadow-md hover:bg-primary-container hover:text-on-primary-container transition-all" type="submit">Complete Registration</button>
+</div>
+</form>
+</section>
+<!-- Analytics Subtle Tease -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-12">
+<div class="p-8 bg-[#f6f3f2] rounded-xl flex flex-col items-center text-center">
+<span class="text-4xl font-serif text-primary">12</span>
+<p class="text-[10px] font-label uppercase tracking-widest text-stone-500 mt-2">Active Specialists</p>
+</div>
+<div class="p-8 bg-[#f6f3f2] rounded-xl flex flex-col items-center text-center">
+<span class="text-4xl font-serif text-primary">94%</span>
+<p class="text-[10px] font-label uppercase tracking-widest text-stone-500 mt-2">Retention Rate</p>
+</div>
+<div class="p-8 bg-[#f6f3f2] rounded-xl flex flex-col items-center text-center">
+<span class="text-4xl font-serif text-primary">240+</span>
+<p class="text-[10px] font-label uppercase tracking-widest text-stone-500 mt-2">Weekly Bookings</p>
+</div>
+</section>
+</div>
+<!-- Footer Editorial -->
+<footer class="mt-20 py-12 px-8 border-t border-outline-variant/10 text-center">
+<p class="text-xs font-label text-stone-400 uppercase tracking-[0.2em]">L'Élégance Salon Management Portal • Est. 2024</p>
+</footer>
+</main>
+</body></html>

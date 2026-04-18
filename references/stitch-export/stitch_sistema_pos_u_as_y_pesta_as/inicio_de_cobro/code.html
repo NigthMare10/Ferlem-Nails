@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>L'Élégance Salon | Checkout</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#504e4c",
+                        "inverse-on-surface": "#f3f0f0",
+                        "tertiary-container": "#c4c0bd",
+                        "primary-fixed-dim": "#f0bd8b",
+                        "primary": "#7d562d",
+                        "error-container": "#ffdad6",
+                        "outline-variant": "#d4c2c3",
+                        "on-primary-container": "#6c471f",
+                        "secondary": "#7c5357",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed-variant": "#623c40",
+                        "surface-variant": "#e4e2e1",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "surface": "#fcf9f8",
+                        "secondary-fixed": "#ffdadc",
+                        "background": "#fcf9f8",
+                        "on-background": "#1b1c1c",
+                        "on-tertiary-fixed-variant": "#484644",
+                        "on-primary-fixed-variant": "#623f18",
+                        "primary-container": "#eab786",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-tint": "#7d562d",
+                        "primary-fixed": "#ffdcbd",
+                        "surface-container-low": "#f6f3f2",
+                        "surface-bright": "#fcf9f8",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#2c1600",
+                        "surface-container-high": "#eae7e7",
+                        "outline": "#827474",
+                        "inverse-surface": "#303030",
+                        "on-error": "#ffffff",
+                        "tertiary": "#605e5c",
+                        "on-tertiary-fixed": "#1c1b1a",
+                        "on-surface": "#1b1c1c",
+                        "secondary-container": "#fdc7cb",
+                        "on-secondary-fixed": "#301216",
+                        "surface-container-highest": "#e4e2e1",
+                        "surface-container": "#f0eded",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#eeb9bd",
+                        "on-secondary-container": "#795154",
+                        "tertiary-fixed-dim": "#cac6c3",
+                        "tertiary-fixed": "#e6e2df",
+                        "on-surface-variant": "#504444",
+                        "inverse-primary": "#f0bd8b",
+                        "surface-dim": "#dcd9d9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Noto Serif"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+        h1, h2, h3 {
+            font-family: 'Noto Serif', serif;
+        }
+        .editorial-gradient {
+            background: linear-gradient(135deg, #7d562d 0%, #eab786 100%);
+        }
+        .glass-overlay {
+            background: rgba(252, 249, 248, 0.7);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col overflow-hidden">
+<!-- TopAppBar -->
+<header class="bg-[#fcf9f8] dark:bg-stone-950 flex justify-between items-center w-full px-8 py-4 docked full-width top-0 z-50">
+<div class="text-2xl font-serif italic text-stone-900 dark:text-stone-100">
+            L'Élégance Salon
+        </div>
+<div class="flex items-center gap-6">
+<button class="hover:bg-[#f6f3f2] dark:hover:bg-stone-800 transition-colors p-2 rounded-full scale-95 duration-200 text-[#7d562d] dark:text-[#eab786]">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="hover:bg-[#f6f3f2] dark:hover:bg-stone-800 transition-colors p-2 rounded-full scale-95 duration-200 text-[#7d562d] dark:text-[#eab786]">
+<span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center relative px-6 md:px-12">
+<!-- Asymmetric Background Elements -->
+<div class="absolute top-1/4 -left-20 w-96 h-96 bg-primary-container opacity-10 rounded-full blur-3xl -z-10"></div>
+<div class="absolute bottom-1/4 -right-20 w-80 h-80 bg-secondary-container opacity-10 rounded-full blur-3xl -z-10"></div>
+<div class="max-w-7xl w-full">
+<!-- Header Text -->
+<div class="mb-16 text-center">
+<p class="font-label uppercase tracking-widest text-secondary text-sm mb-2">Bienvenue</p>
+<h1 class="text-5xl md:text-6xl font-headline italic text-on-surface leading-tight">Sélectionnez le Service</h1>
+</div>
+<!-- Central Buttons: The Core Interaction -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12 h-[500px]">
+<!-- Uñas Option -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-container-low shadow-sm transition-all duration-500 hover:-translate-y-2 cursor-pointer flex items-center justify-center">
+<img alt="Elegant manicured nails" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 grayscale-[20%] group-hover:grayscale-0" data-alt="Close-up of minimalist elegant beige manicured nails on a soft silk background with warm studio lighting and neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1oZLylfQc9Tw5BSG9FH-uybVESbsBrUcYyOZM13QnLECSVlwzcdScKtHKMCblvKuJ3vZa3zLQbyhTWqlj6xM9PUg5oorrpKrOOMS6F7j81F_K5i-7XkSoixf2_93tmED99n2PcaZzKtfYiD_ACHHQ3Ye4D9TX53pu7Eut_fNQaExU0BWglBwLT_dlaRLxC7mGIZM6NATHCSjHAwYq8InfYXUULskR2dmZDvB4MqWMaNvqD6WVAErMUYWhO7RElKaBespQ8efYWwMa"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60"></div>
+<div class="relative z-10 flex flex-col items-center text-center p-8">
+<span class="material-symbols-outlined text-primary text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-300" data-icon="brush">brush</span>
+<h2 class="text-4xl font-headline text-on-surface">Uñas</h2>
+<div class="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<span class="font-label text-xs tracking-widest uppercase border-b border-primary pb-1 text-primary">Commencer le Paiement</span>
+</div>
+</div>
+</div>
+<!-- Pestañas Option -->
+<div class="group relative overflow-hidden rounded-xl bg-surface-container-low shadow-sm transition-all duration-500 hover:-translate-y-2 cursor-pointer flex items-center justify-center">
+<img alt="Beautiful eyelash extensions" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-40 grayscale-[20%] group-hover:grayscale-0" data-alt="Detailed close-up of thick long eyelashes with a soft warm focus on the eye area and luxury aesthetic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWMNzSAjSHFa9i0tMCLz2ZRz_oO8Uh4AGBFZSFByjdr3aJjGNolSssb8eAx0MJhfp0WltSpDe7pANbNFWj9dMBiraFAHxMntEDMrA_vCP4pqPSwr5No5_2zdgjYBNcnWAIytov813T-FjD53D-X8DDO6DFVd4YCH9fOJ4hGL4YmrhS-2mZ5jBt_QeCmomH0So24mdxlJdmvxyD3vLHmcZQDCJfp0y_nfd43Dr6ObSD6nXak3kukNykRag0GIBApS5oxakoO7rWiory"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60"></div>
+<div class="relative z-10 flex flex-col items-center text-center p-8">
+<span class="material-symbols-outlined text-primary text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-300" data-icon="visibility">visibility</span>
+<h2 class="text-4xl font-headline text-on-surface">Pestañas</h2>
+<div class="mt-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+<span class="font-label text-xs tracking-widest uppercase border-b border-primary pb-1 text-primary">Commencer le Paiement</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Quick Access Footer (Settings) -->
+<footer class="w-full px-8 py-6 flex justify-between items-center bg-surface-container-low">
+<div class="flex items-center gap-2 text-stone-500">
+<span class="text-xs font-label uppercase tracking-tighter">Terminal ID: 0042-LX</span>
+</div>
+<div class="flex gap-8">
+<a class="flex items-center gap-2 text-stone-500 hover:text-primary transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="settings">settings</span>
+<span class="font-label text-xs uppercase tracking-widest">Settings</span>
+</a>
+<a class="flex items-center gap-2 text-stone-500 hover:text-primary transition-colors duration-200" href="#">
+<span class="material-symbols-outlined text-sm" data-icon="logout">logout</span>
+<span class="font-label text-xs uppercase tracking-widest">Logout</span>
+</a>
+</div>
+</footer>
+<!-- FAB for general actions (Suppress if logic dictates, but keeping subtle help here) -->
+<div class="fixed bottom-12 right-12 z-40">
+<button class="editorial-gradient text-on-primary w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+</div>
+</body></html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&amp;family=Manrope:wght@300;400;600;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-container": "#504e4c",
+                    "inverse-on-surface": "#f3f0f0",
+                    "tertiary-container": "#c4c0bd",
+                    "primary-fixed-dim": "#f0bd8b",
+                    "primary": "#7d562d",
+                    "error-container": "#ffdad6",
+                    "outline-variant": "#d4c2c3",
+                    "on-primary-container": "#6c471f",
+                    "secondary": "#7c5357",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed-variant": "#623c40",
+                    "surface-variant": "#e4e2e1",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "surface": "#fcf9f8",
+                    "secondary-fixed": "#ffdadc",
+                    "background": "#fcf9f8",
+                    "on-background": "#1b1c1c",
+                    "on-tertiary-fixed-variant": "#484644",
+                    "on-primary-fixed-variant": "#623f18",
+                    "primary-container": "#eab786",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-tint": "#7d562d",
+                    "primary-fixed": "#ffdcbd",
+                    "surface-container-low": "#f6f3f2",
+                    "surface-bright": "#fcf9f8",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed": "#2c1600",
+                    "surface-container-high": "#eae7e7",
+                    "outline": "#827474",
+                    "inverse-surface": "#303030",
+                    "on-error": "#ffffff",
+                    "tertiary": "#605e5c",
+                    "on-tertiary-fixed": "#1c1b1a",
+                    "on-surface": "#1b1c1c",
+                    "secondary-container": "#fdc7cb",
+                    "on-secondary-fixed": "#301216",
+                    "surface-container-highest": "#e4e2e1",
+                    "surface-container": "#f0eded",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed-dim": "#eeb9bd",
+                    "on-secondary-container": "#795154",
+                    "tertiary-fixed-dim": "#cac6c3",
+                    "tertiary-fixed": "#e6e2df",
+                    "on-surface-variant": "#504444",
+                    "inverse-primary": "#f0bd8b",
+                    "surface-dim": "#dcd9d9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Noto Serif"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body { font-family: 'Manrope', sans-serif; }
+      .font-serif { font-family: 'Noto Serif', serif; }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopAppBar -->
+<header class="bg-[#fcf9f8] dark:bg-stone-950 flex justify-between items-center w-full px-8 py-4 fixed top-0 z-50">
+<div class="text-2xl font-serif italic text-stone-900 dark:text-stone-100">L'Élégance Salon</div>
+<div class="flex items-center space-x-6">
+<button class="text-stone-500 dark:text-stone-400 hover:bg-[#f6f3f2] dark:hover:bg-stone-800 transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center space-x-2">
+<span class="material-symbols-outlined text-[#7d562d] dark:text-[#eab786]">account_circle</span>
+<span class="text-sm font-semibold text-stone-700">Admin</span>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="bg-[#f6f3f2] dark:bg-stone-900 h-screen w-64 fixed left-0 top-0 flex flex-col py-8 px-6 hidden md:flex">
+<div class="mb-12 mt-12">
+<h2 class="font-serif text-xl text-stone-800 dark:text-stone-200">L'Élégance</h2>
+<p class="text-xs font-label uppercase tracking-widest text-stone-500 mt-1">Professional Wellness</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center space-x-3 px-4 py-3 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">point_of_sale</span>
+<span class="text-xs font-label uppercase tracking-widest">Checkout</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">badge</span>
+<span class="text-xs font-label uppercase tracking-widest">Employee Management</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-[#7d562d] dark:text-[#eab786] font-bold border-r-2 border-[#7d562d] bg-surface-container-lowest transition-all duration-300" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="text-xs font-label uppercase tracking-widest">Price Settings</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-all duration-300" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span class="text-xs font-label uppercase tracking-widest">Analytics</span>
+</a>
+</nav>
+<div class="mt-auto space-y-2 border-t border-outline-variant/20 pt-6">
+<a class="flex items-center space-x-3 px-4 py-3 text-stone-500 dark:text-stone-400 hover:text-stone-900 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-xs font-label uppercase tracking-widest">Settings</span>
+</a>
+<a class="flex items-center space-x-3 px-4 py-3 text-stone-500 dark:text-stone-400 hover:text-stone-900 transition-all" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="text-xs font-label uppercase tracking-widest">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="md:ml-64 pt-24 min-h-screen px-8 pb-16">
+<!-- Editorial Header Section -->
+<div class="max-w-6xl mx-auto mb-16">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-end">
+<div>
+<span class="text-xs font-label uppercase tracking-[0.2em] text-primary mb-4 block">Administration Portal</span>
+<h1 class="text-5xl font-serif font-light text-on-background leading-tight">Price Catalog <br/>&amp; Service Suites</h1>
+</div>
+<div class="text-right">
+<button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-4 rounded-md font-semibold text-sm tracking-wide transition-transform active:scale-95 duration-200">
+                        ADD NEW SERVICE
+                    </button>
+</div>
+</div>
+</div>
+<!-- Pricing Management Area -->
+<div class="max-w-6xl mx-auto">
+<div class="bg-surface-container-low rounded-xl p-1">
+<!-- Header row with tonal shift instead of border -->
+<div class="grid grid-cols-12 gap-4 px-8 py-6 bg-surface-container-low rounded-t-xl">
+<div class="col-span-6">
+<span class="text-xs font-label uppercase tracking-widest text-stone-500">Service Description</span>
+</div>
+<div class="col-span-2 text-center">
+<span class="text-xs font-label uppercase tracking-widest text-stone-500">Duration</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-xs font-label uppercase tracking-widest text-stone-500">Current Price</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-xs font-label uppercase tracking-widest text-stone-500">Actions</span>
+</div>
+</div>
+<!-- Service List Items -->
+<div class="space-y-4 p-4">
+<!-- Item 1 -->
+<div class="group bg-surface-container-lowest rounded-xl p-6 transition-all duration-300 hover:translate-x-1">
+<div class="grid grid-cols-12 gap-4 items-center">
+<div class="col-span-6 flex items-center gap-6">
+<div class="w-20 h-20 bg-surface-container-highest rounded-xl overflow-hidden shrink-0">
+<img alt="Manicura Rusa service" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Close-up of elegant manicured hands with neutral polish resting on white marble, soft lighting, professional salon photography" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBcEk5JlBHb3oian9vEZb_uPtw-ZApttCrqZVMRhGAoy0I_xxCBGZWKH_CExCL4SOyx_OiR9cYdOoWHYxYtpr_RpBDvTJVg4ZLKhxQR193aVdskHhF6CpZReVjHGJ7SXzhy75fbKxcel86rLRDsbJBo0ddThDp2szsj9M6TCnOlOlyDje93HsVqbi2kNmbIj_HSZPhRE0s7gOwO9yDTvps6V_FOyddYiVFdiV_zLehd-YRqKSvcO6XvoaDGhFLFvGImKFBsCfCwdPT"/>
+</div>
+<div>
+<h3 class="font-serif text-xl text-on-background">Manicura Rusa</h3>
+<p class="text-sm text-stone-500 mt-1">Detailed cuticle work with premium finishes.</p>
+</div>
+</div>
+<div class="col-span-2 text-center">
+<span class="text-stone-700 font-medium">90 min</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-2xl font-serif text-primary">$45.00</span>
+</div>
+<div class="col-span-2 text-right">
+<button class="text-primary text-xs font-label uppercase tracking-widest font-bold hover:bg-primary-container/10 px-4 py-2 rounded-md transition-colors">
+                                    Edit
+                                </button>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="group bg-surface-container-lowest rounded-xl p-6 transition-all duration-300 hover:translate-x-1">
+<div class="grid grid-cols-12 gap-4 items-center">
+<div class="col-span-6 flex items-center gap-6">
+<div class="w-20 h-20 bg-surface-container-highest rounded-xl overflow-hidden shrink-0">
+<img alt="Extensiones de Pestañas" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Macro photo of long eyelashes with soft golden eye makeup, ethereal lighting, shallow depth of field, beauty editorial style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2MHIeL-Zjgz0befkK0VNE3ENXkhJ8VIhJjZtqmqeknVAq9WastoJ5znEElVtNHHJ8nwles5b3u8FAyIFKV-Giu_nzCZLpqjUbAplNP068-BmPEcB_HY7KaO6nO6DZp20yDrqPXHiDzRaMKWW8R383X4dB1g7h7iz8ULXzvZvN6ISxEXoi-ixaXbVWDen_SA4rZq3re_IVDYM8wocZPNfhuF3BmQ51XiUyL5NK1wTD4kcG6MKgZIB5GBp8iUUuOi4LQS-TqHNug3qC"/>
+</div>
+<div>
+<h3 class="font-serif text-xl text-on-background">Extensiones de Pestañas 1x1</h3>
+<p class="text-sm text-stone-500 mt-1">Individual lash application for a natural lift.</p>
+</div>
+</div>
+<div class="col-span-2 text-center">
+<span class="text-stone-700 font-medium">120 min</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-2xl font-serif text-primary">$85.00</span>
+</div>
+<div class="col-span-2 text-right">
+<button class="text-primary text-xs font-label uppercase tracking-widest font-bold hover:bg-primary-container/10 px-4 py-2 rounded-md transition-colors">
+                                    Edit
+                                </button>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="group bg-surface-container-lowest rounded-xl p-6 transition-all duration-300 hover:translate-x-1">
+<div class="grid grid-cols-12 gap-4 items-center">
+<div class="col-span-6 flex items-center gap-6">
+<div class="w-20 h-20 bg-surface-container-highest rounded-xl overflow-hidden shrink-0">
+<img alt="Mantenimiento service" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="Interior of a luxury spa treatment room with soft linen, a single candle, and a ceramic bowl, warm neutral tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEigsJ6As72uFhFqNVFQ26uiciAaUXElaDtUchSM_nH2hNbxUw2eVDAflyDt1aqNSS_BjK2L44IMPu354Cg2sMIWYVOQuwyAT7tC8en9u3vrZZ3Tw0bTjqAE16TeXBuHKfoG2n50XzdWtDwcb9pZs5Hb9E9gej379XJlbJrbnkjXNDk9PLkregOiNx0dGR7dPQco7CTAR81zQAYY1H_6n63DNTu0Whs_xdjBLzCRp3OQ8JWEv6JPGm_kSNTi_Qujnm_2XrhMTL3JPF"/>
+</div>
+<div>
+<h3 class="font-serif text-xl text-on-background">Mantenimiento</h3>
+<p class="text-sm text-stone-500 mt-1">Bi-weekly touch-up for all lash and nail services.</p>
+</div>
+</div>
+<div class="col-span-2 text-center">
+<span class="text-stone-700 font-medium">45 min</span>
+</div>
+<div class="col-span-2 text-right">
+<span class="text-2xl font-serif text-primary">$30.00</span>
+</div>
+<div class="col-span-2 text-right">
+<button class="text-primary text-xs font-label uppercase tracking-widest font-bold hover:bg-primary-container/10 px-4 py-2 rounded-md transition-colors">
+                                    Edit
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Secondary Utility Section - Stats & Visual Break -->
+<div class="max-w-6xl mx-auto mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-surface-container-high/50 p-8 rounded-xl border-l-4 border-primary">
+<span class="text-xs font-label uppercase tracking-widest text-stone-500 block mb-2">Total Managed Services</span>
+<div class="text-4xl font-serif text-on-background">24</div>
+</div>
+<div class="bg-surface-container-high/50 p-8 rounded-xl">
+<span class="text-xs font-label uppercase tracking-widest text-stone-500 block mb-2">Avg. Ticket Price</span>
+<div class="text-4xl font-serif text-on-background">$52.40</div>
+</div>
+<div class="relative overflow-hidden rounded-xl h-full min-h-[120px]">
+<img alt="Salon atmosphere" class="absolute inset-0 w-full h-full object-cover brightness-50" data-alt="Soft-focus view of a luxury salon interior with warm lighting, golden accents, and minimalist design, tranquil and professional mood" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_q5RE7f4-fg8aH8S30uI1KBL1WPVG5oDmMsBrCwKUuuEFxGx4ETM7RAtWsIZyPl0PkA4nL8WWLJeVc5zVXtLD8qGP7c3MLeu7BAHeo3DNZ2mI_KiQTwkChJvW_DJFkoZQ2og5KzU7_2a0FAzcaQw60nL7W7YP0RdAiWsErvwc3mpOXJmgVjohbOW4eyTcXlneUW5b3mfXS9I46gyhSdnt1lLvGRf0pH0oUUXiCUjjH-QSvnHsZ_2QxeZw8SsaGckn_027jJ-3O2kj"/>
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="text-white text-xs font-label uppercase tracking-widest font-bold">L'Élégance Experience</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile Navigation Suppressed per Task Rules for Focused Journey -->
+</body></html>
