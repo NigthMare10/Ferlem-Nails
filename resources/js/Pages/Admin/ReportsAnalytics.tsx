@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 import AdminSettingsMenu from '@/Components/admin/AdminSettingsMenu';
-import { buildAdminPrimaryNav } from '@/lib/adminNavigation';
+import { adminRouteMap, buildAdminPrimaryNav } from '@/lib/adminNavigation';
 
 type Dataset = {
     summary: {
@@ -84,6 +84,13 @@ export default function ReportsAnalytics({ title, calendarOptions, datasets }: P
                                 <span className="font-label text-xs uppercase tracking-widest">{item.label}</span>
                             </Link>
                         ))}
+                        <Link
+                            href={adminRouteMap.invoices}
+                            className="group flex items-center gap-3 text-stone-500 transition-all duration-300 ease-in-out hover:text-stone-900"
+                        >
+                            <span className="material-symbols-outlined text-xl">receipt_long</span>
+                            <span className="font-label text-xs uppercase tracking-widest">Historial de Facturas</span>
+                        </Link>
                     </div>
 
                     <div className="pt-8">

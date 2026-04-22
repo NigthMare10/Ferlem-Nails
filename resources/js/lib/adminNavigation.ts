@@ -8,6 +8,7 @@ export type AdminNavItem = {
 export const adminRouteMap = {
     checkout: '/inicio-de-cobro',
     reports: '/reportes-de-ventas-analytics',
+    invoices: '/historial-de-facturas',
     employees: '/gestion-de-empleados-admin',
     pricing: '/ajuste-de-precios-admin',
     settings: '/configuracion-admin',

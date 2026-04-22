@@ -29,6 +29,7 @@ Route::middleware(['auth', 'active.branch'])->group(function (): void {
         Route::redirect('/dashboard', '/reportes-de-ventas-analytics')->name('dashboard');
         Route::get('/reportes-de-ventas-analytics', [AdminConsoleController::class, 'reportes'])->name('reportes.index');
         Route::get('/historial-de-facturas', [StitchScreenController::class, 'historialFacturas'])->name('facturas.index');
+        Route::get('/historial-de-facturas/exportar-csv', [StitchScreenController::class, 'exportHistorialFacturasCsv'])->name('facturas.export');
         Route::get('/detalle-de-factura-premium/{factura?}', [StitchScreenController::class, 'detalleFacturaPremium'])->name('facturas.premium');
         Route::get('/cierre-de-caja-diario', [StitchScreenController::class, 'cierreCaja'])->name('caja.index');
         Route::get('/lista-de-empleados', [StitchScreenController::class, 'listaEmpleados'])->name('empleados.index');

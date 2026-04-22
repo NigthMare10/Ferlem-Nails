@@ -14,6 +14,7 @@ const referenceHtml = readFileSync(
     resolve(currentDir, '../references/stitch-export/stitch_sistema_pos_u_as_y_pesta_as/detalle_de_factura_digital/code.html'),
     'utf8',
 );
+const frameSource = readFileSync(resolve(currentDir, '../resources/js/Pages/Stitch/Frame.tsx'), 'utf8');
 
 const userHtml = transformDetalleFacturaDigitalHtml(referenceHtml, { isAdmin: false });
 const adminHtml = transformDetalleFacturaDigitalHtml(referenceHtml, { isAdmin: true });
@@ -23,7 +24,8 @@ const adminActionScript = getDetalleFacturaDigitalActionScript({ isAdmin: true }
 test('detalle factura digital renderiza imprimir con handler real', () => {
     assert.match(userHtml, /data-stitch-print="true"/);
     assert.match(userHtml, />\s*Imprimir\s*</);
-    assert.match(userActionScript, /printTarget\.print\(\)/);
+    assert.match(userActionScript, /ferlem:print-detail/);
+    assert.match(frameSource, /iframeWindow\.print\(\)/);
 });
 
 test('detalle factura digital resuelve volver segun contexto', () => {

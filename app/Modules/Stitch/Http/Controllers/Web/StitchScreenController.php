@@ -5,8 +5,10 @@ namespace App\Modules\Stitch\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Modules\Facturacion\Models\Factura;
 use App\Modules\Shared\Support\Money;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StitchScreenController extends Controller
 {
@@ -133,9 +135,47 @@ class StitchScreenController extends Controller
         ]);
     }
 
-    public function historialFacturas(): Response
+    public function historialFacturas(Request $request): Response
     {
-        return $this->renderScreen('historial_de_facturas', 'Historial de Facturas');
+        return $this->renderScreen(
+            'historial_de_facturas',
+            'Historial de Facturas',
+            null,
+            $this->serializeInvoiceHistory($request),
+        );
+    }
+
+    public function exportHistorialFacturasCsv(Request $request): StreamedResponse
+    {
+        $invoices = $this->historyInvoicesQuery($request)->get();
+
+        return response()->streamDownload(function () use ($invoices): void {
+            $handle = fopen('php://output', 'w');
+
+            if ($handle === false) {
+                return;
+            }
+
+            fputcsv($handle, ['Folio', 'Referencia', 'Fecha', 'Hora', 'Atendido por', 'Estado', 'Monto total']);
+
+            foreach ($invoices as $invoice) {
+                $serialized = $this->serializeHistoryInvoice($invoice);
+
+                fputcsv($handle, [
+                    $serialized['number'],
+                    $serialized['reference'],
+                    $serialized['issued_date'],
+                    $serialized['issued_time'],
+                    $serialized['operator_name'],
+                    $serialized['status_label'],
+                    $serialized['total_formatted'],
+                ]);
+            }
+
+            fclose($handle);
+        }, 'historial-facturas.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function detalleFacturaDigital(?Factura $factura = null): Response
@@ -221,7 +261,7 @@ class StitchScreenController extends Controller
         return $this->renderScreen('ajuste_de_precios_admin', 'Ajuste de Precios Admin');
     }
 
-    protected function renderScreen(string $folder, string $title, ?Factura $factura = null): Response
+    protected function renderScreen(string $folder, string $title, ?Factura $factura = null, ?array $invoiceHistory = null): Response
     {
         $html = file_get_contents($this->basePath.'\\'.$folder.'\\code.html');
 
@@ -244,6 +284,7 @@ class StitchScreenController extends Controller
             'title' => $title,
             'html' => $html,
             'invoice' => $invoicePayload,
+            'invoiceHistory' => $invoiceHistory,
         ]);
     }
 
@@ -309,5 +350,86 @@ class StitchScreenController extends Controller
         $html = str_replace('Moneda: HNL', 'Moneda: '.$invoice['currency_code'], $html);
 
         return $html;
+    }
+
+    protected function serializeInvoiceHistory(Request $request): array
+    {
+        $invoices = $this->historyInvoicesQuery($request)->get();
+        $serializedInvoices = $invoices->map(fn (Factura $invoice) => $this->serializeHistoryInvoice($invoice))->values();
+        $totalInvoices = $serializedInvoices->count();
+        $totalAmount = (int) $invoices->sum('total_amount');
+        $servicesCount = (int) $invoices->flatMap(fn (Factura $invoice) => $invoice->detalles)->sum('quantity');
+        $averageAmount = $totalInvoices > 0 ? (int) round($totalAmount / $totalInvoices) : 0;
+        $latestInvoice = $serializedInvoices->first();
+        $oldestInvoice = $serializedInvoices->last();
+
+        $rangeLabel = 'Sin registros';
+
+        if ($latestInvoice && $oldestInvoice) {
+            $rangeLabel = $oldestInvoice['issued_date_short'].' - '.$latestInvoice['issued_date_short'];
+        }
+
+        return [
+            'summary' => [
+                'total_invoices_label' => number_format($totalInvoices, 0, '.', ','),
+                'total_invoices_count' => $totalInvoices,
+                'total_revenue_label' => Money::format($totalAmount),
+                'average_ticket_label' => Money::format($averageAmount),
+                'services_count_label' => number_format($servicesCount, 0, '.', ','),
+                'range_label' => $rangeLabel,
+            ],
+            'employees' => $serializedInvoices
+                ->pluck('operator_name')
+                ->filter()
+                ->unique()
+                ->sort()
+                ->values()
+                ->all(),
+            'invoices' => $serializedInvoices->all(),
+            'routes' => [
+                'overview' => route('reportes.index', absolute: false),
+                'history' => route('facturas.index', absolute: false),
+                'export' => route('facturas.export', absolute: false),
+                'latest_invoice' => $latestInvoice['detail_url'] ?? null,
+            ],
+        ];
+    }
+
+    protected function historyInvoicesQuery(Request $request)
+    {
+        $branchId = (int) $request->session()->get('active_branch_id');
+
+        return Factura::query()
+            ->with(['detalles', 'usuario.empleado', 'sucursal'])
+            ->when($branchId > 0, fn ($query) => $query->where('sucursal_id', $branchId))
+            ->latest('issued_at');
+    }
+
+    protected function serializeHistoryInvoice(Factura $invoice): array
+    {
+        $invoice->loadMissing(['detalles', 'usuario.empleado', 'sucursal']);
+
+        $issuedTimezone = $invoice->sucursal?->timezone ?: config('app.timezone', 'America/Tegucigalpa');
+        $issuedAt = $invoice->issued_at?->copy()->timezone($issuedTimezone);
+        $statusLabel = in_array($invoice->status, ['emitida', 'facturada', 'pagada'], true) ? 'Pagada' : ucfirst((string) $invoice->status);
+        $reference = 'REF-'.strtoupper(substr($invoice->public_id, -8));
+        $operatorName = $invoice->usuario?->empleado?->name ?? $invoice->usuario?->name ?? 'FERLEM NAILS';
+        $totalFormatted = Money::format((int) $invoice->total_amount);
+
+        return [
+            'public_id' => $invoice->public_id,
+            'number' => $invoice->number,
+            'reference' => $reference,
+            'issued_date' => $issuedAt?->translatedFormat('d M Y') ?? 'Sin fecha',
+            'issued_date_short' => $issuedAt?->translatedFormat('d M Y') ?? 'Sin fecha',
+            'issued_time' => $issuedAt?->format('h:i a') ?? '--:--',
+            'issued_timezone' => $issuedTimezone,
+            'operator_name' => $operatorName,
+            'status_label' => $statusLabel,
+            'status_key' => 'pagada',
+            'total_formatted' => $totalFormatted,
+            'total_raw' => number_format(((int) $invoice->total_amount) / 100, 2, '.', ''),
+            'detail_url' => route('facturas.show', $invoice, absolute: false),
+        ];
     }
 }
