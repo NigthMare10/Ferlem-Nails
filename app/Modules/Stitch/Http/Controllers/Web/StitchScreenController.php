@@ -249,13 +249,17 @@ class StitchScreenController extends Controller
 
     protected function serializeInvoice(Factura $factura): array
     {
-        $factura->loadMissing(['detalles', 'usuario.empleado']);
+        $factura->loadMissing(['detalles', 'usuario.empleado', 'sucursal']);
+
+        $issuedTimezone = $factura->sucursal?->timezone ?: config('app.timezone', 'America/Tegucigalpa');
+        $issuedAt = $factura->issued_at?->copy()->timezone($issuedTimezone);
 
         return [
             'public_id' => $factura->public_id,
             'number' => $factura->number,
-            'issued_date' => $factura->issued_at?->translatedFormat('d \d\e F, Y'),
-            'issued_time' => $factura->issued_at?->format('h:i a'),
+            'issued_date' => $issuedAt?->translatedFormat('d \d\e F, Y'),
+            'issued_time' => $issuedAt?->format('h:i a'),
+            'issued_timezone' => $issuedTimezone,
             'operator_name' => $factura->usuario?->empleado?->name ?? $factura->usuario?->name ?? 'FERLEM NAILS',
             'subtotal_formatted' => Money::format((int) $factura->subtotal_amount),
             'tax_formatted' => Money::format((int) $factura->tax_amount),
