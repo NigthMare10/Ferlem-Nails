@@ -21,7 +21,7 @@ export default function EmployeeHistory({ title, employee }: { title: string; em
                 <div>
                     <span className="mb-3 block text-xs uppercase tracking-[0.2em] text-primary">Historial Operativo</span>
                     <h1 className="text-5xl font-serif leading-tight text-on-background">Historial Completo de {employee.name}</h1>
-                    <p className="mt-3 max-w-2xl text-sm text-stone-500">Registro extendido de servicios, cobros y método de pago del perfil seleccionado.</p>
+                    <p className="mt-3 max-w-2xl text-sm text-stone-500">Registro extendido de servicios y cobros reales del perfil seleccionado.</p>
                 </div>
             </section>
 
@@ -39,7 +39,7 @@ export default function EmployeeHistory({ title, employee }: { title: string; em
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-outline-variant/5">
-                        {employee.history.map((entry) => (
+                        {employee.history.length ? employee.history.map((entry) => (
                             <tr key={entry.folio} className="transition-colors hover:bg-surface-container-low">
                                 <td className="px-6 py-5 text-sm font-semibold text-on-background">{entry.folio}</td>
                                 <td className="px-6 py-5 text-sm">{entry.date}</td>
@@ -49,7 +49,7 @@ export default function EmployeeHistory({ title, employee }: { title: string; em
                                 <td className="px-6 py-5"><span className="inline-flex items-center rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold text-on-secondary-container">{entry.status}</span></td>
                                 <td className="px-6 py-5 text-right text-lg font-serif">{entry.revenue}</td>
                             </tr>
-                        ))}
+                        )) : <tr><td colSpan={7} className="px-6 py-8 text-center text-sm text-stone-500">Sin facturas reales para este empleado.</td></tr>}
                     </tbody>
                 </table>
             </section>

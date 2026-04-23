@@ -9,7 +9,7 @@ type Employee = {
     image: string;
     level: string;
     since: string;
-    ratingLabel: string;
+    supportingLabel: string;
     overviewUrl: string;
     performanceUrl: string;
     earningsUrl: string;
@@ -21,9 +21,11 @@ type Employee = {
         totalRevenue: string;
         revenueDelta: string;
         serviceTime: string;
-        rating: string;
-        appointments: string;
-        appointmentsNote: string;
+        averageTicket: string;
+        invoiceCount: string;
+        invoiceCountNote: string;
+        servicesCount: string;
+        servicesCountNote: string;
     };
     chart: Array<{ label: string; value: string; height: number }>;
     specialties: Array<{ service: string; share: number }>;
@@ -53,14 +55,7 @@ export default function EmployeePerformance({ title, employee }: { title: string
                 <div className="flex flex-col items-end gap-2 text-right">
                     <span className="text-xs uppercase tracking-widest text-outline">En el equipo desde</span>
                     <span className="text-lg font-serif">{employee.since}</span>
-                    <div className="mt-2 flex items-center gap-1 text-secondary">
-                        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star_half</span>
-                        <span className="ml-1 text-sm font-bold">{employee.ratingLabel}</span>
-                    </div>
+                    <div className="mt-2 text-sm font-semibold text-secondary">{employee.supportingLabel}</div>
                 </div>
             </section>
 
@@ -74,12 +69,12 @@ export default function EmployeePerformance({ title, employee }: { title: string
                     <div className="flex items-baseline gap-2"><span className="text-3xl font-serif text-on-surface">{employee.metrics.serviceTime}</span><span className="text-xs font-bold text-stone-400">prom.</span></div>
                 </div>
                 <div className="flex h-32 flex-col justify-between rounded-xl border border-outline-variant/10 bg-surface-container-lowest p-6 shadow-sm">
-                    <span className="text-xs font-bold uppercase tracking-widest text-outline">Calificación</span>
-                    <div className="flex items-baseline gap-2"><span className="text-3xl font-serif text-on-surface">{employee.metrics.rating}</span><span className="material-symbols-outlined text-lg text-secondary" style={{ fontVariationSettings: "'FILL' 1" }}>auto_awesome</span></div>
+                    <span className="text-xs font-bold uppercase tracking-widest text-outline">Ticket Promedio</span>
+                    <div className="flex items-baseline gap-2"><span className="text-3xl font-serif text-on-surface">{employee.metrics.averageTicket}</span></div>
                 </div>
                 <div className="flex h-32 flex-col justify-between rounded-xl border border-outline-variant/10 bg-surface-container-lowest p-6 shadow-sm">
-                    <span className="text-xs font-bold uppercase tracking-widest text-outline">Citas</span>
-                    <div className="flex items-baseline gap-2"><span className="text-3xl font-serif text-on-surface">{employee.metrics.appointments}</span><span className="text-xs font-medium text-on-surface-variant">{employee.metrics.appointmentsNote}</span></div>
+                    <span className="text-xs font-bold uppercase tracking-widest text-outline">Facturas Atendidas</span>
+                    <div className="flex items-baseline gap-2"><span className="text-3xl font-serif text-on-surface">{employee.metrics.invoiceCount}</span><span className="text-xs font-medium text-on-surface-variant">{employee.metrics.invoiceCountNote}</span></div>
                 </div>
             </section>
 
@@ -111,12 +106,12 @@ export default function EmployeePerformance({ title, employee }: { title: string
                 <div className="flex flex-col rounded-xl border border-outline-variant/10 bg-surface-container-low p-8">
                     <h3 className="mb-6 text-2xl font-serif text-on-surface">Especialidades Principales</h3>
                     <div className="flex-1 space-y-6">
-                        {employee.specialties.map((specialty, index) => (
+                        {employee.specialties.length ? employee.specialties.map((specialty, index) => (
                             <div key={specialty.service} className="space-y-2">
                                 <div className="flex justify-between text-sm"><span className="font-bold text-on-surface">{specialty.service}</span><span className="text-outline">{specialty.share}%</span></div>
                                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-highest"><div className={`h-full ${index === 0 ? 'bg-primary' : index === 1 ? 'bg-primary-container' : 'bg-secondary-container'}`} style={{ width: `${specialty.share}%` }}></div></div>
                             </div>
-                        ))}
+                        )) : <p className="text-sm text-outline">Sin servicios facturados para este empleado.</p>}
                     </div>
                     <div className="mt-8 border-t border-outline-variant/20 pt-6"><p className="text-xs italic leading-relaxed text-outline">{employee.insight}</p></div>
                 </div>
@@ -125,8 +120,8 @@ export default function EmployeePerformance({ title, employee }: { title: string
             <section className="mt-8 space-y-6">
                 <div className="flex items-end justify-between">
                     <div>
-                        <h3 className="text-3xl font-serif leading-none text-on-surface">Citas Recientes</h3>
-                        <p className="mt-2 text-sm text-outline">Últimos servicios realizados por {employee.name}</p>
+                        <h3 className="text-3xl font-serif leading-none text-on-surface">Historial Reciente</h3>
+                        <p className="mt-2 text-sm text-outline">Últimos servicios facturados por {employee.name}</p>
                     </div>
                     <Link href={employee.historyUrl} className="text-sm font-bold tracking-tighter text-secondary underline underline-offset-4">Ver Historial Completo</Link>
                 </div>
@@ -143,7 +138,7 @@ export default function EmployeePerformance({ title, employee }: { title: string
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-outline-variant/5">
-                            {employee.appointments.map((appointment) => (
+                            {employee.appointments.length ? employee.appointments.map((appointment) => (
                                 <tr key={`${appointment.date}-${appointment.client}`} className="transition-colors hover:bg-surface-container-low">
                                     <td className="px-6 py-5 text-sm font-medium">{appointment.date}</td>
                                     <td className="px-6 py-5 text-lg font-serif">{appointment.service}</td>
@@ -151,7 +146,7 @@ export default function EmployeePerformance({ title, employee }: { title: string
                                     <td className="px-6 py-5"><span className="inline-flex items-center rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold text-on-secondary-container">{appointment.status}</span></td>
                                     <td className="px-6 py-5 text-right text-lg font-serif">{appointment.revenue}</td>
                                 </tr>
-                            ))}
+                            )) : <tr><td colSpan={5} className="px-6 py-8 text-center text-sm text-outline">Sin facturas reales para este empleado.</td></tr>}
                         </tbody>
                     </table>
                 </div>

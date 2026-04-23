@@ -11,6 +11,7 @@ use App\Modules\Catalogo\Models\Servicio;
 use App\Modules\Catalogo\Services\CatalogoService;
 use App\Modules\Empleados\Models\Empleado;
 use App\Modules\Shared\Support\Money;
+use App\Modules\Stitch\Services\AdminMetricsService;
 use App\Modules\Sucursales\Models\ConfiguracionSucursal;
 use App\Modules\Sucursales\Models\Sucursal;
 use App\Modules\Sucursales\Support\SucursalContext;
@@ -42,123 +43,31 @@ class AdminConsoleController extends Controller
     public function __construct(
         protected SucursalContext $branchContext,
         protected CatalogoService $catalogoService,
+        protected AdminMetricsService $adminMetricsService,
     ) {
     }
 
     public function reportes(): Response
     {
-        $employees = $this->activeEmployees()->values();
-        $staffPerformance = $employees->take(3)->values()->map(function (Empleado $employee, int $index): array {
-            $profile = $this->buildEmployeeProfile($employee, $index);
+        $metrics = $this->adminMetricsService->buildAnalyticsPayload($this->activeBranch());
+        $datasets = collect($metrics['datasets'])->map(function (array $dataset): array {
+            $dataset['staffPerformance'] = collect($dataset['staffPerformance'])->map(function (array $entry): array {
+                $employee = $this->activeEmployees()->firstWhere('public_id', $entry['employeePublicId']);
+                $index = $employee instanceof Empleado ? $this->employeeIndex($employee) : 0;
 
-            return [
-                'employeePublicId' => $employee->public_id,
-                'name' => $profile['name'],
-                'department' => $profile['role'],
-                'revenue' => $profile['metrics']['totalRevenue'],
-                'image' => $profile['image'],
-            ];
+                return [
+                    ...$entry,
+                    'image' => $this->employeeImages[$index % count($this->employeeImages)],
+                ];
+            })->all();
+
+            return $dataset;
         })->all();
 
         return Inertia::render('Admin/ReportsAnalytics', [
             'title' => 'Reportes de Ventas Analytics',
-            'calendarOptions' => [
-                ['label' => 'Abril 2026', 'key' => 'abril-2026'],
-                ['label' => 'Mayo 2026', 'key' => 'mayo-2026'],
-                ['label' => 'Junio 2026', 'key' => 'junio-2026'],
-            ],
-            'datasets' => [
-                'abril-2026' => [
-                    'summary' => [
-                        'ingresos' => 'L 42,850',
-                        'variacionIngresos' => '+12.5% vs mes anterior',
-                        'ticketPromedio' => 'L 148',
-                        'variacionTicket' => 'Rendimiento estable',
-                        'citas' => '312',
-                        'variacionCitas' => '+14 esta semana',
-                        'categoriaPrincipal' => 'Pestañas',
-                        'variacionCategoria' => '58% del total de reservas',
-                    ],
-                    'trend' => [78, 58, 30, 40],
-                    'previousTrend' => [90, 80, 60, 70],
-                    'servicePopularity' => [
-                        ['name' => 'Manicura Rusa Prestige', 'value' => 32],
-                        ['name' => 'Extensiones de Pestañas Volumen', 'value' => 28],
-                        ['name' => 'Cejas Ombré Powder', 'value' => 22],
-                        ['name' => 'Balayage Signature', 'value' => 18],
-                    ],
-                    'staffPerformance' => $staffPerformance,
-                    'retention' => [
-                        'value' => '74%',
-                        'delta' => '+3%',
-                        'note' => 'Tu base de clientas recurrentes sigue creciendo. Considera premiar al 5% con mayor gasto mensual.',
-                    ],
-                    'insight' => [
-                        'title' => 'Pico de Demanda de Fin de Semana',
-                        'body' => 'La analítica indica un aumento del 42% en servicios de alto ticket entre viernes por la tarde y domingo por la mañana. Conviene abrir dos estaciones adicionales de pestañas en esos intervalos.',
-                    ],
-                ],
-                'mayo-2026' => [
-                    'summary' => [
-                        'ingresos' => 'L 46,120',
-                        'variacionIngresos' => '+7.6% vs abril',
-                        'ticketPromedio' => 'L 154',
-                        'variacionTicket' => 'Sube con pestañas premium',
-                        'citas' => '328',
-                        'variacionCitas' => '+9 esta semana',
-                        'categoriaPrincipal' => 'Uñas',
-                        'variacionCategoria' => '51% del total de reservas',
-                    ],
-                    'trend' => [82, 42, 34, 22],
-                    'previousTrend' => [88, 70, 58, 40],
-                    'servicePopularity' => [
-                        ['name' => 'Pestañas Clásicas', 'value' => 34],
-                        ['name' => 'Manicura Rusa Prestige', 'value' => 27],
-                        ['name' => 'Hydrafacial', 'value' => 21],
-                        ['name' => 'Lifting de Pestañas', 'value' => 18],
-                    ],
-                    'staffPerformance' => $staffPerformance,
-                    'retention' => [
-                        'value' => '77%',
-                        'delta' => '+3%',
-                        'note' => 'Las clientas que reservaron bundles de mantenimiento regresaron con más frecuencia. Mantener esa estrategia puede elevar el ticket recurrente.',
-                    ],
-                    'insight' => [
-                        'title' => 'Aumento de Servicios Recurrentes',
-                        'body' => 'Los packs de mantenimiento tuvieron mejor conversión durante mayo. Aprovecha para reforzar ofertas de retoque y reservas automáticas.',
-                    ],
-                ],
-                'junio-2026' => [
-                    'summary' => [
-                        'ingresos' => 'L 39,980',
-                        'variacionIngresos' => '-4.2% vs mayo',
-                        'ticketPromedio' => 'L 139',
-                        'variacionTicket' => 'Afectado por descuentos estacionales',
-                        'citas' => '289',
-                        'variacionCitas' => '-11 esta semana',
-                        'categoriaPrincipal' => 'Cejas',
-                        'variacionCategoria' => '45% del total de reservas',
-                    ],
-                    'trend' => [72, 48, 62, 44],
-                    'previousTrend' => [88, 66, 74, 58],
-                    'servicePopularity' => [
-                        ['name' => 'Retoque Volumen Ruso', 'value' => 30],
-                        ['name' => 'Retiro Gel', 'value' => 26],
-                        ['name' => 'Set Híbrido Completo', 'value' => 24],
-                        ['name' => 'Tratamiento Express', 'value' => 20],
-                    ],
-                    'staffPerformance' => $staffPerformance,
-                    'retention' => [
-                        'value' => '71%',
-                        'delta' => '-6%',
-                        'note' => 'La tasa de retención cayó por promociones externas y menos reservas recurrentes. Conviene reforzar el seguimiento posterior al servicio.',
-                    ],
-                    'insight' => [
-                        'title' => 'Alerta de Retención',
-                        'body' => 'Junio presenta menor retorno en clientas nuevas. Revisa los seguimientos post-servicio y los beneficios de rebooking en recepción.',
-                    ],
-                ],
-            ],
+            'calendarOptions' => $metrics['calendarOptions'],
+            'datasets' => $datasets,
         ]);
     }
 
@@ -486,11 +395,11 @@ class AdminConsoleController extends Controller
             fputcsv($handle, ['Rol', $profile['role']]);
             fputcsv($handle, ['Ingresos totales', $profile['metrics']['totalRevenue']]);
             fputcsv($handle, ['Tiempo promedio', $profile['metrics']['serviceTime']]);
-            fputcsv($handle, ['Calificación', $profile['metrics']['rating']]);
+            fputcsv($handle, ['Ticket promedio', $profile['metrics']['averageTicket']]);
             fputcsv($handle, []);
             fputcsv($handle, ['Fecha', 'Servicio', 'Cliente', 'Estado', 'Monto']);
 
-            foreach ($profile['appointments'] as $appointment) {
+            foreach ($profile['history'] as $appointment) {
                 fputcsv($handle, [
                     $appointment['date'],
                     $appointment['service'],
@@ -624,41 +533,11 @@ class AdminConsoleController extends Controller
 
     protected function buildEmployeeProfile(Empleado $employee, int $index): array
     {
-        $metrics = [
-            ['revenue' => 1482000, 'delta' => '+12%', 'time' => '52 min', 'rating' => '4.98', 'appointments' => '124', 'monthNote' => 'este mes', 'level' => 'V', 'since' => 'Marzo 2021'],
-            ['revenue' => 1264000, 'delta' => '+9%', 'time' => '48 min', 'rating' => '4.94', 'appointments' => '109', 'monthNote' => 'este mes', 'level' => 'IV', 'since' => 'Julio 2022'],
-            ['revenue' => 1123000, 'delta' => '+7%', 'time' => '55 min', 'rating' => '4.90', 'appointments' => '97', 'monthNote' => 'este mes', 'level' => 'III', 'since' => 'Enero 2023'],
-            ['revenue' => 1389000, 'delta' => '+11%', 'time' => '50 min', 'rating' => '4.96', 'appointments' => '118', 'monthNote' => 'este mes', 'level' => 'IV', 'since' => 'Septiembre 2021'],
-        ][$index % 4];
-
-        $services = [
-            ['service' => 'Retoque Volumen Ruso', 'share' => 45],
-            ['service' => 'Set Híbrido Completo', 'share' => 30],
-            ['service' => 'Lash Lift y Tinte', 'share' => 15],
-        ];
-
-        $appointments = collect([
-            ['date' => '12 Oct, 14:00', 'service' => 'Retoque Volumen Ruso', 'client' => 'Sienna Miller', 'status' => 'Confirmada', 'revenue' => 'L 145.00'],
-            ['date' => '12 Oct, 11:30', 'service' => 'Lash Lift y Tinte', 'client' => 'Grace Chen', 'status' => 'Confirmada', 'revenue' => 'L 95.00'],
-            ['date' => '11 Oct, 16:45', 'service' => 'Set Híbrido Completo', 'client' => 'Eleanor Rigby', 'status' => 'Confirmada', 'revenue' => 'L 210.00'],
-            ['date' => '11 Oct, 09:00', 'service' => 'Retoque Clásico', 'client' => 'Marcus Thorne', 'status' => 'Confirmada', 'revenue' => 'L 85.00'],
-        ]);
-
-        $monthlyRevenue = collect([
-            ['label' => 'Sem 1', 'value' => 680000],
-            ['label' => 'Sem 2', 'value' => 940000],
-            ['label' => 'Sem 3', 'value' => 1260000],
-            ['label' => 'Sem 4', 'value' => 1020000],
-        ]);
+        $profile = $this->adminMetricsService->buildEmployeePayload($this->activeBranch(), $employee);
 
         return [
-            'publicId' => $employee->public_id,
-            'name' => $employee->name,
-            'role' => $employee->role_title ?: 'Perfil operativo',
+            ...$profile,
             'image' => $this->employeeImages[$index % count($this->employeeImages)],
-            'level' => $metrics['level'],
-            'since' => $metrics['since'],
-            'ratingLabel' => '4.9 / 5.0',
             'overviewUrl' => '/reportes-de-ventas-analytics',
             'performanceUrl' => '/rendimiento-por-empleado/'.$employee->public_id,
             'earningsUrl' => '/rendimiento-por-empleado/'.$employee->public_id.'/ganancias',
@@ -666,32 +545,6 @@ class AdminConsoleController extends Controller
             'exportUrl' => '/rendimiento-por-empleado/'.$employee->public_id.'/exportar',
             'teamUrl' => '/gestion-de-empleados-admin',
             'dashboardUrl' => '/reportes-de-ventas-analytics',
-            'metrics' => [
-                'totalRevenue' => Money::format($metrics['revenue']),
-                'revenueDelta' => $metrics['delta'],
-                'serviceTime' => $metrics['time'],
-                'rating' => $metrics['rating'],
-                'appointments' => $metrics['appointments'],
-                'appointmentsNote' => $metrics['monthNote'],
-            ],
-            'chart' => $monthlyRevenue->map(fn (array $entry) => [
-                'label' => $entry['label'],
-                'value' => Money::format($entry['value']),
-                'height' => (int) max(24, round(($entry['value'] / 1260000) * 100)),
-            ])->all(),
-            'specialties' => $services,
-            'appointments' => $appointments->all(),
-            'history' => $appointments->map(fn (array $appointment, int $itemIndex) => [
-                ...$appointment,
-                'folio' => 'FNL-EMP-00'.($itemIndex + 1),
-                'paymentMethod' => $itemIndex % 2 === 0 ? 'Tarjeta' : 'Efectivo',
-            ])->all(),
-            'earningsBreakdown' => [
-                ['label' => 'Servicios premium', 'value' => 'L 6,850.00'],
-                ['label' => 'Mantenimientos', 'value' => 'L 4,120.00'],
-                ['label' => 'Complementos', 'value' => 'L 3,850.00'],
-            ],
-            'insight' => 'La precisión del especialista mantiene una conversión fuerte en servicios de alto ticket y una retención estable durante el trimestre.',
         ];
     }
 }

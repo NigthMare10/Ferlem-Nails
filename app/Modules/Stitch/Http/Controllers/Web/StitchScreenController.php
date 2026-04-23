@@ -5,6 +5,7 @@ namespace App\Modules\Stitch\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Modules\Facturacion\Models\Factura;
 use App\Modules\Shared\Support\Money;
+use App\Modules\Stitch\Services\AdminMetricsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,7 +15,7 @@ class StitchScreenController extends Controller
 {
     protected string $basePath;
 
-    public function __construct()
+    public function __construct(protected AdminMetricsService $adminMetricsService)
     {
         $this->basePath = base_path('references/stitch-export/stitch_sistema_pos_u_as_y_pesta_as');
     }
@@ -137,17 +138,35 @@ class StitchScreenController extends Controller
 
     public function historialFacturas(Request $request): Response
     {
+        $branch = $request->user()->sucursales()->whereKey((int) $request->session()->get('active_branch_id'))->firstOrFail();
+        $filters = $this->historyFilters($request);
+        $history = $this->adminMetricsService->buildHistoryPayload($branch, $filters);
+        $latestInvoiceUrl = $history['invoices'][0]['detail_url'] ?? null;
+
+        $history['routes'] = [
+            'overview' => route('reportes.index', absolute: false),
+            'history' => route('facturas.index', absolute: false),
+            'export' => route('facturas.export', [
+                'q' => $filters['query'] !== '' ? $filters['query'] : null,
+                'employee' => $filters['employee_public_id'] !== '' ? $filters['employee_public_id'] : null,
+                'status' => $filters['status'] !== 'all' ? $filters['status'] : null,
+            ], absolute: false),
+            'latest_invoice' => $latestInvoiceUrl,
+        ];
+
         return $this->renderScreen(
             'historial_de_facturas',
             'Historial de Facturas',
             null,
-            $this->serializeInvoiceHistory($request),
+            $history,
         );
     }
 
     public function exportHistorialFacturasCsv(Request $request): StreamedResponse
     {
-        $invoices = $this->historyInvoicesQuery($request)->get();
+        $branch = $request->user()->sucursales()->whereKey((int) $request->session()->get('active_branch_id'))->firstOrFail();
+        $filters = $this->historyFilters($request);
+        $invoices = $this->adminMetricsService->filteredHistoryRows($branch, $filters);
 
         return response()->streamDownload(function () use ($invoices): void {
             $handle = fopen('php://output', 'w');
@@ -158,9 +177,7 @@ class StitchScreenController extends Controller
 
             fputcsv($handle, ['Folio', 'Referencia', 'Fecha', 'Hora', 'Atendido por', 'Estado', 'Monto total']);
 
-            foreach ($invoices as $invoice) {
-                $serialized = $this->serializeHistoryInvoice($invoice);
-
+            foreach ($invoices as $serialized) {
                 fputcsv($handle, [
                     $serialized['number'],
                     $serialized['reference'],
@@ -286,6 +303,15 @@ class StitchScreenController extends Controller
             'invoice' => $invoicePayload,
             'invoiceHistory' => $invoiceHistory,
         ]);
+    }
+
+    protected function historyFilters(Request $request): array
+    {
+        return [
+            'query' => trim((string) $request->query('q', '')),
+            'employee_public_id' => trim((string) $request->query('employee', '')),
+            'status' => trim((string) $request->query('status', 'all')),
+        ];
     }
 
     protected function serializeInvoice(Factura $factura): array

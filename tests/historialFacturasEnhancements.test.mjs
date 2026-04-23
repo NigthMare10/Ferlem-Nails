@@ -24,7 +24,15 @@ const historyPayload = {
         services_count_label: '3',
         range_label: '21 Abr 2026 - 22 Abr 2026',
     },
-    employees: ['Administracion General', 'Prueba'],
+    employees: [
+        { publicId: 'emp-admin', name: 'Administracion General' },
+        { publicId: 'emp-prueba', name: 'Prueba' },
+    ],
+    filters: {
+        query: 'cesar',
+        employeePublicId: 'emp-admin',
+        status: 'all',
+    },
     invoices: [
         {
             public_id: '01historialabc',
@@ -35,11 +43,14 @@ const historyPayload = {
             issued_time: '11:15 am',
             issued_timezone: 'America/Tegucigalpa',
             operator_name: 'Administracion General',
+            operator_public_ids: ['emp-admin'],
             status_label: 'Pagada',
             status_key: 'pagada',
             total_formatted: 'L 1,035.00',
+            total_amount: 103500,
             total_raw: '1035.00',
             detail_url: '/detalle-de-factura-digital/01historialabc',
+            search_index: 'FNL-CM-00000001 REF-00000001 Administracion General Pagada L 1,035.00 1035.00',
         },
         {
             public_id: '01historialxyz',
@@ -50,17 +61,20 @@ const historyPayload = {
             issued_time: '04:30 pm',
             issued_timezone: 'America/Tegucigalpa',
             operator_name: 'Prueba',
+            operator_public_ids: ['emp-prueba'],
             status_label: 'Pagada',
             status_key: 'pagada',
             total_formatted: 'L 517.50',
+            total_amount: 51750,
             total_raw: '517.50',
             detail_url: '/detalle-de-factura-digital/01historialxyz',
+            search_index: 'FNL-CM-00000002 REF-00000002 Prueba Pagada L 517.50 517.50',
         },
     ],
     routes: {
         overview: '/reportes-de-ventas-analytics',
         history: '/historial-de-facturas',
-        export: '/historial-de-facturas/exportar-csv',
+        export: '/historial-de-facturas/exportar-csv?q=cesar&employee=emp-admin',
         latest_invoice: '/detalle-de-factura-digital/01historialabc',
     },
 };
@@ -79,14 +93,17 @@ test('historial de facturas conecta navegacion y elimina botones muertos', () =>
 test('historial de facturas conecta buscador y filtros visibles', () => {
     assert.match(transformedHtml, /data-history-search="true"/);
     assert.match(transformedHtml, /data-history-employee="true"/);
+    assert.match(transformedHtml, /value="cesar"/);
+    assert.match(transformedHtml, /value="emp-admin" selected/);
     assert.match(transformedHtml, /data-history-search-value=/);
     assert.match(actionScript, /applyFilters/);
-    assert.match(actionScript, /data-history-search-value/);
+    assert.match(actionScript, /data-history-employee-ids/);
+    assert.match(actionScript, /updateExportHref/);
 });
 
 test('historial de facturas conecta ver factura y exportar csv', () => {
     assert.match(transformedHtml, /href="\/detalle-de-factura-digital\/01historialabc"[^>]*>Ver Factura</);
-    assert.match(transformedHtml, /href="\/historial-de-facturas\/exportar-csv"/);
+    assert.match(transformedHtml, /href="\/historial-de-facturas\/exportar-csv\?q=cesar&amp;employee=emp-admin"/);
 });
 
 test('historial de facturas expone engranaje para menu salir', () => {

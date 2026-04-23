@@ -57,12 +57,12 @@ export default function EmployeeEarnings({ title, employee }: { title: string; e
                         <p className="mt-2 text-sm text-stone-500">Origen principal de facturación del periodo actual.</p>
                     </div>
                     <div className="space-y-4">
-                        {employee.earningsBreakdown.map((item, index) => (
+                        {employee.earningsBreakdown.length ? employee.earningsBreakdown.map((item, index) => (
                             <div key={item.label} className={`rounded-xl p-5 ${index === 0 ? 'bg-white' : 'bg-white/70'}`}>
                                 <p className="text-[10px] uppercase tracking-widest text-stone-500">{item.label}</p>
                                 <p className="mt-2 text-2xl font-serif text-primary">{item.value}</p>
                             </div>
-                        ))}
+                        )) : <div className="rounded-xl bg-white/70 p-5 text-sm text-stone-500">Sin desglose real disponible para este empleado.</div>}
                     </div>
                 </div>
             </section>

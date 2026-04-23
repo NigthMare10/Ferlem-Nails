@@ -10,8 +10,8 @@ type Dataset = {
         variacionIngresos: string;
         ticketPromedio: string;
         variacionTicket: string;
-        citas: string;
-        variacionCitas: string;
+        servicios: string;
+        variacionServicios: string;
         categoriaPrincipal: string;
         variacionCategoria: string;
     };
@@ -133,9 +133,9 @@ export default function ReportsAnalytics({ title, calendarOptions, datasets }: P
                             <div className="mt-4 flex items-center gap-1 text-xs font-medium text-stone-500"><span className="material-symbols-outlined text-sm">remove</span><span>{currentDataset.summary.variacionTicket}</span></div>
                         </div>
                         <div className="group relative overflow-hidden rounded-xl bg-surface-container-lowest p-8">
-                            <p className="mb-2 font-label text-[10px] uppercase tracking-widest text-secondary">Citas</p>
-                            <h3 className="text-4xl font-headline tracking-tighter text-on-surface">{currentDataset.summary.citas}</h3>
-                            <div className="mt-4 flex items-center gap-1 text-xs font-medium text-green-600"><span className="material-symbols-outlined text-sm">trending_up</span><span>{currentDataset.summary.variacionCitas}</span></div>
+                            <p className="mb-2 font-label text-[10px] uppercase tracking-widest text-secondary">Servicios Realizados</p>
+                            <h3 className="text-4xl font-headline tracking-tighter text-on-surface">{currentDataset.summary.servicios}</h3>
+                            <div className="mt-4 flex items-center gap-1 text-xs font-medium text-green-600"><span className="material-symbols-outlined text-sm">trending_up</span><span>{currentDataset.summary.variacionServicios}</span></div>
                         </div>
                         <div className="group relative rounded-xl bg-surface-container-low p-8">
                             <p className="mb-2 font-label text-[10px] uppercase tracking-widest text-secondary">Categoría Principal</p>
@@ -168,12 +168,12 @@ export default function ReportsAnalytics({ title, calendarOptions, datasets }: P
                         <section>
                             <div className="mb-8 flex items-center gap-4"><h2 className="text-2xl font-headline">Popularidad de Servicios</h2><div className="h-px flex-1 bg-surface-container-highest"></div></div>
                             <div className="space-y-8">
-                                {currentDataset.servicePopularity.map((service) => (
+                                {currentDataset.servicePopularity.length ? currentDataset.servicePopularity.map((service) => (
                                     <div key={service.name} className="group">
                                         <div className="mb-3 flex items-end justify-between"><span className="font-body font-semibold text-on-surface">{service.name}</span><span className="font-label text-xs text-stone-500">{service.value}%</span></div>
                                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-container-high"><div className="h-full bg-primary transition-all duration-700" style={{ width: `${service.value}%` }}></div></div>
                                     </div>
-                                ))}
+                                )) : <p className="text-sm text-stone-500">Sin servicios facturados en el periodo seleccionado.</p>}
                             </div>
                         </section>
 
@@ -189,7 +189,7 @@ export default function ReportsAnalytics({ title, calendarOptions, datasets }: P
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-surface-container-low">
-                                        {currentDataset.staffPerformance.map((row) => (
+                                        {currentDataset.staffPerformance.length ? currentDataset.staffPerformance.map((row) => (
                                             <tr key={row.employeePublicId} className="group transition-colors hover:bg-surface-container-low">
                                                 <td className="px-6 py-4">
                                                     <Link href={`/rendimiento-por-empleado/${row.employeePublicId}`} className="flex items-center gap-3">
@@ -200,7 +200,7 @@ export default function ReportsAnalytics({ title, calendarOptions, datasets }: P
                                                 <td className="px-6 py-4 text-xs font-body text-stone-500">{row.department}</td>
                                                 <td className="px-6 py-4 text-right text-sm font-headline">{row.revenue}</td>
                                             </tr>
-                                        ))}
+                                        )) : <tr><td colSpan={3} className="px-6 py-8 text-center text-sm text-stone-500">Sin rendimiento real disponible en el periodo seleccionado.</td></tr>}
                                     </tbody>
                                 </table>
                             </div>
