@@ -1,0 +1,84 @@
+<?php
+
+namespace App\Http\Resources;
+
+use App\Actions\Appointments\CreateAppointmentAction;
+use App\Support\Permissions;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class AppointmentResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        $user = $request->user();
+        $viewAll = $user?->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL) ?? false;
+        $canAssign = $user?->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN) ?? false;
+        $visibleItems = $this->items
+            ->when(! $viewAll, fn ($items) => $items->where('assigned_to', $user->getKey()))
+            ->sortBy('position')
+            ->values();
+        $visibleStart = $viewAll ? $this->scheduled_start : $visibleItems->min('scheduled_start');
+        $visibleEnd = $viewAll ? $this->scheduled_end : $visibleItems->max('scheduled_end');
+        $visibleDuration = $viewAll
+            ? $this->expected_duration_minutes
+            : $visibleItems->sum(fn ($item) => $item->duration_minutes * $item->quantity);
+        $visibleTotalCents = $visibleItems->sum(fn ($item) => $this->cents($item->line_total));
+
+        return [
+            'id' => $this->id,
+            'client_name' => $this->client_name,
+            'client_phone' => $this->client_phone,
+            'status' => $this->status,
+            'status_label' => match ($this->status) {
+                'scheduled' => 'Programada',
+                'completed' => 'Completada',
+                'canceled' => 'Cancelada',
+                'no_show' => 'No llegó',
+                default => $this->status,
+            },
+            'notes' => $this->notes,
+            'is_shared' => $this->items->pluck('assigned_to')->unique()->count() > 1,
+            'visible_start' => $visibleStart->toIso8601String(),
+            'visible_end' => $visibleEnd->toIso8601String(),
+            'visible_start_time' => $visibleStart->setTimezone(CreateAppointmentAction::TIMEZONE)->format('H:i'),
+            'visible_end_time' => $visibleEnd->setTimezone(CreateAppointmentAction::TIMEZONE)->format('H:i'),
+            'visible_duration_minutes' => $visibleDuration,
+            'visible_total' => number_format($visibleTotalCents / 100, 2, '.', ''),
+            'can_reschedule' => $this->status === 'scheduled'
+                && ($canAssign || ! $this->items->contains(fn ($item) => $item->assigned_to !== $user->getKey())),
+            'can_change_status' => $this->status === 'scheduled'
+                && ($viewAll || ! $this->items->contains(fn ($item) => $item->assigned_to !== $user->getKey())),
+            'can_mark_no_show_now' => $this->status === 'scheduled'
+                && ! $this->scheduled_start->greaterThan(now('UTC')),
+            'status_reason' => match ($this->status) {
+                'canceled' => $this->cancellation_reason,
+                'no_show' => $this->no_show_reason,
+                default => null,
+            },
+            'visible_items' => $visibleItems->map(fn ($item) => [
+                'id' => $item->id,
+                'service_id' => $item->service_id,
+                'service_name' => $item->service_name,
+                'duration_minutes' => $item->duration_minutes,
+                'default_duration_minutes' => $item->default_duration_minutes,
+                'position' => $item->position,
+                'scheduled_start' => $item->scheduled_start->toIso8601String(),
+                'scheduled_end' => $item->scheduled_end->toIso8601String(),
+                'start_time' => $item->scheduled_start->setTimezone(CreateAppointmentAction::TIMEZONE)->format('H:i'),
+                'end_time' => $item->scheduled_end->setTimezone(CreateAppointmentAction::TIMEZONE)->format('H:i'),
+                'assigned_to' => ['id' => $item->assignedTo->id, 'name' => $item->assignedTo->name],
+                'unit_price' => $item->unit_price,
+                'quantity' => $item->quantity,
+                'line_total' => $item->line_total,
+            ])->values(),
+        ];
+    }
+
+    private function cents(string $amount): int
+    {
+        [$whole, $fraction] = array_pad(explode('.', $amount, 2), 2, '0');
+
+        return ((int) $whole * 100) + (int) str_pad(substr($fraction, 0, 2), 2, '0');
+    }
+}
