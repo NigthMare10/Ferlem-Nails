@@ -4,6 +4,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { useDisplay } from 'vuetify';
 import { usePermissions } from '../composables/usePermissions';
 import AppSnackbar from '../Components/AppSnackbar.vue';
+import NotificationBell from '../Components/Notifications/NotificationBell.vue';
 import StudioLemusBrand from '../Components/StudioLemusBrand.vue';
 import UserMenu from '../Components/UserMenu.vue';
 
@@ -108,6 +109,7 @@ const navigate = (href: string) => {
             <VAppBarNavIcon aria-label="Abrir navegación" @click="drawer = !drawer" />
             <VAppBarTitle class="font-weight-bold">{{ title }}</VAppBarTitle>
             <template #append>
+                <NotificationBell class="mr-1" />
                 <UserMenu
                     v-if="auth?.user"
                     :user="auth.user"

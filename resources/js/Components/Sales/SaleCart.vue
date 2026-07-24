@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import type { PaymentMethod, SaleCartItem } from '../../types/sales';
+import { decimalToCents, formatHnl } from '../../utils/money';
+import SaleCheckoutSummary from './SaleCheckoutSummary.vue';
+import SaleLineItem from './SaleLineItem.vue';
+import SalePaymentMethod from './SalePaymentMethod.vue';
 
 defineProps<{
     items: SaleCartItem[];
@@ -19,14 +23,6 @@ defineEmits<{
     checkout: [];
 }>();
 
-const cents = (value: string) => {
-    const [whole, fraction = ''] = value.split('.');
-    return (Number(whole) * 100) + Number(fraction.padEnd(2, '0').slice(0, 2));
-};
-const money = (value: number) => new Intl.NumberFormat('es-HN', {
-    style: 'currency',
-    currency: 'HNL',
-}).format(value / 100);
 </script>
 
 <template>
@@ -46,79 +42,18 @@ const money = (value: number) => new Intl.NumberFormat('es-HN', {
             <p class="text-body-2 text-medium-emphasis mb-0">Agrega los servicios realizados para preparar la venta.</p>
         </VCardText>
 
-        <VList v-else class="sale-cart__items pa-3" lines="three">
-            <VListItem v-for="item in items" :key="item.id" class="sale-cart__item mb-2" rounded="lg">
-                <VListItemTitle class="font-weight-bold text-wrap">{{ item.name }}</VListItemTitle>
-                <VListItemSubtitle class="mt-1">
-                    {{ money(cents(item.price)) }} c/u · {{ money(cents(item.price) * item.quantity) }}
-                </VListItemSubtitle>
-                <div class="d-flex align-center justify-space-between ga-2 mt-3">
-                    <div class="d-flex align-center ga-1">
-                        <VBtn
-                            icon="mdi-minus"
-                            size="small"
-                            variant="outlined"
-                            :disabled="processing"
-                            :aria-label="`Disminuir ${item.name}`"
-                            @click="$emit('decrease', item.id)"
-                        />
-                        <span class="sale-cart__quantity" :aria-label="`Cantidad ${item.quantity}`">{{ item.quantity }}</span>
-                        <VBtn
-                            icon="mdi-plus"
-                            size="small"
-                            variant="outlined"
-                            :disabled="processing || item.quantity >= 50"
-                            :aria-label="`Aumentar ${item.name}`"
-                            @click="$emit('increase', item.id)"
-                        />
-                    </div>
-                    <VBtn
-                        icon="mdi-delete-outline"
-                        size="small"
-                        variant="text"
-                        color="error"
-                        :disabled="processing"
-                        :aria-label="`Eliminar ${item.name}`"
-                        @click="$emit('remove', item.id)"
-                    />
-                </div>
-            </VListItem>
-        </VList>
+        <div v-else class="sale-cart__items pa-3">
+            <SaleLineItem v-for="item in items" :key="item.id" :item-key="item.id" :name="item.name" :price="item.price" :quantity="item.quantity" :duration-minutes="item.duration_minutes" :processing="processing" @increase="$emit('increase', item.id)" @decrease="$emit('decrease', item.id)" @remove="$emit('remove', item.id)" />
+        </div>
 
         <template v-if="items.length">
             <VDivider />
             <VCardText class="pa-5">
-                <div class="d-flex justify-space-between text-body-2 text-medium-emphasis mb-2">
-                    <span>Total de servicios</span>
-                    <strong class="text-high-emphasis">{{ totalServices }}</strong>
-                </div>
-                <VSwitch
-                    :model-value="paymentMethod === 'card'"
-                    label="Pago con tarjeta"
-                    color="primary"
-                    inset
-                    hide-details
-                    class="mb-3"
-                    :disabled="processing"
-                    @update:model-value="$emit('paymentMethod', $event ? 'card' : 'cash')"
-                />
-                <div class="d-flex justify-space-between text-body-2 mb-2">
-                    <span>Método</span>
-                    <strong>{{ paymentMethod === 'card' ? 'Tarjeta' : 'Efectivo' }}</strong>
-                </div>
-                <template v-if="paymentMethod === 'card'">
-                    <div class="d-flex justify-space-between text-body-2 mb-2">
-                        <span>Comisión POS 4%</span>
-                        <strong>{{ money(cardFeeCents) }}</strong>
-                    </div>
-                    <div class="d-flex justify-space-between text-body-2 mb-4">
-                        <span>Ingreso neto estimado</span>
-                        <strong>{{ money(netAmountCents) }}</strong>
-                    </div>
-                </template>
+                <SalePaymentMethod :model-value="paymentMethod" :amount-cents="totalCents" :processing="processing" @update:model-value="$emit('paymentMethod', $event)" />
+                <SaleCheckoutSummary :total-cents="totalCents" :total-services="totalServices" :payment-method="paymentMethod" :balance-cents="totalCents" :balance-fee-cents="cardFeeCents" :total-fee-cents="cardFeeCents" :net-amount-cents="netAmountCents" />
                 <div class="d-flex justify-space-between align-end mb-5">
                     <span class="text-body-1 font-weight-bold">Total a cobrar</span>
-                    <span class="text-h5 font-weight-bold text-primary">{{ money(totalCents) }}</span>
+                    <span class="text-h5 font-weight-bold text-primary">{{ formatHnl(totalCents) }}</span>
                 </div>
                 <VBtn
                     block
@@ -129,7 +64,7 @@ const money = (value: number) => new Intl.NumberFormat('es-HN', {
                     :disabled="processing"
                     @click="$emit('checkout')"
                 >
-                    Cobrar {{ money(totalCents) }}
+                    Cobrar {{ formatHnl(totalCents) }}
                 </VBtn>
             </VCardText>
         </template>
@@ -142,14 +77,4 @@ const money = (value: number) => new Intl.NumberFormat('es-HN', {
     overflow-y: auto;
 }
 
-.sale-cart__item {
-    border: 1px solid rgba(var(--v-theme-on-surface), 0.08);
-    background: rgba(var(--v-theme-surface-variant), 0.35);
-}
-
-.sale-cart__quantity {
-    min-width: 34px;
-    text-align: center;
-    font-weight: 800;
-}
 </style>

@@ -3,20 +3,22 @@
 namespace App\Actions\Sales;
 
 use App\Models\Sale;
-use App\Models\SaleItem;
 use App\Models\SalePayment;
 use App\Models\Service;
 use App\Models\User;
+use App\Support\Money;
 use App\Support\Permissions;
+use App\Support\SaleFinancials;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use LogicException;
 
 class CreateSaleAction
 {
     private const MAX_AMOUNT_CENTS = 999999999999;
+
+    public function __construct(private readonly PersistCompletedSaleAction $persistCompletedSale) {}
 
     public function execute(User $user, array $items, string $checkoutToken, string $paymentMethod): Sale
     {
@@ -70,7 +72,7 @@ class CreateSaleAction
 
                 foreach ($normalizedItems as $item) {
                     $service = $services->get($item['service_id']);
-                    $unitPriceCents = $this->decimalToCents($service->price);
+                    $unitPriceCents = Money::toCents($service->price);
                     $lineTotalCents = $unitPriceCents * $item['quantity'];
 
                     if ($lineTotalCents > self::MAX_AMOUNT_CENTS) {
@@ -89,67 +91,25 @@ class CreateSaleAction
                     }
 
                     $preparedItems[] = [
-                        'service' => $service,
+                        'service_id' => $service->getKey(),
+                        'appointment_item_id' => null,
+                        'performed_by' => $user->getKey(),
+                        'service_name' => $service->name,
+                        'service_description' => $service->description,
+                        'duration_minutes' => $service->duration_minutes,
                         'quantity' => $item['quantity'],
-                        'unit_price' => $this->centsToDecimal($unitPriceCents),
-                        'line_total' => $this->centsToDecimal($lineTotalCents),
+                        'unit_price_cents' => $unitPriceCents,
+                        'line_total_cents' => $lineTotalCents,
                     ];
                 }
 
-                $cardFeeCents = $paymentMethod === Sale::PAYMENT_METHOD_CARD
-                    ? $this->percentageOfCents($subtotalCents, Sale::CARD_FEE_RATE)
-                    : 0;
-                $netAmountCents = $subtotalCents - $cardFeeCents;
-
-                $sale = new Sale;
-                $sale->sold_by = $user->getKey();
-                $sale->sold_at = now('UTC');
-                $sale->subtotal = $this->centsToDecimal($subtotalCents);
-                $sale->total = $this->centsToDecimal($subtotalCents);
-                $sale->total_services = $totalServices;
-                $sale->status = Sale::STATUS_COMPLETED;
-                $sale->payment_method = $paymentMethod;
-                $sale->card_fee_rate = $paymentMethod === Sale::PAYMENT_METHOD_CARD ? Sale::CARD_FEE_RATE : '0.00';
-                $sale->card_fee_amount = $this->centsToDecimal($cardFeeCents);
-                $sale->net_amount = $this->centsToDecimal($netAmountCents);
-                $sale->checkout_token = $checkoutToken;
-                $sale->request_hash = $requestHash;
-                $sale->save();
-
-                $sale->sale_number = 'SL-'.str_pad((string) $sale->getKey(), 6, '0', STR_PAD_LEFT);
-                $sale->save();
-
-                $allocatedFees = $this->allocateFee($preparedItems, $cardFeeCents, $subtotalCents);
-                foreach ($preparedItems as $index => $preparedItem) {
-                    $service = $preparedItem['service'];
-                    $saleItem = new SaleItem;
-                    $saleItem->sale_id = $sale->getKey();
-                    $saleItem->service_id = $service->getKey();
-                    $saleItem->performed_by = $user->getKey();
-                    $saleItem->position = $index + 1;
-                    $saleItem->service_name = $service->name;
-                    $saleItem->service_description = $service->description;
-                    $saleItem->duration_minutes = $service->duration_minutes;
-                    $saleItem->unit_price = $preparedItem['unit_price'];
-                    $saleItem->quantity = $preparedItem['quantity'];
-                    $saleItem->line_total = $preparedItem['line_total'];
-                    $allocatedFeeCents = $allocatedFees[$index];
-                    $saleItem->allocated_card_fee_amount = $this->centsToDecimal($allocatedFeeCents);
-                    $saleItem->net_line_amount = $this->centsToDecimal($this->decimalToCents($preparedItem['line_total']) - $allocatedFeeCents);
-                    $saleItem->save();
-                }
-
-                $payment = new SalePayment;
-                $payment->sale_id = $sale->getKey();
-                $payment->type = SalePayment::TYPE_FINAL_PAYMENT;
-                $payment->method = $paymentMethod;
-                $payment->amount = $sale->total;
-                $payment->card_fee_rate = $sale->card_fee_rate;
-                $payment->card_fee_amount = $sale->card_fee_amount;
-                $payment->net_amount = $sale->net_amount;
-                $payment->save();
-
-                return $sale->load(['soldBy:id,name', 'items', 'payments']);
+                return $this->persistCompletedSale->execute(
+                    $user,
+                    $preparedItems,
+                    [SaleFinancials::payment(SalePayment::TYPE_FINAL_PAYMENT, $paymentMethod, $subtotalCents)],
+                    $checkoutToken,
+                    $requestHash,
+                );
             }, 3);
         } catch (UniqueConstraintViolationException $exception) {
             if (! $this->isCheckoutTokenConflict($exception)) {
@@ -198,48 +158,6 @@ class CreateSaleAction
         return hash('sha256', json_encode($items, JSON_THROW_ON_ERROR));
     }
 
-    private function decimalToCents(string $amount): int
-    {
-        if (! preg_match('/^(\d+)(?:\.(\d{1,2}))?$/', $amount, $matches)) {
-            throw new LogicException('El precio almacenado no tiene un formato decimal válido.');
-        }
-
-        $whole = (int) $matches[1];
-        $fraction = (int) str_pad($matches[2] ?? '', 2, '0');
-
-        return ($whole * 100) + $fraction;
-    }
-
-    private function centsToDecimal(int $cents): string
-    {
-        return intdiv($cents, 100).'.'.str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
-    }
-
-    private function percentageOfCents(int $amountCents, string $percentage): int
-    {
-        $percentageHundredths = $this->decimalToCents($percentage);
-
-        return intdiv(($amountCents * $percentageHundredths) + 5000, 10000);
-    }
-
-    private function allocateFee(array $items, int $feeCents, int $totalCents): array
-    {
-        $allocations = [];
-        $used = 0;
-        $last = count($items) - 1;
-        foreach ($items as $index => $item) {
-            $lineCents = $this->decimalToCents($item['line_total']);
-            $allocation = $index === $last
-                ? $feeCents - $used
-                : intdiv(($feeCents * $lineCents) + intdiv($totalCents, 2), $totalCents);
-            $allocation = min($allocation, $feeCents - $used);
-            $allocations[] = $allocation;
-            $used += $allocation;
-        }
-
-        return $allocations;
-    }
-
     private function findByToken(string $checkoutToken): ?Sale
     {
         return Sale::query()
@@ -266,7 +184,7 @@ class CreateSaleAction
             ]);
         }
 
-        return $sale->loadMissing(['soldBy:id,name', 'items']);
+        return $sale->loadMissing(['soldBy:id,name', 'items.performedBy:id,name', 'payments']);
     }
 
     private function isCheckoutTokenConflict(UniqueConstraintViolationException $exception): bool

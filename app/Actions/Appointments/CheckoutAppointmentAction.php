@@ -2,17 +2,19 @@
 
 namespace App\Actions\Appointments;
 
+use App\Actions\Notifications\PublishInternalNotificationAction;
+use App\Actions\Sales\PersistCompletedSaleAction;
 use App\Models\Appointment;
 use App\Models\AppointmentDeposit;
 use App\Models\AppointmentEvent;
 use App\Models\AppointmentItem;
 use App\Models\Sale;
-use App\Models\SaleItem;
 use App\Models\SalePayment;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Money;
 use App\Support\Permissions;
+use App\Support\SaleFinancials;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
@@ -22,6 +24,11 @@ use Illuminate\Validation\ValidationException;
 class CheckoutAppointmentAction
 {
     private const MAX_AMOUNT_CENTS = 999999999999;
+
+    public function __construct(
+        private readonly PersistCompletedSaleAction $persistCompletedSale,
+        private readonly PublishInternalNotificationAction $publishNotification,
+    ) {}
 
     public function execute(User $user, Appointment $appointment, array $data): Sale
     {
@@ -67,61 +74,23 @@ class CheckoutAppointmentAction
                 }
 
                 $balanceCents = $totalCents - $depositCents;
-                $finalFeeCents = $balanceCents > 0 && $data['payment_method'] === Sale::PAYMENT_METHOD_CARD
-                    ? Money::percentageOfCents($balanceCents, Sale::CARD_FEE_RATE)
-                    : 0;
                 $depositFeeCents = $depositCents > 0 ? Money::toCents($deposit->card_fee_amount) : 0;
-                $totalFeeCents = $depositFeeCents + $finalFeeCents;
-                $summaryMethod = $balanceCents > 0 ? $data['payment_method'] : ($deposit?->payment_method ?? $data['payment_method']);
-
-                $sale = new Sale;
-                $sale->appointment_id = $locked->getKey();
-                $sale->sold_by = $user->getKey();
-                $sale->sold_at = now('UTC');
-                $sale->subtotal = Money::fromCents($totalCents);
-                $sale->total = Money::fromCents($totalCents);
-                $sale->total_services = collect($prepared)->sum('quantity');
-                $sale->status = Sale::STATUS_COMPLETED;
-                $sale->payment_method = $summaryMethod;
-                $sale->card_fee_rate = $summaryMethod === Sale::PAYMENT_METHOD_CARD ? Sale::CARD_FEE_RATE : '0.00';
-                $sale->card_fee_amount = Money::fromCents($totalFeeCents);
-                $sale->net_amount = Money::fromCents($totalCents - $totalFeeCents);
-                $sale->checkout_token = $data['checkout_token'];
-                $sale->request_hash = $requestHash;
-                $sale->save();
-                $sale->sale_number = 'SL-'.str_pad((string) $sale->getKey(), 6, '0', STR_PAD_LEFT);
-                $sale->save();
-
-                $allocations = $this->allocateFee($prepared, $totalFeeCents, $totalCents);
-                foreach ($prepared as $index => $line) {
-                    $item = new SaleItem;
-                    $item->sale_id = $sale->getKey();
-                    $item->service_id = $line['service_id'];
-                    $item->performed_by = $line['performed_by'];
-                    $item->appointment_item_id = $line['appointment_item_id'];
-                    $item->position = $index + 1;
-                    $item->service_name = $line['service_name'];
-                    $item->service_description = $line['service_description'];
-                    $item->duration_minutes = $line['duration_minutes'];
-                    $item->unit_price = Money::fromCents($line['unit_price_cents']);
-                    $item->quantity = $line['quantity'];
-                    $item->line_total = Money::fromCents($line['line_total_cents']);
-                    $item->allocated_card_fee_amount = Money::fromCents($allocations[$index]);
-                    $item->net_line_amount = Money::fromCents($line['line_total_cents'] - $allocations[$index]);
-                    $item->save();
+                $payments = [];
+                if ($depositCents > 0 && $deposit) {
+                    $payments[] = SaleFinancials::payment(SalePayment::TYPE_DEPOSIT_APPLIED, $deposit->payment_method, $depositCents, $depositFeeCents, $deposit->card_fee_rate, $deposit->getKey());
                 }
+                if ($balanceCents > 0) {
+                    $payments[] = SaleFinancials::payment(SalePayment::TYPE_FINAL_PAYMENT, $data['payment_method'], $balanceCents);
+                }
+                $sale = $this->persistCompletedSale->execute($user, $prepared, $payments, $data['checkout_token'], $requestHash, $locked->getKey());
 
                 if ($depositCents > 0 && $deposit) {
-                    $this->createPayment($sale, SalePayment::TYPE_DEPOSIT_APPLIED, $deposit->payment_method, $depositCents, Money::toCents($deposit->card_fee_amount), $deposit->card_fee_rate, $deposit->getKey());
                     $deposit->status = AppointmentDeposit::STATUS_APPLIED;
                     $deposit->applied_amount = Money::fromCents(Money::toCents($deposit->applied_amount) + $depositCents);
                     $deposit->resolved_at = now('UTC');
                     $deposit->resolved_by = $user->getKey();
                     $deposit->resolution_notes = "Aplicado a la venta {$sale->sale_number}.";
                     $deposit->save();
-                }
-                if ($balanceCents > 0) {
-                    $this->createPayment($sale, SalePayment::TYPE_FINAL_PAYMENT, $data['payment_method'], $balanceCents, $finalFeeCents, $data['payment_method'] === Sale::PAYMENT_METHOD_CARD ? Sale::CARD_FEE_RATE : '0.00');
                 }
 
                 $locked->status = Appointment::STATUS_COMPLETED;
@@ -137,6 +106,17 @@ class CheckoutAppointmentAction
                 $event->new_values = ['status' => Appointment::STATUS_COMPLETED, 'sale_id' => $sale->getKey(), 'sale_number' => $sale->sale_number];
                 $event->notes = 'Cita atendida y cobrada.';
                 $event->save();
+
+                $this->publishNotification->execute(
+                    $user,
+                    'appointment.completed',
+                    'Cita completada',
+                    "Se completó la cita de {$locked->client_name}.",
+                    "/appointments?appointment={$locked->getKey()}",
+                    ['type' => 'appointment', 'id' => $locked->getKey(), 'sale_id' => $sale->getKey()],
+                    "appointment-event:{$event->getKey()}",
+                    $event->occurred_at,
+                );
 
                 return $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
             }, 3);
@@ -227,37 +207,6 @@ class CheckoutAppointmentAction
         }
 
         return $prepared;
-    }
-
-    private function allocateFee(array $lines, int $feeCents, int $totalCents): array
-    {
-        $allocated = [];
-        $used = 0;
-        $last = count($lines) - 1;
-        foreach ($lines as $index => $line) {
-            $value = $index === $last
-                ? $feeCents - $used
-                : intdiv(($feeCents * $line['line_total_cents']) + intdiv($totalCents, 2), $totalCents);
-            $value = min($value, $feeCents - $used);
-            $allocated[] = $value;
-            $used += $value;
-        }
-
-        return $allocated;
-    }
-
-    private function createPayment(Sale $sale, string $type, string $method, int $amountCents, int $feeCents, string $rate, ?int $depositId = null): void
-    {
-        $payment = new SalePayment;
-        $payment->sale_id = $sale->getKey();
-        $payment->type = $type;
-        $payment->method = $method;
-        $payment->amount = Money::fromCents($amountCents);
-        $payment->card_fee_rate = $rate;
-        $payment->card_fee_amount = Money::fromCents($feeCents);
-        $payment->net_amount = Money::fromCents($amountCents - $feeCents);
-        $payment->appointment_deposit_id = $depositId;
-        $payment->save();
     }
 
     private function authorizeGlobal(User $user): void

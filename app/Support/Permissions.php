@@ -4,6 +4,8 @@ namespace App\Support;
 
 final class Permissions
 {
+    public const NOTIFICATIONS_ACCESS = 'notifications.access';
+
     public const SALES_ACCESS = 'sales.access';
 
     public const SALES_CREATE = 'sales.create';
@@ -66,7 +68,8 @@ final class Permissions
 
     public static function all(): array
     {
-        return [self::SALES_ACCESS, self::SALES_CREATE, self::SALES_VIEW_OWN, self::SALES_REPRINT,
+        return [self::NOTIFICATIONS_ACCESS,
+            self::SALES_ACCESS, self::SALES_CREATE, self::SALES_VIEW_OWN, self::SALES_REPRINT,
             self::REPORTS_SALES_VIEW, self::APPOINTMENTS_VIEW_PROJECTION,
             self::APPOINTMENTS_ACCESS, self::APPOINTMENTS_VIEW_OWN, self::APPOINTMENTS_VIEW_ALL,
             self::APPOINTMENTS_CREATE, self::APPOINTMENTS_PERFORM, self::APPOINTMENTS_UPDATE,

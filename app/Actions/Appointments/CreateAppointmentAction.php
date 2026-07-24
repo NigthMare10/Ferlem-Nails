@@ -2,6 +2,7 @@
 
 namespace App\Actions\Appointments;
 
+use App\Actions\Notifications\PublishInternalNotificationAction;
 use App\Models\Appointment;
 use App\Models\AppointmentEvent;
 use App\Models\AppointmentItem;
@@ -20,7 +21,10 @@ class CreateAppointmentAction
 
     private const MAX_AMOUNT_CENTS = 999999999999;
 
-    public function __construct(private RecordAppointmentDepositAction $recordDeposit) {}
+    public function __construct(
+        private RecordAppointmentDepositAction $recordDeposit,
+        private PublishInternalNotificationAction $publishNotification,
+    ) {}
 
     public function execute(User $user, array $data): Appointment
     {
@@ -123,6 +127,17 @@ class CreateAppointmentAction
             $event->occurred_at = now('UTC');
             $event->new_values = ['items' => $this->eventItems($appointment->items), 'status' => Appointment::STATUS_SCHEDULED];
             $event->save();
+
+            $this->publishNotification->execute(
+                $user,
+                'appointment.created',
+                'Cita creada',
+                "Se creó la cita de {$appointment->client_name}.",
+                "/appointments?appointment={$appointment->getKey()}",
+                ['type' => 'appointment', 'id' => $appointment->getKey()],
+                "appointment-event:{$event->getKey()}",
+                $event->occurred_at,
+            );
 
             if ($data['has_deposit'] ?? false) {
                 $this->recordDeposit->execute($user, $appointment, $data['deposit']);

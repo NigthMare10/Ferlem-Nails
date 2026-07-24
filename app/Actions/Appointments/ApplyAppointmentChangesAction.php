@@ -2,6 +2,7 @@
 
 namespace App\Actions\Appointments;
 
+use App\Actions\Notifications\PublishInternalNotificationAction;
 use App\Models\Appointment;
 use App\Models\AppointmentEvent;
 use App\Models\AppointmentItem;
@@ -14,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class ApplyAppointmentChangesAction
 {
+    public function __construct(private PublishInternalNotificationAction $publishNotification) {}
+
     public function execute(User $user, Appointment $appointment, array $data, bool $reschedule): Appointment
     {
         if (! $user->is_active || ! $user->hasPermissionTo(Permissions::APPOINTMENTS_ACCESS) || ! $user->hasPermissionTo(Permissions::APPOINTMENTS_UPDATE)) {
@@ -110,6 +113,19 @@ class ApplyAppointmentChangesAction
             $event->new_values = $newChanges;
             $event->notes = $reschedule ? ($data['reschedule_note'] ?? null) : null;
             $event->save();
+
+            if ($reschedule) {
+                $this->publishNotification->execute(
+                    $user,
+                    'appointment.rescheduled',
+                    'Cita reprogramada',
+                    "Se reprogramó la cita de {$locked->client_name}.",
+                    "/appointments?appointment={$locked->getKey()}",
+                    ['type' => 'appointment', 'id' => $locked->getKey()],
+                    "appointment-event:{$event->getKey()}",
+                    $event->occurred_at,
+                );
+            }
 
             return $locked->load(['assignedTo:id,name', 'createdBy:id,name', 'items.assignedTo:id,name', 'events.performedBy:id,name']);
         }, 3);

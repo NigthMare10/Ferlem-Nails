@@ -24,6 +24,14 @@ Cambio de prioridad aprobado el 2026-07-19. Este orden sustituye las fases histo
 | 3D | Anulacion de ventas | Pendiente | No |
 | 3E | Costos, gastos y ganancia real | Pendiente | No |
 
+## Fase tecnica transversal
+
+| Fase | Nombre | Estado | Aprobacion | Produccion |
+|---|---|---|---|---|
+| 5A | Estabilizacion final, notificaciones y produccion | En pruebas | No | Lista para desplegar |
+
+5A unifica checkout normal/citas, simplifica Ganancias, incorpora notificaciones internas database y prepara Hostinger/PHP 8.3. No cambia la aprobacion de 4B-4F y no se considera desplegada sin URL real y smoke test satisfactorio.
+
 ### Fase 3B - Ganancias Generales e ingresos diarios
 
 La pantalla `Ganancias Generales` muestra exclusivamente ingresos brutos por servicios completados: total vendido, ventas, servicios, promedio por venta, totales por empleado y totales por dia. Debe advertir que todavia no incluye costos ni gastos y nunca presentar estos ingresos como ganancia neta, utilidad o margen.

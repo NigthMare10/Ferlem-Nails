@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useDisplay } from 'vuetify';
 import type { PaymentMethod, SaleCartItem } from '../../types/sales';
+import { decimalToCents, formatHnl } from '../../utils/money';
+import SaleCheckoutSummary from './SaleCheckoutSummary.vue';
 
 defineProps<{
     modelValue: boolean;
@@ -14,7 +16,9 @@ defineProps<{
     error?: string;
     appointmentMode?: boolean;
     depositCents?: number;
+    depositFeeCents?: number;
     balanceCents?: number;
+    balanceFeeCents?: number;
 }>();
 
 const emit = defineEmits<{
@@ -23,14 +27,6 @@ const emit = defineEmits<{
 }>();
 const { xs } = useDisplay();
 
-const cents = (value: string) => {
-    const [whole, fraction = ''] = value.split('.');
-    return (Number(whole) * 100) + Number(fraction.padEnd(2, '0').slice(0, 2));
-};
-const money = (value: number) => new Intl.NumberFormat('es-HN', {
-    style: 'currency',
-    currency: 'HNL',
-}).format(value / 100);
 </script>
 
 <template>
@@ -57,37 +53,17 @@ const money = (value: number) => new Intl.NumberFormat('es-HN', {
                 <VList class="confirm-sale-dialog__list pa-0" lines="two">
                     <VListItem v-for="item in items" :key="item.id" class="px-0">
                         <VListItemTitle class="font-weight-bold">{{ item.name }}</VListItemTitle>
-                        <VListItemSubtitle>{{ item.quantity }} × {{ money(cents(item.price)) }}</VListItemSubtitle>
+                        <VListItemSubtitle>{{ item.quantity }} × {{ formatHnl(decimalToCents(item.price)) }}</VListItemSubtitle>
                         <template #append>
-                            <span class="font-weight-bold">{{ money(cents(item.price) * item.quantity) }}</span>
+                            <span class="font-weight-bold">{{ formatHnl(decimalToCents(item.price) * item.quantity) }}</span>
                         </template>
                     </VListItem>
                 </VList>
                 <VDivider class="my-4" />
-                <div class="d-flex justify-space-between text-body-2 mb-2">
-                    <span>Total de servicios</span>
-                    <strong>{{ totalServices }}</strong>
-                </div>
-                <div v-if="appointmentMode && depositCents" class="d-flex justify-space-between text-body-2 mb-2">
-                    <span>Adelanto aplicado</span><strong>− {{ money(depositCents) }}</strong>
-                </div>
-                <div class="d-flex justify-space-between text-body-2 mb-2">
-                    <span>Método de pago</span>
-                    <strong>{{ appointmentMode && balanceCents === 0 ? 'Cubierto por adelanto' : paymentMethod === 'card' ? 'Tarjeta' : 'Efectivo' }}</strong>
-                </div>
-                <template v-if="!appointmentMode && paymentMethod === 'card'">
-                    <div class="d-flex justify-space-between text-body-2 mb-2">
-                        <span>Comisión POS 4%</span>
-                        <strong>{{ money(cardFeeCents) }}</strong>
-                    </div>
-                    <div class="d-flex justify-space-between text-body-2 mb-3">
-                        <span>Ingreso neto</span>
-                        <strong>{{ money(netAmountCents) }}</strong>
-                    </div>
-                </template>
+                <SaleCheckoutSummary :total-cents="totalCents" :total-services="totalServices" :payment-method="paymentMethod" :deposit-cents="depositCents" :deposit-fee-cents="depositFeeCents" :balance-cents="appointmentMode ? (balanceCents ?? totalCents) : totalCents" :balance-fee-cents="balanceFeeCents ?? cardFeeCents" :total-fee-cents="cardFeeCents" :net-amount-cents="netAmountCents" />
                 <div class="d-flex justify-space-between align-end">
                     <span class="text-body-1 font-weight-bold">{{ appointmentMode ? 'Saldo final a cobrar' : 'Total a cobrar' }}</span>
-                    <span class="text-h5 font-weight-bold text-primary">{{ money(appointmentMode ? (balanceCents ?? totalCents) : totalCents) }}</span>
+                    <span class="text-h5 font-weight-bold text-primary">{{ formatHnl(appointmentMode ? (balanceCents ?? totalCents) : totalCents) }}</span>
                 </div>
             </VCardText>
 

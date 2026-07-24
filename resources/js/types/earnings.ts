@@ -44,16 +44,6 @@ export type AppointmentProjection = {
     pending_balance: string;
 };
 
-export type OtherIncome = {
-    retained_deposits_count: number;
-    retained_deposits: string;
-};
-
-export type Outflows = {
-    refunds_count: number;
-    refunded_deposits: string;
-};
-
 export type EmployeeSummary = EarningsSummary & {
     id: number;
     name: string;

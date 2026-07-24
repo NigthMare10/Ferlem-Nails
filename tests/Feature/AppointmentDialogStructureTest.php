@@ -130,6 +130,18 @@ class AppointmentDialogStructureTest extends TestCase
         $this->assertStringContainsString('meta[name="csrf-token"]', $detailsDialog);
     }
 
+    public function test_service_selector_closes_after_each_selection_without_removing_multiple_selection(): void
+    {
+        $component = file_get_contents(resource_path('js/Components/Appointments/AppointmentFormDialog.vue'));
+
+        $this->assertNotFalse($component);
+        $this->assertStringContainsString('const servicesMenuOpen = ref(false)', $component);
+        $this->assertStringContainsString('v-model:menu="servicesMenuOpen"', $component);
+        $this->assertStringContainsString('@update:model-value="closeServicesMenu"', $component);
+        $this->assertStringContainsString('servicesMenuOpen.value = false', $component);
+        $this->assertStringContainsString('multiple chips closable-chips', $component);
+    }
+
     public function test_phase_four_c_deposits_share_the_existing_dialog_shell_without_later_features(): void
     {
         $component = file_get_contents(resource_path('js/Components/Appointments/AppointmentDetailsDialog.vue'));

@@ -94,6 +94,7 @@ class AppointmentController extends Controller
             'calendar_days' => $view === 'month' ? $calendar->execute($user, $month, $employeeId) : [],
             'assignees' => $assignees->map->only(['id', 'name'])->values(),
             'services' => SaleServiceResource::collection($services)->resolve($request),
+            'openAppointmentId' => $request->integer('appointment') ?: null,
         ]);
     }
 

@@ -1,6 +1,7 @@
 import 'vuetify/styles';
 import '../css/app.css';
 import { createApp, h } from 'vue';
+import type { DefineComponent } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
@@ -46,7 +47,7 @@ const vuetify = createVuetify({
 
 createInertiaApp({
     resolve: name => {
-        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true }) as Record<string, { default: unknown }>;
+        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true }) as Record<string, { default: DefineComponent }>;
         return pages[`./Pages/${name}.vue`];
     },
     setup({ el, App, props, plugin }) { createApp({ render: () => h(App, props) }).use(plugin).use(vuetify).mount(el); },

@@ -8,6 +8,7 @@ const props = defineProps<{ modelValue: boolean; date: string; assignees: Appoin
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 const { xs } = useDisplay();
 const selectedServiceIds = ref<number[]>([]);
+const servicesMenuOpen = ref(false);
 const samePerson = ref(true);
 const commonAssignee = ref<number | null>(null);
 const availabilityLoading = ref(false);
@@ -76,9 +77,14 @@ function scheduleAvailability(): void {
     availabilityTimer = setTimeout(() => { void loadAvailability(); }, 250);
 }
 
+function closeServicesMenu(): void {
+    servicesMenuOpen.value = false;
+}
+
 watch(() => props.modelValue, open => {
     if (!open) return;
     selectedServiceIds.value = [];
+    servicesMenuOpen.value = false;
     samePerson.value = true;
     commonAssignee.value = props.assignees[0]?.id ?? null;
     availabilityLoaded.value = false;
@@ -102,7 +108,7 @@ function money(value: number | string): string { return new Intl.NumberFormat('e
     <VDialog :model-value="modelValue" :fullscreen="xs" :persistent="form.processing" max-width="780" scrollable @update:model-value="value => value ? undefined : close()">
         <VCard><VToolbar color="surface" flat><VToolbarTitle class="font-weight-bold">Nueva cita</VToolbarTitle><VBtn icon="mdi-close" aria-label="Cerrar" :disabled="form.processing" @click="close" /></VToolbar><VDivider />
             <VCardText class="pa-4 pa-sm-7"><VForm @submit.prevent="save"><div class="form-section-title">Información de la clienta</div><VRow><VCol cols="12" sm="7"><VTextField v-model="form.client_name" label="Nombre de la clienta" :error-messages="form.errors.client_name" /></VCol><VCol cols="12" sm="5"><VTextField v-model="form.client_phone" label="Teléfono (opcional)" :error-messages="form.errors.client_phone" /></VCol></VRow><VTextField v-model="form.date" type="date" label="Fecha" :error-messages="form.errors.date" />
-                <div class="form-section-title mt-2">Servicios</div><VAutocomplete v-model="selectedServiceIds" label="Selecciona uno o varios servicios" :items="services" item-title="name" item-value="id" multiple chips closable-chips :error-messages="form.errors.items" />
+                <div class="form-section-title mt-2">Servicios</div><VAutocomplete v-model="selectedServiceIds" v-model:menu="servicesMenuOpen" label="Selecciona uno o varios servicios" :items="services" item-title="name" item-value="id" multiple chips closable-chips :error-messages="form.errors.items" @update:model-value="closeServicesMenu" />
                 <VAlert v-if="selectedItems.length && !canAssign" type="info" variant="tonal" density="compact" class="mb-3">Tú realizarás los servicios de esta cita</VAlert>
                 <template v-if="canAssign"><VSwitch v-if="selectedItems.length" v-model="samePerson" label="Una misma persona realizará todos los servicios" color="primary" hide-details class="mb-3" /><VSelect v-if="samePerson && selectedItems.length" v-model="commonAssignee" label="Persona asignada" :items="assignees" item-title="name" item-value="id" /></template>
                 <VCard v-for="entry in selectedItems" :key="entry.item.service_id" variant="outlined" class="pa-4 mb-3" rounded="lg"><div class="font-weight-bold">{{ entry.service!.name }} · {{ money(entry.service!.price) }}</div><div class="text-caption text-medium-emphasis mb-3">Tiempo habitual: {{ entry.service!.duration_minutes }} min</div><VRow><VCol cols="6"><VTextField v-model.number="entry.item.duration_minutes" type="number" min="5" max="480" step="5" label="Duración reservada" suffix="min" /></VCol><VCol cols="6"><VTextField v-model.number="entry.item.quantity" type="number" min="1" max="20" label="Cantidad" /></VCol></VRow><VSelect v-if="canAssign && !samePerson" v-model="entry.item.assigned_to" label="Persona asignada" :items="assignees" item-title="name" item-value="id" /><div class="text-caption text-primary">Horario: {{ segment(entry.index, entry.item) }}</div></VCard>

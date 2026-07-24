@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppointmentDetailsDialog from '../../Components/Appointments/AppointmentDetailsDialog.vue';
 import AppointmentFormDialog from '../../Components/Appointments/AppointmentFormDialog.vue';
@@ -39,6 +39,7 @@ const props = defineProps<{
     appointments: Appointment[];
     assignees: AppointmentAssignee[];
     services: AppointmentService[];
+    openAppointmentId?: number | null;
 }>();
 
 const { can } = usePermissions();
@@ -214,6 +215,15 @@ function clearDetails(): void {
     detailsError.value = null;
     detailsLoading.value = false;
 }
+
+watch(() => props.openAppointmentId, appointmentId => {
+    if (!appointmentId) return;
+    selectedAppointmentId.value = appointmentId;
+    selectedAppointment.value = null;
+    selectedDialogMode.value = 'detail';
+    detailsOpen.value = true;
+    void loadDetails();
+}, { immediate: true });
 </script>
 
 <template>

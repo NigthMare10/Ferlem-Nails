@@ -2,6 +2,7 @@
 
 namespace App\Actions\Appointments;
 
+use App\Actions\Notifications\PublishInternalNotificationAction;
 use App\Models\AppointmentDeposit;
 use App\Models\AppointmentDepositRefund;
 use App\Models\AppointmentEvent;
@@ -19,6 +20,8 @@ class ResolveAppointmentDepositAction
     public const FULL_RETENTION = 'full_retention';
 
     public const PARTIAL_REFUND = 'partial_refund';
+
+    public function __construct(private PublishInternalNotificationAction $publishNotification) {}
 
     public function executeWithinTransaction(
         User $user,
@@ -96,6 +99,22 @@ class ResolveAppointmentDepositAction
         ];
         $event->notes = $data['resolution_notes'] ?? null;
         $event->save();
+
+        [$type, $title, $message] = match ($status) {
+            AppointmentDeposit::STATUS_REFUNDED => ['appointment.deposit_refunded', 'Adelanto devuelto', 'Se devolvió completamente un adelanto.'],
+            AppointmentDeposit::STATUS_PARTIALLY_REFUNDED => ['appointment.deposit_partially_refunded', 'Adelanto devuelto parcialmente', 'Se devolvió parcialmente un adelanto y se retuvo el saldo.'],
+            default => ['appointment.deposit_retained', 'Adelanto retenido', 'Se retuvo completamente un adelanto.'],
+        };
+        $this->publishNotification->execute(
+            $user,
+            $type,
+            $title,
+            $message,
+            "/appointments?appointment={$deposit->appointment_id}",
+            ['type' => 'appointment_deposit', 'id' => $deposit->getKey(), 'appointment_id' => $deposit->appointment_id],
+            "appointment-event:{$event->getKey()}",
+            $event->occurred_at,
+        );
 
         return $deposit;
     }

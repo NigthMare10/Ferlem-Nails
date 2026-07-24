@@ -23,7 +23,7 @@ export type AppointmentCheckoutContext = {
     pending_balance: string;
     can_assign: boolean;
     can_resolve_deposit: boolean;
-    deposit: null | { id: number; amount: string; available_amount: string; payment_method: PaymentMethod; payment_method_label: string };
+    deposit: null | { id: number; amount: string; available_amount: string; payment_method: PaymentMethod; payment_method_label: string; card_fee_amount: string };
     items: Array<{
         appointment_item_id: number;
         service_id: number | null;

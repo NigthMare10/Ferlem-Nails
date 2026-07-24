@@ -4,10 +4,8 @@ namespace App\Actions\Reports;
 
 use App\Models\Appointment;
 use App\Models\AppointmentDeposit;
-use App\Models\AppointmentDepositRefund;
 use App\Support\Money;
 use App\Support\ReportPeriod;
-use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 
 final class BuildAppointmentProjectionAction
@@ -108,7 +106,6 @@ final class BuildAppointmentProjectionAction
                 'deposits_received' => Money::fromCents($depositsReceivedCents),
                 'pending_balance' => Money::fromCents($pendingBalanceCents),
             ],
-            ...$this->buildAdjustments($localStart, $localEnd, $employeeId),
             'projection_employees' => collect($employees)->map(fn (array $row) => [
                 'id' => $row['id'],
                 'name' => $row['name'],
@@ -117,56 +114,6 @@ final class BuildAppointmentProjectionAction
                 'projected_gross' => Money::fromCents($row['gross_cents']),
                 'pending_balance' => Money::fromCents($row['pending_cents']),
             ])->values()->all(),
-        ];
-    }
-
-    public function executeAdjustments(array $filters): array
-    {
-        [$localStart, $localEnd] = ReportPeriod::bounds($filters);
-        $employeeId = isset($filters['employee_id']) ? (int) $filters['employee_id'] : null;
-
-        return $this->buildAdjustments($localStart, $localEnd, $employeeId);
-    }
-
-    private function buildAdjustments(CarbonImmutable $localStart, CarbonImmutable $localEnd, ?int $employeeId): array
-    {
-        $retained = AppointmentDeposit::query()
-            ->whereIn('status', [AppointmentDeposit::STATUS_RETAINED, AppointmentDeposit::STATUS_PARTIALLY_REFUNDED])
-            ->whereNotNull('resolved_at')
-            ->where('resolved_at', '>=', $localStart->utc())
-            ->where('resolved_at', '<', $localEnd->utc())
-            ->whereHas('appointment', function (Builder $query) use ($employeeId) {
-                $query->whereIn('status', [Appointment::STATUS_CANCELED, Appointment::STATUS_NO_SHOW])
-                    ->when($employeeId !== null, fn (Builder $appointment) => $appointment->whereHas(
-                        'items', fn (Builder $items) => $items->where('assigned_to', $employeeId),
-                    ));
-            })
-            ->toBase()
-            ->selectRaw('COUNT(*) as deposits_count')
-            ->selectRaw('COALESCE(SUM(retained_amount), 0) as amount')
-            ->first();
-
-        $refunded = AppointmentDepositRefund::query()
-            ->where('refunded_at', '>=', $localStart->utc())
-            ->where('refunded_at', '<', $localEnd->utc())
-            ->when($employeeId !== null, fn (Builder $query) => $query->whereHas(
-                'deposit.appointment.items',
-                fn (Builder $items) => $items->where('assigned_to', $employeeId),
-            ))
-            ->toBase()
-            ->selectRaw('COUNT(*) as refunds_count')
-            ->selectRaw('COALESCE(SUM(amount), 0) as amount')
-            ->first();
-
-        return [
-            'other_income' => [
-                'retained_deposits_count' => (int) $retained->deposits_count,
-                'retained_deposits' => Money::fromCents(Money::toCents((string) $retained->amount)),
-            ],
-            'outflows' => [
-                'refunds_count' => (int) $refunded->refunds_count,
-                'refunded_deposits' => Money::fromCents(Money::toCents((string) $refunded->amount)),
-            ],
         ];
     }
 

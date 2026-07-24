@@ -34,6 +34,7 @@ const money = (value: string) => new Intl.NumberFormat('es-HN', {
     style: 'currency',
     currency: 'HNL',
 }).format(Number(value));
+const printReceipt = () => window.print();
 </script>
 
 <template>
@@ -42,7 +43,7 @@ const money = (value: string) => new Intl.NumberFormat('es-HN', {
         <VMain class="receipt-page">
             <div class="receipt-actions">
                 <VBtn variant="outlined" prepend-icon="mdi-plus" @click="router.visit('/sales/new')">Nueva venta</VBtn>
-                <VBtn color="primary" prepend-icon="mdi-printer-outline" @click="window.print()">Imprimir</VBtn>
+                <VBtn color="primary" prepend-icon="mdi-printer-outline" @click="printReceipt">Imprimir</VBtn>
             </div>
 
             <article class="receipt-paper" aria-label="Comprobante de venta">

@@ -6,6 +6,7 @@ use App\Http\Controllers\CashController;
 use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
@@ -20,6 +21,12 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/', HomeController::class)->name('home');
+    Route::middleware('permission:'.Permissions::NOTIFICATIONS_ACCESS)->group(function () {
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('/notifications/recent', [NotificationController::class, 'recent'])->name('notifications.recent');
+        Route::patch('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
+        Route::patch('/notifications/read-all', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    });
     Route::get('/cash', [CashController::class, 'index'])
         ->middleware([
             'permission:'.Permissions::SALES_ACCESS,

@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Support\Permissions;
 use App\Models\User;
+use App\Support\Permissions;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AppointmentsIndexRequest extends FormRequest
@@ -41,10 +41,13 @@ class AppointmentsIndexRequest extends FormRequest
     {
         return [function ($validator) {
             $employeeId = $this->input('employee_id');
-            if (! $employeeId) return;
+            if (! $employeeId) {
+                return;
+            }
             $user = $this->user();
             if (! $user->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL)) {
                 $validator->errors()->add('employee_id', 'No puedes filtrar la agenda de otra persona.');
+
                 return;
             }
             if (! User::query()->whereKey($employeeId)->where('is_active', true)->permission(Permissions::APPOINTMENTS_PERFORM)->exists()) {

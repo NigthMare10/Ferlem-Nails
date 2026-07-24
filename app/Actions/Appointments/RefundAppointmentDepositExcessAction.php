@@ -2,6 +2,7 @@
 
 namespace App\Actions\Appointments;
 
+use App\Actions\Notifications\PublishInternalNotificationAction;
 use App\Models\Appointment;
 use App\Models\AppointmentDeposit;
 use App\Models\AppointmentDepositRefund;
@@ -17,6 +18,8 @@ use Illuminate\Validation\ValidationException;
 
 class RefundAppointmentDepositExcessAction
 {
+    public function __construct(private PublishInternalNotificationAction $publishNotification) {}
+
     public function execute(User $user, Appointment $appointment, array $data): AppointmentDeposit
     {
         $this->authorizeGlobal($user);
@@ -79,6 +82,17 @@ class RefundAppointmentDepositExcessAction
                 ];
                 $event->notes = $data['note'] ?? 'Devolución de excedente antes del cobro.';
                 $event->save();
+
+                $this->publishNotification->execute(
+                    $user,
+                    'appointment.deposit_excess_refunded',
+                    'Excedente de adelanto devuelto',
+                    "Se devolvió un excedente del adelanto de la cita de {$locked->client_name}.",
+                    "/appointments?appointment={$locked->getKey()}",
+                    ['type' => 'appointment_deposit', 'id' => $deposit->getKey(), 'appointment_id' => $locked->getKey()],
+                    "appointment-event:{$event->getKey()}",
+                    $event->occurred_at,
+                );
 
                 return $deposit->fresh(['refunds']);
             }, 3);

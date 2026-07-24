@@ -129,7 +129,7 @@ class Phase4EAppointmentProjectionTest extends TestCase
                 ->where('projection.pending_balance', '90.00'));
     }
 
-    public function test_actual_mode_includes_real_adjustments_without_projection_payload(): void
+    public function test_financial_adjustments_remain_persisted_but_are_not_exposed_in_earnings(): void
     {
         $owner = $this->user('owner');
         $employee = $this->user('employee');
@@ -150,32 +150,15 @@ class Phase4EAppointmentProjectionTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->has('actual')
                 ->missing('projection')
-                ->where('other_income.retained_deposits_count', 1)
-                ->where('other_income.retained_deposits', '45.00')
-                ->where('outflows.refunds_count', 1)
-                ->where('outflows.refunded_deposits', '15.00'));
-    }
-
-    public function test_retained_deposits_and_refunds_are_separate_and_employee_scope_counts_each_once(): void
-    {
-        $owner = $this->user('owner');
-        $ana = $this->user('employee', 'Ana');
-        $bea = $this->user('employee', 'Bea');
-        $appointment = $this->appointment($owner, '2026-07-20 10:00:00', [[$ana, '50.00', 1], [$bea, '50.00', 1]], Appointment::STATUS_CANCELED);
-        $deposit = $this->deposit($appointment, $owner, '50.00', AppointmentDeposit::STATUS_PARTIALLY_REFUNDED, [
-            'refunded_amount' => '20.00',
-            'retained_amount' => '30.00',
-            'resolved_at' => $this->utc('2026-07-25 09:00:00'),
-        ]);
-        $this->refund($deposit, $owner, '20.00', '2026-07-25 09:05:00');
-
-        $this->actingAs($owner)->get("/earnings?mode=projection&period=today&date=2026-07-25&employee_id={$ana->id}")
+                ->missing('other_income')
+                ->missing('outflows'));
+        $this->get('/earnings?mode=projection&period=today&date=2026-07-25')
             ->assertInertia(fn (Assert $page) => $page
-                ->where('projection.projected_gross', '0.00')
-                ->where('other_income.retained_deposits_count', 1)
-                ->where('other_income.retained_deposits', '30.00')
-                ->where('outflows.refunds_count', 1)
-                ->where('outflows.refunded_deposits', '20.00'));
+                ->has('projection')
+                ->missing('other_income')
+                ->missing('outflows'));
+        $this->assertDatabaseHas('appointment_deposits', ['id' => $deposit->id, 'retained_amount' => 45]);
+        $this->assertDatabaseHas('appointment_deposit_refunds', ['appointment_deposit_id' => $deposit->id, 'amount' => 15]);
     }
 
     public function test_actual_results_and_filter_are_attributed_to_performer_not_cashier(): void

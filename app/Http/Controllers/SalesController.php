@@ -63,6 +63,7 @@ class SalesController extends Controller
                     'available_amount' => $deposit->availableAmount(),
                     'payment_method' => $deposit->payment_method,
                     'payment_method_label' => $deposit->payment_method === Sale::PAYMENT_METHOD_CARD ? 'Tarjeta' : 'Efectivo',
+                    'card_fee_amount' => $deposit->card_fee_amount,
                 ] : null,
                 'pending_balance' => Money::fromCents(max(0, Money::toCents($appointment->expected_total) - $depositCents)),
                 'can_assign' => $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN),

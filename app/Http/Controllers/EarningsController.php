@@ -29,13 +29,8 @@ class EarningsController extends Controller
         if ($mode !== 'projection') {
             $payload = [...$payload, ...$salesReport->execute($filters)];
         }
-        if ($canViewProjection) {
-            $payload = [
-                ...$payload,
-                ...($mode === 'actual'
-                    ? $projectionReport->executeAdjustments($filters)
-                    : $projectionReport->execute($filters)),
-            ];
+        if ($canViewProjection && $mode !== 'actual') {
+            $payload = [...$payload, ...$projectionReport->execute($filters)];
         }
 
         $hasProjection = isset($payload['projection']);

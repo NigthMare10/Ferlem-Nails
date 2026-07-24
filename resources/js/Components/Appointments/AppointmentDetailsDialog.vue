@@ -35,6 +35,11 @@ const rescheduleForm = useForm({
 const depositForm = useForm({ amount: '', payment_method: 'cash', note: '' });
 const cancelForm = useForm({ reason: '', deposit_resolution: '', refund_amount: '', resolution_notes: '', operation_token: '' });
 const noShowForm = useForm({ reason: '', deposit_resolution: '', refund_amount: '', resolution_notes: '', operation_token: '' });
+const editErrors = computed(() => editForm.errors as Record<string, string | undefined>);
+const rescheduleErrors = computed(() => rescheduleForm.errors as Record<string, string | undefined>);
+const depositErrors = computed(() => depositForm.errors as Record<string, string | undefined>);
+const cancelErrors = computed(() => cancelForm.errors as Record<string, string | undefined>);
+const noShowErrors = computed(() => noShowForm.errors as Record<string, string | undefined>);
 const availabilityLoading = ref(false);
 const availableTimes = ref<string[]>([]);
 const availabilityMessage = ref('');
@@ -353,14 +358,14 @@ watch(
                 </template>
 
                 <template v-else-if="mode === 'edit'">
-                    <VAlert v-if="editForm.errors.appointment" type="error" variant="tonal" class="mb-5">{{ editForm.errors.appointment }}</VAlert>
+                    <VAlert v-if="editErrors.appointment" type="error" variant="tonal" class="mb-5">{{ editErrors.appointment }}</VAlert>
                     <div class="form-section-title">Información de la clienta</div>
                     <VRow><VCol cols="12" sm="7"><VTextField v-model="editForm.client_name" label="Nombre de la clienta" :error-messages="editForm.errors.client_name" :disabled="editForm.processing" /></VCol><VCol cols="12" sm="5"><VTextField v-model="editForm.client_phone" label="Teléfono (opcional)" :error-messages="editForm.errors.client_phone" :disabled="editForm.processing" /></VCol></VRow>
                     <VTextarea v-model="editForm.notes" label="Notas (opcional)" rows="3" counter="1000" :error-messages="editForm.errors.notes" :disabled="editForm.processing" />
                 </template>
 
                 <template v-else-if="mode === 'reschedule'">
-                    <VAlert v-if="rescheduleForm.errors.appointment" type="error" variant="tonal" class="mb-5">{{ rescheduleForm.errors.appointment }}</VAlert>
+                    <VAlert v-if="rescheduleErrors.appointment" type="error" variant="tonal" class="mb-5">{{ rescheduleErrors.appointment }}</VAlert>
                     <VAlert type="info" variant="tonal" density="compact" class="mb-5">Los servicios, cantidades, duración y total reservado no cambian al reprogramar.</VAlert>
                     <div class="form-section-title">Nuevo horario</div>
                     <VRow><VCol cols="12" sm="7"><VTextField v-model="rescheduleForm.date" type="date" label="Fecha" :error-messages="rescheduleForm.errors.date" :disabled="rescheduleForm.processing" /></VCol><VCol cols="12" sm="5"><VSelect v-model="rescheduleForm.start_time" label="Hora disponible" :items="availableTimes" :loading="availabilityLoading" :disabled="!availableTimes.length || rescheduleForm.processing" :error-messages="rescheduleForm.errors.start_time" /></VCol></VRow>
@@ -374,7 +379,7 @@ watch(
                 </template>
 
                 <template v-else-if="mode === 'deposit'">
-                    <VAlert v-if="depositForm.errors.appointment || depositForm.errors.deposit" type="error" variant="tonal" class="mb-5">{{ depositForm.errors.appointment || depositForm.errors.deposit }}</VAlert>
+                    <VAlert v-if="depositErrors.appointment || depositErrors.deposit" type="error" variant="tonal" class="mb-5">{{ depositErrors.appointment || depositErrors.deposit }}</VAlert>
                     <VAlert type="info" variant="tonal" density="compact" class="mb-5">El adelanto se registra separado de la venta y reduce únicamente el saldo estimado.</VAlert>
                     <VRow><VCol cols="12" sm="6"><VTextField v-model="depositForm.amount" type="number" min="0.01" step="0.01" :max="appointment.visible_total" label="Monto recibido" prefix="L" :error-messages="depositForm.errors.amount" :disabled="depositForm.processing" /></VCol><VCol cols="12" sm="6"><VSelect v-model="depositForm.payment_method" label="Método de pago" :items="[{ title: 'Efectivo', value: 'cash' }, { title: 'Tarjeta', value: 'card' }]" :error-messages="depositForm.errors.payment_method" :disabled="depositForm.processing" /></VCol></VRow>
                     <VTextarea v-model="depositForm.note" label="Nota (opcional)" rows="3" counter="500" :error-messages="depositForm.errors.note" :disabled="depositForm.processing" />
@@ -382,19 +387,19 @@ watch(
                 </template>
 
                 <template v-else-if="mode === 'cancel'">
-                    <VAlert v-if="cancelForm.errors.appointment" type="error" variant="tonal" class="mb-5">{{ cancelForm.errors.appointment }}</VAlert>
+                    <VAlert v-if="cancelErrors.appointment" type="error" variant="tonal" class="mb-5">{{ cancelErrors.appointment }}</VAlert>
                     <div class="terminal-summary"><strong>{{ appointment.client_name }}</strong><span class="text-capitalize">{{ dateLabel(appointment.date) }} · {{ appointment.visible_start_time }}</span><span>{{ appointment.visible_items.map(item => item.service_name).join(', ') }}</span></div>
                     <VAlert type="warning" variant="tonal" class="my-5">La cita dejará de ocupar estos horarios.</VAlert>
                     <VTextarea v-model="cancelForm.reason" label="Motivo" rows="4" counter="500" :error-messages="cancelForm.errors.reason" :disabled="cancelForm.processing" autofocus />
-                    <VCard v-if="appointment.has_pending_deposit" variant="outlined" rounded="lg" class="pa-4 mt-5"><div class="form-section-title">Resolver saldo disponible de {{ money(appointment.deposit!.available_amount) }}</div><VAlert v-if="cancelForm.errors.deposit_resolution" type="error" variant="tonal" density="compact" class="mb-3">{{ cancelForm.errors.deposit_resolution }}</VAlert><VSelect v-model="cancelForm.deposit_resolution" label="Resolución obligatoria" :items="[{ title: 'Devolución completa', value: 'full_refund' }, { title: 'Retención completa', value: 'full_retention' }, { title: 'Devolución parcial', value: 'partial_refund' }]" :disabled="cancelForm.processing" /><VTextField v-if="cancelForm.deposit_resolution === 'partial_refund'" v-model="cancelForm.refund_amount" type="number" min="0.01" step="0.01" :max="appointment.deposit!.available_amount" label="Monto a devolver" prefix="L" :error-messages="cancelForm.errors.refund_amount" :disabled="cancelForm.processing" /><VTextarea v-model="cancelForm.resolution_notes" label="Nota de resolución (opcional)" rows="2" counter="500" :error-messages="cancelForm.errors.resolution_notes" :disabled="cancelForm.processing" /></VCard>
+                    <VCard v-if="appointment.has_pending_deposit" variant="outlined" rounded="lg" class="pa-4 mt-5"><div class="form-section-title">Resolver saldo disponible de {{ money(appointment.deposit!.available_amount ?? '0.00') }}</div><VAlert v-if="cancelForm.errors.deposit_resolution" type="error" variant="tonal" density="compact" class="mb-3">{{ cancelForm.errors.deposit_resolution }}</VAlert><VSelect v-model="cancelForm.deposit_resolution" label="Resolución obligatoria" :items="[{ title: 'Devolución completa', value: 'full_refund' }, { title: 'Retención completa', value: 'full_retention' }, { title: 'Devolución parcial', value: 'partial_refund' }]" :disabled="cancelForm.processing" /><VTextField v-if="cancelForm.deposit_resolution === 'partial_refund'" v-model="cancelForm.refund_amount" type="number" min="0.01" step="0.01" :max="appointment.deposit!.available_amount" label="Monto a devolver" prefix="L" :error-messages="cancelForm.errors.refund_amount" :disabled="cancelForm.processing" /><VTextarea v-model="cancelForm.resolution_notes" label="Nota de resolución (opcional)" rows="2" counter="500" :error-messages="cancelForm.errors.resolution_notes" :disabled="cancelForm.processing" /></VCard>
                 </template>
 
                 <template v-else-if="mode === 'no_show'">
-                    <VAlert v-if="noShowForm.errors.appointment" type="error" variant="tonal" class="mb-5">{{ noShowForm.errors.appointment }}</VAlert>
+                    <VAlert v-if="noShowErrors.appointment" type="error" variant="tonal" class="mb-5">{{ noShowErrors.appointment }}</VAlert>
                     <div class="terminal-summary"><strong>{{ appointment.client_name }}</strong><span class="text-capitalize">{{ dateLabel(appointment.date) }} · {{ appointment.visible_start_time }}</span></div>
                     <VAlert type="warning" variant="tonal" class="my-5">La cita se marcará como no presentada.</VAlert>
                     <VTextarea v-model="noShowForm.reason" label="Motivo" rows="4" counter="500" :error-messages="noShowForm.errors.reason" :disabled="noShowForm.processing" autofocus />
-                    <VCard v-if="appointment.has_pending_deposit" variant="outlined" rounded="lg" class="pa-4 mt-5"><div class="form-section-title">Resolver saldo disponible de {{ money(appointment.deposit!.available_amount) }}</div><VAlert v-if="noShowForm.errors.deposit_resolution" type="error" variant="tonal" density="compact" class="mb-3">{{ noShowForm.errors.deposit_resolution }}</VAlert><VSelect v-model="noShowForm.deposit_resolution" label="Resolución obligatoria" :items="[{ title: 'Devolución completa', value: 'full_refund' }, { title: 'Retención completa', value: 'full_retention' }, { title: 'Devolución parcial', value: 'partial_refund' }]" :disabled="noShowForm.processing" /><VTextField v-if="noShowForm.deposit_resolution === 'partial_refund'" v-model="noShowForm.refund_amount" type="number" min="0.01" step="0.01" :max="appointment.deposit!.available_amount" label="Monto a devolver" prefix="L" :error-messages="noShowForm.errors.refund_amount" :disabled="noShowForm.processing" /><VTextarea v-model="noShowForm.resolution_notes" label="Nota de resolución (opcional)" rows="2" counter="500" :error-messages="noShowForm.errors.resolution_notes" :disabled="noShowForm.processing" /></VCard>
+                    <VCard v-if="appointment.has_pending_deposit" variant="outlined" rounded="lg" class="pa-4 mt-5"><div class="form-section-title">Resolver saldo disponible de {{ money(appointment.deposit!.available_amount ?? '0.00') }}</div><VAlert v-if="noShowForm.errors.deposit_resolution" type="error" variant="tonal" density="compact" class="mb-3">{{ noShowForm.errors.deposit_resolution }}</VAlert><VSelect v-model="noShowForm.deposit_resolution" label="Resolución obligatoria" :items="[{ title: 'Devolución completa', value: 'full_refund' }, { title: 'Retención completa', value: 'full_retention' }, { title: 'Devolución parcial', value: 'partial_refund' }]" :disabled="noShowForm.processing" /><VTextField v-if="noShowForm.deposit_resolution === 'partial_refund'" v-model="noShowForm.refund_amount" type="number" min="0.01" step="0.01" :max="appointment.deposit!.available_amount" label="Monto a devolver" prefix="L" :error-messages="noShowForm.errors.refund_amount" :disabled="noShowForm.processing" /><VTextarea v-model="noShowForm.resolution_notes" label="Nota de resolución (opcional)" rows="2" counter="500" :error-messages="noShowForm.errors.resolution_notes" :disabled="noShowForm.processing" /></VCard>
                 </template>
             </VCardText>
 

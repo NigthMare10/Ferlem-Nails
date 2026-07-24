@@ -364,7 +364,7 @@ class Phase4DAppointmentCheckoutTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('appointment.deposit.available_amount', '50.00')
                 ->where('appointment.pending_balance', '50.00')
-                ->missing('appointment.deposit.card_fee_amount'));
+                ->where('appointment.deposit.card_fee_amount', '3.20'));
         $this->getJson("/appointments/{$appointment->id}")
             ->assertJsonPath('appointment.deposit.available_amount', '50.00')
             ->assertJsonPath('appointment.events.0.type', AppointmentEvent::TYPE_DEPOSIT_EXCESS_REFUNDED);

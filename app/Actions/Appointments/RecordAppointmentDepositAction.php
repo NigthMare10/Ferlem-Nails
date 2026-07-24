@@ -2,6 +2,7 @@
 
 namespace App\Actions\Appointments;
 
+use App\Actions\Notifications\PublishInternalNotificationAction;
 use App\Models\Appointment;
 use App\Models\AppointmentDeposit;
 use App\Models\AppointmentEvent;
@@ -14,6 +15,8 @@ use Illuminate\Validation\ValidationException;
 
 class RecordAppointmentDepositAction
 {
+    public function __construct(private PublishInternalNotificationAction $publishNotification) {}
+
     public function execute(User $user, Appointment $appointment, array $data): AppointmentDeposit
     {
         $this->authorize($user, $appointment);
@@ -72,6 +75,17 @@ class RecordAppointmentDepositAction
             ];
             $event->notes = $data['note'] ?? null;
             $event->save();
+
+            $this->publishNotification->execute(
+                $user,
+                'appointment.deposit_recorded',
+                'Adelanto registrado',
+                "Se registró un adelanto para la cita de {$locked->client_name}.",
+                "/appointments?appointment={$locked->getKey()}",
+                ['type' => 'appointment_deposit', 'id' => $deposit->getKey(), 'appointment_id' => $locked->getKey()],
+                "appointment-event:{$event->getKey()}",
+                $event->occurred_at,
+            );
 
             return $deposit;
         }, 3);

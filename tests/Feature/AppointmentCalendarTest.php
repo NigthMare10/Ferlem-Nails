@@ -16,28 +16,49 @@ class AppointmentCalendarTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void { parent::setUp(); $this->seed(DatabaseSeeder::class); Carbon::setTestNow('2026-07-20 14:00:00'); }
-    protected function tearDown(): void { Carbon::setTestNow(); parent::tearDown(); }
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(DatabaseSeeder::class);
+        Carbon::setTestNow('2026-07-20 14:00:00');
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
 
     public function test_monthly_calendar_scopes_segments_counts_distinct_appointments_and_keeps_payload_compact(): void
     {
-        $owner = $this->user('owner'); $first = $this->user('employee'); $second = $this->user('employee');
-        $facial = $this->service('Facial'); $pedi = $this->service('Pedispa');
+        $owner = $this->user('owner');
+        $first = $this->user('employee');
+        $second = $this->user('employee');
+        $facial = $this->service('Facial');
+        $pedi = $this->service('Pedispa');
         app(CreateAppointmentAction::class)->execute($owner, ['client_name' => 'Lucía', 'date' => '2026-07-21', 'start_time' => '15:00', 'items' => [$this->item($facial, $first), $this->item($pedi, $second)]]);
         $calendar = app(BuildAppointmentCalendarAction::class);
         $all = $calendar->execute($owner, '2026-07');
         $own = $calendar->execute($first, '2026-07');
 
-        $this->assertSame(1, $all[0]['appointments_count']); $this->assertSame(2, $all[0]['services_count']);
-        $this->assertSame(1, $own[0]['services_count']); $this->assertSame('Facial', $own[0]['previews'][0]['service_name']);
-        $this->assertNull($own[0]['previews'][0]['assigned_name']); $this->assertTrue($own[0]['previews'][0]['is_shared']);
-        $this->assertArrayNotHasKey('notes', $own[0]['previews'][0]); $this->assertArrayNotHasKey('events', $own[0]['previews'][0]);
+        $this->assertSame(1, $all[0]['appointments_count']);
+        $this->assertSame(2, $all[0]['services_count']);
+        $this->assertSame(1, $own[0]['services_count']);
+        $this->assertSame('Facial', $own[0]['previews'][0]['service_name']);
+        $this->assertNull($own[0]['previews'][0]['assigned_name']);
+        $this->assertTrue($own[0]['previews'][0]['is_shared']);
+        $this->assertArrayNotHasKey('notes', $own[0]['previews'][0]);
+        $this->assertArrayNotHasKey('events', $own[0]['previews'][0]);
     }
 
     public function test_view_all_employee_filter_and_month_query_validation_are_enforced(): void
     {
-        $owner = $this->user('owner'); $employee = $this->user('employee'); $other = $this->user('employee'); $service = $this->service('Facial');
-        $this->create($owner, $employee, $service, '15:00'); $this->create($owner, $other, $service, '16:00');
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $other = $this->user('employee');
+        $service = $this->service('Facial');
+        $this->create($owner, $employee, $service, '15:00');
+        $this->create($owner, $other, $service, '16:00');
         $this->actingAs($owner)->get('/appointments?view=month&month=2026-07&employee_id='.$employee->id)
             ->assertInertia(fn ($page) => $page->where('view', 'month')->where('employee_id', $employee->id)->where('calendar_days.0.services_count', 1));
         $this->actingAs($employee)->get('/appointments?view=month&month=2026-07&employee_id='.$other->id)->assertSessionHasErrors('employee_id');
@@ -45,7 +66,8 @@ class AppointmentCalendarTest extends TestCase
 
     public function test_monthly_calendar_counts_and_previews_only_scheduled_appointments(): void
     {
-        $owner = $this->user('owner'); $employee = $this->user('employee');
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
         $scheduled = $this->create($owner, $employee, $this->service('Programado'), '09:00');
         $canceled = $this->create($owner, $employee, $this->service('Cancelado'), '10:00');
         $noShow = $this->create($owner, $employee, $this->service('No llegó'), '11:00');
@@ -108,8 +130,26 @@ class AppointmentCalendarTest extends TestCase
         $this->assertStringNotContainsString('@wheel', $component);
     }
 
-    private function create(User $actor, User $assignee, Service $service, string $time): Appointment { return app(CreateAppointmentAction::class)->execute($actor, ['client_name' => 'Lucía', 'date' => '2026-07-21', 'start_time' => $time, 'items' => [$this->item($service, $assignee)]]); }
-    private function item(Service $service, User $user): array { return ['service_id' => $service->id, 'assigned_to' => $user->id, 'quantity' => 1, 'duration_minutes' => 60]; }
-    private function user(string $role): User { $user = User::factory()->create(['is_active' => true]); $user->assignRole($role); return $user; }
-    private function service(string $name): Service { return Service::query()->create(['name' => $name, 'duration_minutes' => 60, 'price' => '100.00', 'is_active' => true]); }
+    private function create(User $actor, User $assignee, Service $service, string $time): Appointment
+    {
+        return app(CreateAppointmentAction::class)->execute($actor, ['client_name' => 'Lucía', 'date' => '2026-07-21', 'start_time' => $time, 'items' => [$this->item($service, $assignee)]]);
+    }
+
+    private function item(Service $service, User $user): array
+    {
+        return ['service_id' => $service->id, 'assigned_to' => $user->id, 'quantity' => 1, 'duration_minutes' => 60];
+    }
+
+    private function user(string $role): User
+    {
+        $user = User::factory()->create(['is_active' => true]);
+        $user->assignRole($role);
+
+        return $user;
+    }
+
+    private function service(string $name): Service
+    {
+        return Service::query()->create(['name' => $name, 'duration_minutes' => 60, 'price' => '100.00', 'is_active' => true]);
+    }
 }

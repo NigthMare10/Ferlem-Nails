@@ -7,6 +7,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "ext-pdo": "*",
+        "ext-pdo_mysql": "*",
         "inertiajs/inertia-laravel": "^3.1",
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0",
@@ -75,6 +77,9 @@
         }
     },
     "config": {
+        "platform": {
+            "php": "8.3.0"
+        },
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,

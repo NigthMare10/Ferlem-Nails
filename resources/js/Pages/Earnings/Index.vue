@@ -12,8 +12,6 @@ import type {
     EarningsPeriod,
     EmployeeOption,
     EmployeeSummary,
-    OtherIncome,
-    Outflows,
 } from '../../types/earnings';
 
 const props = defineProps<{
@@ -22,8 +20,6 @@ const props = defineProps<{
     canViewProjection: boolean;
     actual?: ActualResults;
     projection?: AppointmentProjection;
-    other_income?: OtherIncome;
-    outflows?: Outflows;
     employees: EmployeeSummary[];
     daily?: DailySummary[];
     employeeOptions: EmployeeOption[];
@@ -177,11 +173,6 @@ function resetFilters(): void {
                 </VCol>
             </VRow>
         </section>
-
-        <VRow v-if="other_income && outflows" class="report-section">
-            <VCol cols="12" md="6"><VCard class="surface-card h-100"><VCardItem><VCardTitle>Otros ingresos</VCardTitle><VCardSubtitle>Adelantos retenidos, nunca ingreso por servicios</VCardSubtitle></VCardItem><VCardText><div class="text-h5 font-weight-bold">{{ money(other_income.retained_deposits) }}</div><div class="text-caption mt-2">{{ count(other_income.retained_deposits_count) }} retenciones resueltas</div></VCardText></VCard></VCol>
-            <VCol cols="12" md="6"><VCard class="surface-card h-100"><VCardItem><VCardTitle>Salidas</VCardTitle><VCardSubtitle>Devoluciones de adelantos, nunca ingreso</VCardSubtitle></VCardItem><VCardText><div class="text-h5 font-weight-bold">{{ money(outflows.refunded_deposits) }}</div><div class="text-caption mt-2">{{ count(outflows.refunds_count) }} devoluciones</div></VCardText></VCard></VCol>
-        </VRow>
 
         <VCard v-if="employees.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }">
             <VCardItem class="pa-5 pb-2"><VCardTitle>Rendimiento por empleado</VCardTitle><VCardSubtitle>Servicios atribuidos a quien los realiza, no a quien cobra</VCardSubtitle></VCardItem>

@@ -13,6 +13,7 @@ class CreateOwner extends Command
         {--email= : Correo electrónico del propietario}
         {--password= : Contraseña del propietario}
         {--force : Restablece la contraseña si el usuario ya existe}';
+
     protected $description = 'Crea o actualiza el primer propietario de Studio Lemus';
 
     public function handle(): int

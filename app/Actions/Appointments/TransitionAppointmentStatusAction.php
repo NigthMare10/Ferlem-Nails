@@ -2,6 +2,7 @@
 
 namespace App\Actions\Appointments;
 
+use App\Actions\Notifications\PublishInternalNotificationAction;
 use App\Models\Appointment;
 use App\Models\AppointmentDeposit;
 use App\Models\AppointmentDepositRefund;
@@ -16,7 +17,10 @@ use Illuminate\Validation\ValidationException;
 
 class TransitionAppointmentStatusAction
 {
-    public function __construct(private ResolveAppointmentDepositAction $resolveDeposit) {}
+    public function __construct(
+        private ResolveAppointmentDepositAction $resolveDeposit,
+        private PublishInternalNotificationAction $publishNotification,
+    ) {}
 
     public function execute(
         User $user,
@@ -87,6 +91,18 @@ class TransitionAppointmentStatusAction
             $event->new_values = ['status' => $status];
             $event->notes = $reason;
             $event->save();
+
+            $isCanceled = $status === Appointment::STATUS_CANCELED;
+            $this->publishNotification->execute(
+                $user,
+                $isCanceled ? 'appointment.canceled' : 'appointment.no_show',
+                $isCanceled ? 'Cita cancelada' : 'Cliente no llegó',
+                ($isCanceled ? 'Se canceló' : 'Se marcó como no llegó').' la cita de '.$locked->client_name.'.',
+                "/appointments?appointment={$locked->getKey()}",
+                ['type' => 'appointment', 'id' => $locked->getKey()],
+                "appointment-event:{$event->getKey()}",
+                $event->occurred_at,
+            );
 
             return $locked->load([
                 'assignedTo:id,name',
