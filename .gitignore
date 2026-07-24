@@ -1,6 +1,9 @@
 *.log
 .DS_Store
 .env
+.env.*
+!.env.example
+!.env.production.example
 .env.backup
 .env.production
 .phpactor.json
@@ -21,6 +24,10 @@
 /storage/*.key
 /storage/pail
 /vendor
+/deploy/hostinger/.env
+/deploy/hostinger/ssh-askpass.cmd
+/deploy/hostinger/release/
+/deploy/hostinger/*.zip
 _ide_helper.php
 Homestead.json
 Homestead.yaml

@@ -3,6 +3,8 @@ set -Eeuo pipefail
 
 BASE_URL=${1:-${DEPLOY_BASE_URL:-}}
 BASE_URL=${BASE_URL%/}
+PUBLIC_ROOT=${PUBLIC_ROOT:-public}
+export PUBLIC_ROOT
 
 log() {
     printf '[smoke] %s\n' "$*"
@@ -21,7 +23,7 @@ case "$BASE_URL" in
     *) fail "La URL debe comenzar con https://." ;;
 esac
 [ -f artisan ] || fail "Ejecute el script desde la raiz de Laravel."
-[ -f public/build/manifest.json ] || fail "Falta public/build/manifest.json."
+[ -f "$PUBLIC_ROOT/build/manifest.json" ] || fail "Falta $PUBLIC_ROOT/build/manifest.json."
 
 tmp_dir=$(mktemp -d)
 trap 'rm -rf "$tmp_dir"' EXIT HUP INT TERM
@@ -58,7 +60,7 @@ assert_no_trace "$tmp_dir/up.txt" "/up"
 
 log "Comprobando assets publicados por el manifest."
 php -r '
-$manifest = json_decode(file_get_contents("public/build/manifest.json"), true, 512, JSON_THROW_ON_ERROR);
+$manifest = json_decode(file_get_contents(getenv("PUBLIC_ROOT")."/build/manifest.json"), true, 512, JSON_THROW_ON_ERROR);
 $files = [];
 foreach ($manifest as $entry) {
     if (isset($entry["file"])) { $files[] = $entry["file"]; }
@@ -74,10 +76,7 @@ while IFS= read -r asset; do
     curl_https --output /dev/null "$BASE_URL/build/$asset"
 done < "$tmp_dir/assets.txt"
 
-log "Comprobando conexion Artisan a la base."
-php artisan db:show --no-interaction >/dev/null
-
-log "Comprobando estado de migraciones."
+log "Comprobando conexion Artisan y estado de migraciones."
 php artisan migrate:status --no-interaction
 
 log "Comprobando storage sin escribir datos."
@@ -86,6 +85,6 @@ log "Comprobando storage sin escribir datos."
 [ -r storage ] && [ -x storage ] || fail "storage no es accesible."
 [ -w storage/framework ] || fail "storage/framework no es escribible por PHP CLI."
 [ -w bootstrap/cache ] || fail "bootstrap/cache no es escribible por PHP CLI."
-[ -e public/storage ] || fail "Falta public/storage; ejecute php artisan storage:link."
+[ -e "$PUBLIC_ROOT/storage" ] || fail "Falta $PUBLIC_ROOT/storage."
 
 log "Smoke test de solo lectura completado."

@@ -2,6 +2,19 @@
 
 Esta guia despliega Studio Lemus (Laravel 13, PHP 8.3 y MySQL) sin instalar Node.js en Hostinger. Los assets se compilan localmente y se publica `public/build` junto con el codigo.
 
+> No use el auto-deploy de hPanel para este proyecto si su PHP no ofrece `proc_open`. Composer/Symfony Process no puede completar la instalacion en ese entorno. No se modifica Composer ni el codigo para evitarlo: use SSH manual solo cuando el PHP CLI tenga `proc_open`, o el release precompilado local descrito abajo.
+
+## Despliegue confirmado en Hostinger
+
+El despliegue inicial se realizo mediante SSH como transporte y release precompilado como metodo de instalacion. PHP CLI 8.3 estaba disponible, pero `proc_open` estaba deshabilitado tanto en el PHP predeterminado como en el binario 8.3 alternativo; Composer remoto queda descartado.
+
+- Aplicacion privada: `.../domains/[DOMINIO]/studio-lemus`.
+- Directorio publico: `.../domains/[DOMINIO]/public_html`.
+- Se copiaron solamente los contenidos de `public/` al directorio publico y se ajusto `index.php` hacia `../studio-lemus`.
+- La base se detecto vacia y recibio `migrate --force`, seeders RBAC y el owner inicial autorizado.
+- El auto-deploy de hPanel no se utilizo. Desactive su integracion Git desde la interfaz hPanel para evitar que vuelva a intentar Composer con `proc_open` deshabilitado.
+- Para futuras versiones: genere el ZIP local, subalo por SSH/SFTP, active mantenimiento si ya existe una version publica, reemplace solo codigo privado y `public/`, conserve `.env` y `storage`, migre, cachee y ejecute el smoke test con `PUBLIC_ROOT=../public_html`.
+
 ## 1. Requisitos y decisiones
 
 - Plan Hostinger con PHP 8.3, extensiones `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `fileinfo` y Composer 2.
@@ -25,6 +38,16 @@ composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 ```
 
 `public/build` debe viajar en el artefacto. Si se usa Git y esa carpeta esta ignorada, subirla por SFTP o crear un archivo de entrega que la incluya; no ejecutar Node en el servidor. No subir `.env`, `node_modules`, pruebas, caches locales ni dumps SQL al directorio publico.
+
+Cuando Composer no puede ejecutarse en Hostinger por `proc_open`, genere el release precompilado local despues de instalar dependencias de produccion:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build-hostinger-release.ps1
+```
+
+El resultado es `deploy/hostinger/studio-lemus-production.zip`. Contiene solo `app`, `bootstrap`, `config`, `database`, `public`, `resources`, `routes`, `storage`, `vendor`, `artisan`, `composer.json` y `composer.lock`. Excluye `.env`, Git, Node, tests, docs, logs, dumps y diagnosticos. Extraigalo en la carpeta privada de Laravel; no ejecute Composer en hPanel ni en el servidor cuando use este metodo.
+
+Para actualizaciones futuras con release precompilado: active mantenimiento con el PHP CLI disponible, respalde MySQL, reemplace codigo privado sin sobrescribir `.env` ni `storage`, sincronice el contenido de `public/`, ejecute `migrate --force`, regenere caches, desactive mantenimiento y ejecute el smoke test. Si SSH no esta disponible, haga estos pasos desde hPanel/phpMyAdmin solo cuando el panel ofrezca una alternativa segura; de lo contrario solicite SSH al proveedor.
 
 ## 3. Estructura recomendada
 
@@ -193,6 +216,8 @@ bash scripts/smoke-test-production.sh https://__DOMINIO_HOSTINGER__
 ```
 
 El smoke test solo lee: comprueba HTTPS y su redireccion, login, `/up`, assets del manifest, ausencia de trazas visibles, conexion Artisan a la base, estado de migraciones y storage. No inicia sesion ni modifica datos.
+
+En planes Hostinger donde PHP CLI tenga `proc_open` deshabilitado, no use `php artisan about` ni `php artisan db:show`: Laravel puede invocar Symfony Process para esos comandos. Use `php artisan migrate:status` para comprobar conexion y migraciones; es compatible con el release precompilado.
 
 Revise tambien:
 
