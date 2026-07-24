@@ -153,6 +153,7 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->assertSame(5, $sale->total_services);
         $this->assertSame(['Servicio repetido', 'Servicio repetido', 'Adicional'], $sale->items->pluck('service_name')->all());
         $this->assertSame(['40.00', '20.00', '30.00'], $sale->items->pluck('line_total')->all());
+        $this->assertSame([null, null, $additional->id], $sale->items->pluck('service_id')->all());
     }
 
     public function test_reserved_line_cannot_disappear_without_explicit_confirmation(): void

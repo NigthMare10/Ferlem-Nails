@@ -74,6 +74,7 @@ class Phase4DAppointmentCheckoutMigrationTest extends TestCase
         $this->assertSame('4.06', (string) $payment->card_fee_amount);
         $this->assertSame('120.94', (string) $payment->net_amount);
         $this->assertTrue(Schema::hasColumn('sales', 'appointment_id'));
+        $this->assertTrue(collect(Schema::getIndexes('sale_items'))->pluck('name')->contains('sale_items_sale_service_unique'));
         $this->assertSame(1, DB::table('sale_payments')->where('sale_id', $saleId)->count());
         $performedBy = collect(Schema::getColumns('sale_items'))->firstWhere('name', 'performed_by');
         $this->assertTrue($performedBy['nullable'], 'sale_items.performed_by debe permanecer nullable.');

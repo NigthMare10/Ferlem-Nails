@@ -172,6 +172,11 @@ class CheckoutAppointmentAction
 
         $additionalIds = collect($data['items'])->filter(fn ($line) => empty($line['appointment_item_id']))
             ->pluck('service_id')->filter()->map(fn ($id) => (int) $id)->unique()->sort()->values();
+        $submittedAdditionalIds = collect($data['items'])->filter(fn ($line) => empty($line['appointment_item_id']))
+            ->pluck('service_id')->filter()->map(fn ($id) => (int) $id);
+        if ($submittedAdditionalIds->duplicates()->isNotEmpty()) {
+            throw ValidationException::withMessages(['items' => 'Cada servicio adicional debe aparecer una sola vez. Ajusta su cantidad en la misma línea.']);
+        }
         $services = Service::query()->whereKey($additionalIds->all())->orderBy('id')->lockForUpdate()->get()->keyBy('id');
         if ($services->count() !== $additionalIds->count() || $services->contains(fn (Service $service) => ! $service->is_active)) {
             throw ValidationException::withMessages(['items' => 'Uno de los servicios adicionales ya no está disponible.']);
@@ -210,7 +215,7 @@ class CheckoutAppointmentAction
             }
             $prepared[] = [
                 'appointment_item_id' => $appointmentItem?->getKey(),
-                'service_id' => $appointmentItem?->service_id ?? $service->getKey(),
+                'service_id' => $appointmentItem ? null : $service->getKey(),
                 'performed_by' => $performerId,
                 'service_name' => $appointmentItem?->service_name ?? $service->name,
                 'service_description' => $appointmentItem?->service_description ?? $service->description,

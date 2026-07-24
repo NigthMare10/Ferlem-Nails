@@ -27,11 +27,6 @@ return new class extends Migration
             }
         });
 
-        $indexes = collect(Schema::getIndexes('sale_items'))->pluck('name');
-        if ($indexes->contains('sale_items_sale_service_unique')) {
-            Schema::table('sale_items', fn (Blueprint $table) => $table->dropUnique('sale_items_sale_service_unique'));
-        }
-
         DB::table('sales')->orderBy('id')->chunkById(500, function ($sales): void {
             foreach ($sales as $sale) {
                 DB::table('sale_items')->where('sale_id', $sale->id)->update([
@@ -83,7 +78,8 @@ return new class extends Migration
             ->groupBy('sale_id', 'service_id')
             ->havingRaw('COUNT(*) > 1')
             ->exists();
-        if (! $duplicates) {
+        $indexes = collect(Schema::getIndexes('sale_items'))->pluck('name');
+        if (! $duplicates && ! $indexes->contains('sale_items_sale_service_unique')) {
             Schema::table('sale_items', fn (Blueprint $table) => $table->unique(['sale_id', 'service_id'], 'sale_items_sale_service_unique'));
         }
     }
