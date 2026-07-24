@@ -14,6 +14,8 @@ final class Permissions
 
     public const REPORTS_SALES_VIEW = 'reports.sales.view';
 
+    public const APPOINTMENTS_VIEW_PROJECTION = 'appointments.view_projection';
+
     public const APPOINTMENTS_ACCESS = 'appointments.access';
 
     public const APPOINTMENTS_VIEW_OWN = 'appointments.view_own';
@@ -31,6 +33,12 @@ final class Permissions
     public const APPOINTMENTS_CANCEL = 'appointments.cancel';
 
     public const APPOINTMENTS_MARK_NO_SHOW = 'appointments.mark_no_show';
+
+    public const APPOINTMENTS_MANAGE_DEPOSIT = 'appointments.manage_deposit';
+
+    public const APPOINTMENTS_RESOLVE_DEPOSIT = 'appointments.resolve_deposit';
+
+    public const APPOINTMENTS_CONVERT_TO_SALE = 'appointments.convert_to_sale';
 
     public const SETTINGS_ACCESS = 'settings.access';
 
@@ -59,10 +67,12 @@ final class Permissions
     public static function all(): array
     {
         return [self::SALES_ACCESS, self::SALES_CREATE, self::SALES_VIEW_OWN, self::SALES_REPRINT,
-            self::REPORTS_SALES_VIEW,
+            self::REPORTS_SALES_VIEW, self::APPOINTMENTS_VIEW_PROJECTION,
             self::APPOINTMENTS_ACCESS, self::APPOINTMENTS_VIEW_OWN, self::APPOINTMENTS_VIEW_ALL,
             self::APPOINTMENTS_CREATE, self::APPOINTMENTS_PERFORM, self::APPOINTMENTS_UPDATE,
             self::APPOINTMENTS_ASSIGN, self::APPOINTMENTS_CANCEL, self::APPOINTMENTS_MARK_NO_SHOW,
+            self::APPOINTMENTS_MANAGE_DEPOSIT, self::APPOINTMENTS_RESOLVE_DEPOSIT,
+            self::APPOINTMENTS_CONVERT_TO_SALE,
             self::SETTINGS_ACCESS, self::USERS_VIEW, self::USERS_CREATE, self::USERS_UPDATE,
             self::USERS_ASSIGN_ROLE, self::USERS_TOGGLE_STATUS, self::USERS_RESET_PASSWORD,
             self::SERVICES_VIEW, self::SERVICES_CREATE, self::SERVICES_UPDATE, self::SERVICES_DELETE,

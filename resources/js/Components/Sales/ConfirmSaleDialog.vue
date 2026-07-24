@@ -12,6 +12,9 @@ defineProps<{
     netAmountCents: number;
     processing: boolean;
     error?: string;
+    appointmentMode?: boolean;
+    depositCents?: number;
+    balanceCents?: number;
 }>();
 
 const emit = defineEmits<{
@@ -45,7 +48,7 @@ const money = (value: number) => new Intl.NumberFormat('es-HN', {
                         <VIcon icon="mdi-receipt-text-check-outline" size="25" />
                     </VAvatar>
                 </template>
-                <VCardTitle class="text-h6 font-weight-bold">Confirmar venta</VCardTitle>
+                <VCardTitle class="text-h6 font-weight-bold">{{ appointmentMode ? 'Completar cita y cobrar' : 'Confirmar venta' }}</VCardTitle>
                 <VCardSubtitle>Revisa los servicios antes de generar el recibo.</VCardSubtitle>
             </VCardItem>
 
@@ -65,11 +68,14 @@ const money = (value: number) => new Intl.NumberFormat('es-HN', {
                     <span>Total de servicios</span>
                     <strong>{{ totalServices }}</strong>
                 </div>
+                <div v-if="appointmentMode && depositCents" class="d-flex justify-space-between text-body-2 mb-2">
+                    <span>Adelanto aplicado</span><strong>− {{ money(depositCents) }}</strong>
+                </div>
                 <div class="d-flex justify-space-between text-body-2 mb-2">
                     <span>Método de pago</span>
-                    <strong>{{ paymentMethod === 'card' ? 'Tarjeta' : 'Efectivo' }}</strong>
+                    <strong>{{ appointmentMode && balanceCents === 0 ? 'Cubierto por adelanto' : paymentMethod === 'card' ? 'Tarjeta' : 'Efectivo' }}</strong>
                 </div>
-                <template v-if="paymentMethod === 'card'">
+                <template v-if="!appointmentMode && paymentMethod === 'card'">
                     <div class="d-flex justify-space-between text-body-2 mb-2">
                         <span>Comisión POS 4%</span>
                         <strong>{{ money(cardFeeCents) }}</strong>
@@ -80,8 +86,8 @@ const money = (value: number) => new Intl.NumberFormat('es-HN', {
                     </div>
                 </template>
                 <div class="d-flex justify-space-between align-end">
-                    <span class="text-body-1 font-weight-bold">Total a cobrar</span>
-                    <span class="text-h5 font-weight-bold text-primary">{{ money(totalCents) }}</span>
+                    <span class="text-body-1 font-weight-bold">{{ appointmentMode ? 'Saldo final a cobrar' : 'Total a cobrar' }}</span>
+                    <span class="text-h5 font-weight-bold text-primary">{{ money(appointmentMode ? (balanceCents ?? totalCents) : totalCents) }}</span>
                 </div>
             </VCardText>
 

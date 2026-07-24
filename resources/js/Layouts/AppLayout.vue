@@ -61,10 +61,19 @@ const navigate = (href: string) => {
                     v-if="auth?.navigation?.appointments"
                     prepend-icon="mdi-calendar-clock-outline"
                     title="Agenda"
-                    :active="currentUrl.startsWith('/appointments')"
+                    :active="currentUrl.startsWith('/appointments') && !currentUrl.startsWith('/appointments/history')"
                     color="primary"
                     rounded="lg"
                     @click="navigate('/appointments')"
+                />
+                <VListItem
+                    v-if="auth?.navigation?.appointments"
+                    prepend-icon="mdi-history"
+                    title="Historial de citas"
+                    :active="currentUrl.startsWith('/appointments/history')"
+                    color="primary"
+                    rounded="lg"
+                    @click="navigate('/appointments/history')"
                 />
                 <VListItem
                     v-if="auth?.navigation?.earnings"

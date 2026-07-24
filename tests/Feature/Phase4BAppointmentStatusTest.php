@@ -133,6 +133,34 @@ class Phase4BAppointmentStatusTest extends TestCase
         $this->assertSame(Appointment::STATUS_NO_SHOW, $second->fresh()->status);
     }
 
+    public function test_administrator_can_mark_a_visible_appointment_as_no_show(): void
+    {
+        $owner = $this->user('owner');
+        $administrator = $this->user('administrator');
+        $appointment = $this->appointment($owner, [$this->user('employee')], '10:00');
+        Carbon::setTestNow('2026-07-21 17:00:00 UTC');
+
+        $this->actingAs($administrator)
+            ->post("/appointments/{$appointment->id}/no-show", ['reason' => 'La clienta no se presentó.'])
+            ->assertStatus(303);
+
+        $this->assertSame(Appointment::STATUS_NO_SHOW, $appointment->fresh()->status);
+    }
+
+    public function test_user_without_no_show_permission_receives_forbidden(): void
+    {
+        $employee = $this->user('employee');
+        $appointment = $this->appointment($employee, [$employee], '10:00');
+        Role::findByName('employee')->revokePermissionTo(Permissions::APPOINTMENTS_MARK_NO_SHOW);
+        Carbon::setTestNow('2026-07-21 17:00:00 UTC');
+
+        $this->actingAs($employee)
+            ->post("/appointments/{$appointment->id}/no-show", ['reason' => 'La clienta no se presentó.'])
+            ->assertForbidden();
+
+        $this->assertSame(Appointment::STATUS_SCHEDULED, $appointment->fresh()->status);
+    }
+
     public function test_employee_cannot_mark_a_shared_appointment_as_no_show(): void
     {
         $owner = $this->user('owner');
@@ -367,9 +395,9 @@ class Phase4BAppointmentStatusTest extends TestCase
         }
         $this->assertTrue(Route::has('appointments.cancel'));
         $this->assertTrue(Route::has('appointments.no-show'));
-        $this->assertFalse(Route::has('appointments.deposit'));
+        $this->assertTrue(Route::has('appointments.deposit'));
         $this->assertFalse(Route::has('appointments.refund'));
-        $this->assertFalse(Route::has('appointments.checkout'));
+        $this->assertTrue(Route::has('appointments.checkout'));
     }
 
     private function appointment(User $actor, array $assignees, string $time, ?Service $service = null): Appointment

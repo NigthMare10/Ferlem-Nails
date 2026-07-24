@@ -2,21 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Actions\Appointments\CreateAppointmentAction;
-use App\Actions\Appointments\CancelAppointmentAction;
 use App\Actions\Appointments\BuildAppointmentAvailabilityAction;
 use App\Actions\Appointments\BuildAppointmentCalendarAction;
+use App\Actions\Appointments\BuildAppointmentHistoryAction;
+use App\Actions\Appointments\CancelAppointmentAction;
+use App\Actions\Appointments\CheckoutAppointmentAction;
+use App\Actions\Appointments\CreateAppointmentAction;
 use App\Actions\Appointments\MarkAppointmentNoShowAction;
+use App\Actions\Appointments\RecordAppointmentDepositAction;
+use App\Actions\Appointments\RefundAppointmentDepositExcessAction;
 use App\Actions\Appointments\RescheduleAppointmentAction;
 use App\Actions\Appointments\UpdateAppointmentAction;
-use App\Http\Requests\AppointmentsIndexRequest;
 use App\Http\Requests\AppointmentAvailabilityRequest;
+use App\Http\Requests\AppointmentsHistoryRequest;
+use App\Http\Requests\AppointmentsIndexRequest;
 use App\Http\Requests\CancelAppointmentRequest;
+use App\Http\Requests\CheckoutAppointmentRequest;
 use App\Http\Requests\MarkAppointmentNoShowRequest;
+use App\Http\Requests\RefundAppointmentDepositExcessRequest;
 use App\Http\Requests\RescheduleAppointmentRequest;
+use App\Http\Requests\StoreAppointmentDepositRequest;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Http\Requests\UpdateAppointmentRequest;
 use App\Http\Resources\AppointmentDetailsResource;
+use App\Http\Resources\AppointmentHistoryResource;
 use App\Http\Resources\AppointmentResource;
 use App\Http\Resources\SaleServiceResource;
 use App\Models\Appointment;
@@ -48,7 +57,7 @@ class AppointmentController extends Controller
             $localStart = CarbonImmutable::createFromFormat('!Y-m-d', $date, CreateAppointmentAction::TIMEZONE);
             $localEnd = $localStart->addDay();
             $appointments = Appointment::query()
-                ->with(['assignedTo:id,name', 'items.assignedTo:id,name'])
+                ->with(['assignedTo:id,name', 'items.assignedTo:id,name', 'deposit', 'sale:id,appointment_id'])
                 ->where('status', Appointment::STATUS_SCHEDULED)
                 ->where('scheduled_start', '>=', $localStart->utc())
                 ->where('scheduled_start', '<', $localEnd->utc())
@@ -96,6 +105,35 @@ class AppointmentController extends Controller
             ->with('success', 'La cita fue creada correctamente.');
     }
 
+    public function history(AppointmentsHistoryRequest $request, BuildAppointmentHistoryAction $history): Response
+    {
+        $user = $request->user();
+        $filters = $request->safe()->except('page');
+        $viewAll = $user->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL);
+        $assignees = $viewAll
+            ? User::query()
+                ->whereHas('assignedAppointmentItems')
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->map->only(['id', 'name'])
+                ->values()
+            : collect();
+
+        return Inertia::render('Appointments/History', [
+            'appointments' => AppointmentHistoryResource::collection($history->execute($user, $filters)),
+            'filters' => [
+                'date_from' => $filters['date_from'] ?? null,
+                'date_to' => $filters['date_to'] ?? null,
+                'status' => $filters['status'] ?? null,
+                'employee_id' => isset($filters['employee_id']) ? (int) $filters['employee_id'] : null,
+                'client' => $filters['client'] ?? null,
+                'service' => $filters['service'] ?? null,
+            ],
+            'assignees' => $assignees,
+            'canViewAll' => $viewAll,
+        ]);
+    }
+
     public function availability(AppointmentAvailabilityRequest $request, BuildAppointmentAvailabilityAction $action): JsonResponse
     {
         $data = $request->validated();
@@ -121,7 +159,18 @@ class AppointmentController extends Controller
     public function show(Request $request, Appointment $appointment): JsonResponse
     {
         $this->authorizeView($request->user(), $appointment);
-        $appointment->load(['assignedTo:id,name', 'createdBy:id,name', 'canceledBy:id,name', 'noShowBy:id,name', 'items.assignedTo:id,name', 'events.performedBy:id,name']);
+        $appointment->load([
+            'assignedTo:id,name',
+            'createdBy:id,name',
+            'canceledBy:id,name',
+            'noShowBy:id,name',
+            'items.assignedTo:id,name',
+            'events.performedBy:id,name',
+            'deposit.recordedBy:id,name',
+            'deposit.resolvedBy:id,name',
+            'deposit.refunds.refundedBy:id,name',
+            'sale:id,appointment_id,sold_by,sale_number,total,sold_at',
+        ]);
 
         return response()->json([
             'appointment' => (new AppointmentDetailsResource($appointment))->resolve($request),
@@ -152,12 +201,33 @@ class AppointmentController extends Controller
         ], 303)->with('success', 'La cita fue reprogramada correctamente.');
     }
 
+    public function storeDeposit(
+        StoreAppointmentDepositRequest $request,
+        Appointment $appointment,
+        RecordAppointmentDepositAction $action,
+    ): RedirectResponse {
+        $action->execute($request->user(), $appointment, $request->validated());
+
+        return back(303)->with('success', 'El adelanto fue registrado correctamente.');
+    }
+
+    public function refundDepositExcess(
+        RefundAppointmentDepositExcessRequest $request,
+        Appointment $appointment,
+        RefundAppointmentDepositExcessAction $action,
+    ): RedirectResponse {
+        $action->execute($request->user(), $appointment, $request->validated());
+
+        return back(303)->with('success', 'El excedente del adelanto fue devuelto correctamente.');
+    }
+
     public function cancel(
         CancelAppointmentRequest $request,
         Appointment $appointment,
         CancelAppointmentAction $action,
     ): RedirectResponse {
-        $action->execute($request->user(), $appointment, $request->validated('reason'));
+        $data = $request->validated();
+        $action->execute($request->user(), $appointment, $data['reason'], $data);
 
         return back(303)->with('success', 'La cita fue cancelada correctamente.');
     }
@@ -167,9 +237,20 @@ class AppointmentController extends Controller
         Appointment $appointment,
         MarkAppointmentNoShowAction $action,
     ): RedirectResponse {
-        $action->execute($request->user(), $appointment, $request->validated('reason'));
+        $data = $request->validated();
+        $action->execute($request->user(), $appointment, $data['reason'], $data);
 
         return back(303)->with('success', 'La cita fue marcada como No llegó.');
+    }
+
+    public function checkout(
+        CheckoutAppointmentRequest $request,
+        Appointment $appointment,
+        CheckoutAppointmentAction $action,
+    ): RedirectResponse {
+        $sale = $action->execute($request->user(), $appointment, $request->validated());
+
+        return to_route('sales.receipt', $sale, 303);
     }
 
     private function authorizeView(User $user, Appointment $appointment): void

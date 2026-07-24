@@ -22,6 +22,10 @@ class SaleReceiptResource extends JsonResource
             'total_services' => $this->total_services,
             'payment_method' => $this->payment_method,
             'payment_method_label' => $this->payment_method === Sale::PAYMENT_METHOD_CARD ? 'Tarjeta' : 'Efectivo',
+            'client' => $this->appointment ? [
+                'name' => $this->appointment->client_name,
+                'phone' => $this->appointment->client_phone,
+            ] : null,
             'sold_by' => [
                 'id' => $this->soldBy->id,
                 'name' => $this->soldBy->name,
@@ -34,6 +38,18 @@ class SaleReceiptResource extends JsonResource
                 'unit_price' => $item->unit_price,
                 'quantity' => $item->quantity,
                 'line_total' => $item->line_total,
+                'performed_by' => $item->performedBy ? [
+                    'id' => $item->performedBy->id,
+                    'name' => $item->performedBy->name,
+                ] : null,
+            ])->values(),
+            'payments' => $this->payments->map(fn ($payment) => [
+                'id' => $payment->id,
+                'type' => $payment->type,
+                'type_label' => $payment->type === 'deposit_applied' ? 'Adelanto aplicado' : 'Saldo final pagado',
+                'method' => $payment->method,
+                'method_label' => $payment->method === Sale::PAYMENT_METHOD_CARD ? 'Tarjeta' : 'Efectivo',
+                'amount' => $payment->amount,
             ])->values(),
         ];
     }

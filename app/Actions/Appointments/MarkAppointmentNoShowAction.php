@@ -10,7 +10,7 @@ class MarkAppointmentNoShowAction
 {
     public function __construct(private TransitionAppointmentStatusAction $transition) {}
 
-    public function execute(User $user, Appointment $appointment, string $reason): Appointment
+    public function execute(User $user, Appointment $appointment, string $reason, array $depositResolution = []): Appointment
     {
         return $this->transition->execute(
             $user,
@@ -18,6 +18,7 @@ class MarkAppointmentNoShowAction
             $reason,
             Appointment::STATUS_NO_SHOW,
             Permissions::APPOINTMENTS_MARK_NO_SHOW,
+            $depositResolution,
         );
     }
 }

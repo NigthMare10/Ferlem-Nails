@@ -39,6 +39,7 @@ class Sale extends Model
                 throw new LogicException('El número de venta es inmutable.');
             }
         });
+        static::deleting(fn () => throw new LogicException('Las ventas no pueden eliminarse físicamente.'));
     }
 
     public function soldBy(): BelongsTo
@@ -46,8 +47,18 @@ class Sale extends Model
         return $this->belongsTo(User::class, 'sold_by');
     }
 
+    public function appointment(): BelongsTo
+    {
+        return $this->belongsTo(Appointment::class);
+    }
+
     public function items(): HasMany
     {
-        return $this->hasMany(SaleItem::class)->orderBy('id');
+        return $this->hasMany(SaleItem::class)->orderBy('position')->orderBy('id');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(SalePayment::class)->orderBy('id');
     }
 }

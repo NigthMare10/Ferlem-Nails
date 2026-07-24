@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use LogicException;
 
 class Appointment extends Model
@@ -65,5 +66,15 @@ class Appointment extends Model
     public function events(): HasMany
     {
         return $this->hasMany(AppointmentEvent::class)->orderByDesc('occurred_at')->orderByDesc('id');
+    }
+
+    public function deposit(): HasOne
+    {
+        return $this->hasOne(AppointmentDeposit::class);
+    }
+
+    public function sale(): HasOne
+    {
+        return $this->hasOne(Sale::class);
     }
 }

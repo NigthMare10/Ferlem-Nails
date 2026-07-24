@@ -9,6 +9,7 @@ type ReceiptItem = {
     unit_price: string;
     quantity: number;
     line_total: string;
+    performed_by: { id: number; name: string } | null;
 };
 
 defineProps<{
@@ -22,8 +23,10 @@ defineProps<{
         total_services: number;
         payment_method: 'cash' | 'card';
         payment_method_label: string;
+        client: { name: string; phone: string | null } | null;
         sold_by: { id: number; name: string };
         items: ReceiptItem[];
+        payments: Array<{ id: number; type: 'deposit_applied' | 'final_payment'; type_label: string; method: 'cash' | 'card'; method_label: string; amount: string }>;
     };
 }>();
 
@@ -55,10 +58,9 @@ const money = (value: string) => new Intl.NumberFormat('es-HN', {
                     <div><dt>Número</dt><dd>{{ sale.sale_number }}</dd></div>
                     <div><dt>Fecha</dt><dd>{{ sale.sold_at_display }}</dd></div>
                     <div><dt>Atendido por</dt><dd>{{ sale.sold_by.name }}</dd></div>
-                    <div><dt>Método de pago</dt><dd>{{ sale.payment_method_label }}</dd></div>
+                    <div v-if="sale.client"><dt>Clienta</dt><dd>{{ sale.client.name }}</dd></div>
+                    <div v-if="!sale.payments.length"><dt>Método de pago</dt><dd>{{ sale.payment_method_label }}</dd></div>
                 </dl>
-
-                <p v-if="sale.payment_method === 'card'" class="receipt-card-note">Pago realizado con tarjeta</p>
 
                 <div class="receipt-divider" />
 
@@ -69,8 +71,18 @@ const money = (value: string) => new Intl.NumberFormat('es-HN', {
                             <span>{{ item.quantity }} × {{ money(item.unit_price) }}</span>
                             <strong>{{ money(item.line_total) }}</strong>
                         </div>
+                        <div v-if="item.performed_by" class="receipt-item__performer">Realizado por {{ item.performed_by.name }}</div>
                     </div>
                 </section>
+
+                <template v-if="sale.payments.length">
+                    <div class="receipt-divider" />
+                    <section class="receipt-payments">
+                        <div v-for="payment in sale.payments" :key="payment.id" class="receipt-item__line">
+                            <span>{{ payment.type_label }} · {{ payment.method_label }}</span><strong>{{ money(payment.amount) }}</strong>
+                        </div>
+                    </section>
+                </template>
 
                 <div class="receipt-divider" />
 
@@ -187,6 +199,9 @@ const money = (value: string) => new Intl.NumberFormat('es-HN', {
     margin-bottom: 3px;
     font-weight: 700;
 }
+
+.receipt-item__performer { margin-top: 2px; color: #555; font-size: 10px; }
+.receipt-payments { display: grid; gap: 7px; }
 
 .receipt-total {
     align-items: baseline;

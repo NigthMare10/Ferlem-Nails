@@ -4,8 +4,8 @@ import { useForm } from '@inertiajs/vue3';
 import { useDisplay } from 'vuetify';
 import type { AppointmentAssignee, AppointmentDetails } from '../../types/appointments';
 
-type DialogMode = 'detail' | 'edit' | 'reschedule' | 'cancel' | 'no_show';
-type InitialDialogMode = Exclude<DialogMode, 'edit'>;
+type DialogMode = 'detail' | 'edit' | 'reschedule' | 'cancel' | 'no_show' | 'deposit';
+type InitialDialogMode = Exclude<DialogMode, 'edit' | 'deposit'>;
 
 const props = defineProps<{
     modelValue: boolean;
@@ -19,6 +19,8 @@ const props = defineProps<{
     canViewAll: boolean;
     canCancel: boolean;
     canMarkNoShow: boolean;
+    canManageDeposit: boolean;
+    canResolveDeposit: boolean;
 }>();
 const emit = defineEmits<{ 'update:modelValue': [value: boolean]; retry: []; saved: [mode: DialogMode]; closed: [] }>();
 const { xs } = useDisplay();
@@ -30,30 +32,34 @@ const rescheduleForm = useForm({
     assignments: [] as Array<{ appointment_item_id: number; assigned_to: number | null }>,
     reschedule_note: '',
 });
-const cancelForm = useForm({ reason: '' });
-const noShowForm = useForm({ reason: '' });
+const depositForm = useForm({ amount: '', payment_method: 'cash', note: '' });
+const cancelForm = useForm({ reason: '', deposit_resolution: '', refund_amount: '', resolution_notes: '', operation_token: '' });
+const noShowForm = useForm({ reason: '', deposit_resolution: '', refund_amount: '', resolution_notes: '', operation_token: '' });
 const availabilityLoading = ref(false);
 const availableTimes = ref<string[]>([]);
 const availabilityMessage = ref('');
 let availabilityTimer: ReturnType<typeof setTimeout> | undefined;
 const formProcessing = computed(() => editForm.processing
     || rescheduleForm.processing
+    || depositForm.processing
     || cancelForm.processing
     || noShowForm.processing);
 const dialogBusy = computed(() => formProcessing.value || availabilityLoading.value);
 const detailCanEdit = computed(() => props.appointment?.status === 'scheduled'
-    && props.appointment.can_change_status
+    && props.appointment.can_reschedule
     && props.canUpdate);
+const detailCanRecordDeposit = computed(() => props.appointment?.can_record_deposit && props.canManageDeposit);
 const showFooter = computed(() => Boolean(props.appointment)
     && !props.loading
     && !props.error
-    && (mode.value !== 'detail' || detailCanEdit.value));
+    && (mode.value !== 'detail' || detailCanEdit.value || detailCanRecordDeposit.value));
 const title = computed(() => ({
     detail: 'Detalle de cita',
     edit: 'Editar información',
     reschedule: 'Reprogramar cita',
     cancel: 'Cancelar cita',
     no_show: 'Marcar No llegó',
+    deposit: 'Registrar adelanto',
 })[mode.value]);
 const estimatedEnd = computed(() => {
     if (!props.appointment) return '—';
@@ -83,14 +89,16 @@ watch([() => props.modelValue, () => props.appointment, () => props.initialMode]
             : [],
         reschedule_note: '',
     }).reset().clearErrors();
-    cancelForm.defaults({ reason: '' }).reset().clearErrors();
-    noShowForm.defaults({ reason: '' }).reset().clearErrors();
+    depositForm.defaults({ amount: '', payment_method: 'cash', note: '' }).reset().clearErrors();
+    cancelForm.defaults({ reason: '', deposit_resolution: '', refund_amount: '', resolution_notes: '', operation_token: '' }).reset().clearErrors();
+    noShowForm.defaults({ reason: '', deposit_resolution: '', refund_amount: '', resolution_notes: '', operation_token: '' }).reset().clearErrors();
 });
 
 function resolveInitialMode(initialMode: InitialDialogMode, appointment: AppointmentDetails): InitialDialogMode {
     if (initialMode === 'reschedule' && props.canUpdate && appointment.status === 'scheduled' && appointment.can_reschedule) return initialMode;
-    if (initialMode === 'cancel' && props.canCancel && appointment.status === 'scheduled' && appointment.can_change_status) return initialMode;
-    if (initialMode === 'no_show' && props.canMarkNoShow && appointment.status === 'scheduled' && appointment.can_change_status && appointment.can_mark_no_show_now) return initialMode;
+    const canResolvePending = !appointment.has_pending_deposit || (props.canResolveDeposit && appointment.can_resolve_deposit);
+    if (initialMode === 'cancel' && props.canCancel && appointment.status === 'scheduled' && appointment.can_change_status && canResolvePending) return initialMode;
+    if (initialMode === 'no_show' && props.canMarkNoShow && appointment.status === 'scheduled' && appointment.can_change_status && appointment.can_mark_no_show_now && canResolvePending) return initialMode;
     return 'detail';
 }
 
@@ -107,6 +115,7 @@ function resetDialog(): void {
     availabilityMessage.value = '';
     editForm.reset().clearErrors();
     rescheduleForm.reset().clearErrors();
+    depositForm.reset().clearErrors();
     cancelForm.reset().clearErrors();
     noShowForm.reset().clearErrors();
     emit('closed');
@@ -129,6 +138,12 @@ function cancelCurrentMode(): void {
 function save(): void {
     if (!props.appointment || formProcessing.value) return;
     const submittedMode = mode.value;
+    if (submittedMode === 'cancel' || submittedMode === 'no_show') {
+        const terminalForm = submittedMode === 'cancel' ? cancelForm : noShowForm;
+        if (['full_refund', 'partial_refund'].includes(terminalForm.deposit_resolution) && !terminalForm.operation_token) {
+            terminalForm.operation_token = window.crypto.randomUUID();
+        }
+    }
     const options = {
         preserveScroll: true,
         onSuccess: () => {
@@ -142,6 +157,7 @@ function save(): void {
     };
     if (mode.value === 'edit') editForm.put(`/appointments/${props.appointment.id}`, options);
     if (mode.value === 'reschedule') rescheduleForm.post(`/appointments/${props.appointment.id}/reschedule`, options);
+    if (mode.value === 'deposit') depositForm.post(`/appointments/${props.appointment.id}/deposit`, options);
     if (mode.value === 'cancel') cancelForm.post(`/appointments/${props.appointment.id}/cancel`, options);
     if (mode.value === 'no_show') noShowForm.post(`/appointments/${props.appointment.id}/no-show`, options);
 }
@@ -240,6 +256,7 @@ watch(
         :model-value="modelValue"
         :fullscreen="xs"
         :persistent="dialogBusy || mode !== 'detail'"
+        :scrollable="false"
         max-width="780"
         @after-leave="resetDialog"
         @update:model-value="value => value ? undefined : closeDialog()"
@@ -292,6 +309,15 @@ watch(
                             <div class="total-row pa-4"><span>{{ appointment.is_shared && !canViewAll ? 'Subtotal propio' : 'Total estimado' }}</span><strong>{{ money(appointment.visible_total) }}</strong></div>
                         </VCard>
                     </section>
+                    <section v-if="appointment.deposit" class="mt-7">
+                        <div class="section-title">Adelanto</div>
+                        <VCard variant="outlined" rounded="lg" class="pa-4">
+                            <div class="deposit-grid"><div><span>Recibido originalmente</span><strong>{{ money(appointment.deposit.amount) }}</strong></div><div v-if="appointment.deposit.available_amount !== undefined"><span>Disponible</span><strong>{{ money(appointment.deposit.available_amount) }}</strong></div><div><span>Método</span><strong>{{ appointment.deposit.payment_method_label }}</strong></div><div><span>Estado</span><strong>{{ appointment.deposit.status_label }}</strong></div><div><span>Saldo estimado</span><strong>{{ money(appointment.deposit.estimated_balance) }}</strong></div><div v-if="appointment.deposit.refunded_amount !== undefined"><span>Devuelto</span><strong>{{ money(appointment.deposit.refunded_amount) }}</strong></div><div v-if="appointment.deposit.retained_amount !== undefined"><span>Retenido</span><strong>{{ money(appointment.deposit.retained_amount) }}</strong></div></div>
+                            <div v-if="appointment.deposit.card_fee_amount !== undefined" class="internal-finance mt-4"><div><span>Comisión POS {{ appointment.deposit.card_fee_rate }}%</span><strong>{{ money(appointment.deposit.card_fee_amount) }}</strong></div><div><span>Neto recibido</span><strong>{{ money(appointment.deposit.net_amount!) }}</strong></div></div>
+                            <div class="text-caption text-medium-emphasis mt-3">Registrado {{ appointment.deposit.paid_at_display }}</div>
+                            <VAlert v-if="appointment.deposit.resolution_notes" type="info" variant="tonal" density="compact" class="mt-4"><strong>Nota de resolución:</strong> {{ appointment.deposit.resolution_notes }}</VAlert>
+                        </VCard>
+                    </section>
                     <section v-if="appointment.notes" class="mt-7"><div class="section-title">Notas</div><VCard color="surface-variant" rounded="lg" class="pa-4 text-body-2">{{ appointment.notes }}</VCard></section>
                     <section v-if="appointment.status_reason" class="mt-7">
                         <div class="section-title">Cambio de estado</div>
@@ -300,11 +326,22 @@ watch(
                             <div class="text-caption mt-2"><template v-if="appointment.status_changed_by">{{ appointment.status_changed_by.name }} · </template>{{ appointment.status_changed_at_display }}</div>
                         </VAlert>
                     </section>
+                    <section v-if="appointment.status === 'completed' && appointment.completed_at_display" class="mt-7">
+                        <div class="section-title">Cita completada</div>
+                        <VAlert type="success" variant="tonal"><strong>Completada:</strong> {{ appointment.completed_at_display }}</VAlert>
+                    </section>
+                    <section v-if="appointment.linked_sale" class="mt-7">
+                        <div class="section-title">Venta vinculada</div>
+                        <VCard variant="outlined" rounded="lg" class="pa-4 d-flex align-center justify-space-between ga-3">
+                            <div><strong>{{ appointment.linked_sale.sale_number }}</strong><div class="text-caption text-medium-emphasis">Total {{ money(appointment.linked_sale.total) }}</div></div>
+                            <VBtn v-if="appointment.linked_sale.can_view_receipt" :href="appointment.linked_sale.receipt_url" variant="tonal" color="primary" prepend-icon="mdi-receipt-text-outline">Ver comprobante</VBtn>
+                        </VCard>
+                    </section>
                     <section class="mt-7"><div class="section-title">Registro</div><div v-if="appointment.created_by" class="text-body-2">Creada por <strong>{{ appointment.created_by.name }}</strong></div><div class="text-caption text-medium-emphasis mt-1">{{ appointment.created_at_display }}</div></section>
                     <section class="mt-7">
                         <div class="section-title">Historial de cambios</div>
                         <VTimeline side="end" density="compact" class="history-timeline">
-                            <VTimelineItem v-for="event in appointment.events" :key="event.id" :dot-color="event.type === 'canceled' ? 'error' : event.type === 'no_show' || event.type === 'rescheduled' ? 'warning' : 'primary'" size="x-small">
+                            <VTimelineItem v-for="event in appointment.events" :key="event.id" :dot-color="event.type === 'completed' ? 'success' : event.type === 'canceled' ? 'error' : event.type === 'no_show' || event.type === 'rescheduled' ? 'warning' : event.type === 'deposit_resolved' ? 'secondary' : 'primary'" size="x-small">
                                 <div class="font-weight-bold text-body-2">{{ event.type_label }}</div>
                                 <div v-if="event.changes.length" class="history-changes mt-1"><div v-for="change in event.changes" :key="change.label"><strong>{{ change.label }}:</strong> {{ change.previous ? `${change.previous} → ` : '' }}{{ change.new }}</div></div>
                                 <div v-else class="text-caption text-medium-emphasis">Se actualizó la cita</div>
@@ -336,18 +373,28 @@ watch(
                     <VTextarea v-model="rescheduleForm.reschedule_note" label="Motivo o nota de reprogramación (opcional)" rows="3" counter="500" :error-messages="rescheduleForm.errors.reschedule_note" :disabled="rescheduleForm.processing" class="mt-5" />
                 </template>
 
+                <template v-else-if="mode === 'deposit'">
+                    <VAlert v-if="depositForm.errors.appointment || depositForm.errors.deposit" type="error" variant="tonal" class="mb-5">{{ depositForm.errors.appointment || depositForm.errors.deposit }}</VAlert>
+                    <VAlert type="info" variant="tonal" density="compact" class="mb-5">El adelanto se registra separado de la venta y reduce únicamente el saldo estimado.</VAlert>
+                    <VRow><VCol cols="12" sm="6"><VTextField v-model="depositForm.amount" type="number" min="0.01" step="0.01" :max="appointment.visible_total" label="Monto recibido" prefix="L" :error-messages="depositForm.errors.amount" :disabled="depositForm.processing" /></VCol><VCol cols="12" sm="6"><VSelect v-model="depositForm.payment_method" label="Método de pago" :items="[{ title: 'Efectivo', value: 'cash' }, { title: 'Tarjeta', value: 'card' }]" :error-messages="depositForm.errors.payment_method" :disabled="depositForm.processing" /></VCol></VRow>
+                    <VTextarea v-model="depositForm.note" label="Nota (opcional)" rows="3" counter="500" :error-messages="depositForm.errors.note" :disabled="depositForm.processing" />
+                    <VAlert v-if="depositForm.payment_method === 'card'" type="warning" variant="tonal" density="compact">El backend calculará y conservará la comisión POS exacta del 4%.</VAlert>
+                </template>
+
                 <template v-else-if="mode === 'cancel'">
                     <VAlert v-if="cancelForm.errors.appointment" type="error" variant="tonal" class="mb-5">{{ cancelForm.errors.appointment }}</VAlert>
                     <div class="terminal-summary"><strong>{{ appointment.client_name }}</strong><span class="text-capitalize">{{ dateLabel(appointment.date) }} · {{ appointment.visible_start_time }}</span><span>{{ appointment.visible_items.map(item => item.service_name).join(', ') }}</span></div>
                     <VAlert type="warning" variant="tonal" class="my-5">La cita dejará de ocupar estos horarios.</VAlert>
                     <VTextarea v-model="cancelForm.reason" label="Motivo" rows="4" counter="500" :error-messages="cancelForm.errors.reason" :disabled="cancelForm.processing" autofocus />
+                    <VCard v-if="appointment.has_pending_deposit" variant="outlined" rounded="lg" class="pa-4 mt-5"><div class="form-section-title">Resolver saldo disponible de {{ money(appointment.deposit!.available_amount) }}</div><VAlert v-if="cancelForm.errors.deposit_resolution" type="error" variant="tonal" density="compact" class="mb-3">{{ cancelForm.errors.deposit_resolution }}</VAlert><VSelect v-model="cancelForm.deposit_resolution" label="Resolución obligatoria" :items="[{ title: 'Devolución completa', value: 'full_refund' }, { title: 'Retención completa', value: 'full_retention' }, { title: 'Devolución parcial', value: 'partial_refund' }]" :disabled="cancelForm.processing" /><VTextField v-if="cancelForm.deposit_resolution === 'partial_refund'" v-model="cancelForm.refund_amount" type="number" min="0.01" step="0.01" :max="appointment.deposit!.available_amount" label="Monto a devolver" prefix="L" :error-messages="cancelForm.errors.refund_amount" :disabled="cancelForm.processing" /><VTextarea v-model="cancelForm.resolution_notes" label="Nota de resolución (opcional)" rows="2" counter="500" :error-messages="cancelForm.errors.resolution_notes" :disabled="cancelForm.processing" /></VCard>
                 </template>
 
-                <template v-else>
+                <template v-else-if="mode === 'no_show'">
                     <VAlert v-if="noShowForm.errors.appointment" type="error" variant="tonal" class="mb-5">{{ noShowForm.errors.appointment }}</VAlert>
                     <div class="terminal-summary"><strong>{{ appointment.client_name }}</strong><span class="text-capitalize">{{ dateLabel(appointment.date) }} · {{ appointment.visible_start_time }}</span></div>
                     <VAlert type="warning" variant="tonal" class="my-5">La cita se marcará como no presentada.</VAlert>
                     <VTextarea v-model="noShowForm.reason" label="Motivo" rows="4" counter="500" :error-messages="noShowForm.errors.reason" :disabled="noShowForm.processing" autofocus />
+                    <VCard v-if="appointment.has_pending_deposit" variant="outlined" rounded="lg" class="pa-4 mt-5"><div class="form-section-title">Resolver saldo disponible de {{ money(appointment.deposit!.available_amount) }}</div><VAlert v-if="noShowForm.errors.deposit_resolution" type="error" variant="tonal" density="compact" class="mb-3">{{ noShowForm.errors.deposit_resolution }}</VAlert><VSelect v-model="noShowForm.deposit_resolution" label="Resolución obligatoria" :items="[{ title: 'Devolución completa', value: 'full_refund' }, { title: 'Retención completa', value: 'full_retention' }, { title: 'Devolución parcial', value: 'partial_refund' }]" :disabled="noShowForm.processing" /><VTextField v-if="noShowForm.deposit_resolution === 'partial_refund'" v-model="noShowForm.refund_amount" type="number" min="0.01" step="0.01" :max="appointment.deposit!.available_amount" label="Monto a devolver" prefix="L" :error-messages="noShowForm.errors.refund_amount" :disabled="noShowForm.processing" /><VTextarea v-model="noShowForm.resolution_notes" label="Nota de resolución (opcional)" rows="2" counter="500" :error-messages="noShowForm.errors.resolution_notes" :disabled="noShowForm.processing" /></VCard>
                 </template>
             </VCardText>
 
@@ -356,13 +403,15 @@ watch(
                 <VCardActions class="pa-4 dialog-actions">
                     <template v-if="mode === 'detail'">
                         <VSpacer />
-                        <VBtn variant="tonal" prepend-icon="mdi-pencil-outline" @click="openMode('edit')">Editar información</VBtn>
+                        <VBtn v-if="detailCanRecordDeposit" variant="tonal" prepend-icon="mdi-cash-plus" @click="openMode('deposit')">Registrar adelanto</VBtn>
+                        <VBtn v-if="detailCanEdit" variant="tonal" prepend-icon="mdi-pencil-outline" @click="openMode('edit')">Editar información</VBtn>
                     </template>
                     <template v-else>
                         <VBtn variant="text" :disabled="dialogBusy" @click="cancelCurrentMode">{{ mode === 'edit' || initialMode === 'detail' ? 'Volver' : 'Cerrar' }}</VBtn>
                         <VSpacer />
                         <VBtn v-if="mode === 'edit'" color="primary" prepend-icon="mdi-content-save-outline" :loading="editForm.processing" @click="save">Guardar cambios</VBtn>
                         <VBtn v-else-if="mode === 'reschedule'" color="primary" prepend-icon="mdi-content-save-outline" :loading="rescheduleForm.processing" :disabled="availabilityLoading || !availableTimes.includes(rescheduleForm.start_time)" @click="save">Confirmar reprogramación</VBtn>
+                        <VBtn v-else-if="mode === 'deposit'" color="primary" prepend-icon="mdi-cash-plus" :loading="depositForm.processing" @click="save">Registrar adelanto</VBtn>
                         <VBtn v-else-if="mode === 'cancel'" color="error" prepend-icon="mdi-calendar-remove-outline" :loading="cancelForm.processing" @click="save">Confirmar cancelación</VBtn>
                         <VBtn v-else-if="mode === 'no_show'" color="warning" prepend-icon="mdi-account-off-outline" :loading="noShowForm.processing" @click="save">Marcar No llegó</VBtn>
                     </template>
@@ -391,11 +440,15 @@ watch(
 .history-timeline { margin-left: -14px; }
 .history-changes { display: grid; gap: 4px; font-size: .78rem; }
 .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.deposit-grid, .internal-finance { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.deposit-grid div, .internal-finance div { display: flex; flex-direction: column; }
+.deposit-grid span, .internal-finance span { color: rgba(var(--v-theme-on-surface), .62); font-size: .72rem; }
+.internal-finance { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-top: 14px; border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)); }
 .terminal-summary { gap: 5px; padding: 16px; background: rgb(var(--v-theme-surface-variant)); border-radius: 12px; }
 @media (max-width: 599px) {
     .appointment-dialog-card { width: 100%; height: 100dvh; max-height: 100dvh; }
     .dialog-content { flex: 1 1 auto !important; }
-    .detail-grid, .summary-grid { grid-template-columns: 1fr; }
+    .detail-grid, .summary-grid, .deposit-grid, .internal-finance { grid-template-columns: 1fr; }
     .summary-grid div { flex-direction: row; justify-content: space-between; }
     .dialog-actions { align-items: stretch; flex-direction: column-reverse; }
     .dialog-actions :deep(.v-btn), .dialog-actions :deep(.v-spacer), .dialog-actions :deep(.v-alert) { width: 100%; }

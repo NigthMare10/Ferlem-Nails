@@ -34,6 +34,11 @@ class User extends Authenticatable
         return $this->hasMany(Sale::class, 'sold_by');
     }
 
+    public function performedSaleItems(): HasMany
+    {
+        return $this->hasMany(SaleItem::class, 'performed_by');
+    }
+
     public function assignedAppointments(): HasMany
     {
         return $this->hasMany(Appointment::class, 'assigned_to');
@@ -52,6 +57,21 @@ class User extends Authenticatable
     public function performedAppointmentEvents(): HasMany
     {
         return $this->hasMany(AppointmentEvent::class, 'performed_by');
+    }
+
+    public function recordedAppointmentDeposits(): HasMany
+    {
+        return $this->hasMany(AppointmentDeposit::class, 'recorded_by');
+    }
+
+    public function resolvedAppointmentDeposits(): HasMany
+    {
+        return $this->hasMany(AppointmentDeposit::class, 'resolved_by');
+    }
+
+    public function refundedAppointmentDeposits(): HasMany
+    {
+        return $this->hasMany(AppointmentDepositRefund::class, 'refunded_by');
     }
 
     /**

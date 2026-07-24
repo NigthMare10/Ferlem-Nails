@@ -159,13 +159,13 @@ class Phase3BEarningsTest extends TestCase
             ->assertSessionDoesntHaveErrors();
     }
 
-    public function test_employee_filter_and_all_aggregates_are_exact_without_mixing_sellers(): void
+    public function test_employee_filter_and_all_aggregates_are_exact_without_mixing_performers(): void
     {
         $owner = $this->user('owner', ['name' => 'Owner']);
         $employee = $this->user('employee', ['name' => 'Empleado']);
-        $this->sale($owner, '2026-07-19 09:00:00', '100.00', 2);
-        $this->sale($owner, '2026-07-19 10:00:00', '50.00', 1);
-        $this->sale($employee, '2026-07-19 11:00:00', '250.00', 3);
+        $this->item($this->sale($owner, '2026-07-19 09:00:00', '100.00', 2), '100.00', 2, $owner);
+        $this->item($this->sale($owner, '2026-07-19 10:00:00', '50.00', 1), '50.00', 1, $owner);
+        $this->item($this->sale($employee, '2026-07-19 11:00:00', '250.00', 3), '250.00', 3, $employee);
 
         $this->actingAs($owner)->get('/earnings?period=today&date=2026-07-19')
             ->assertInertia(fn (Assert $page) => $page
@@ -337,11 +337,12 @@ class Phase3BEarningsTest extends TestCase
         return $sale;
     }
 
-    private function item(Sale $sale, string $lineTotal, int $quantity): SaleItem
+    private function item(Sale $sale, string $lineTotal, int $quantity, ?User $performer = null): SaleItem
     {
         $item = new SaleItem;
         $item->sale_id = $sale->id;
         $item->service_id = null;
+        $item->performed_by = $performer?->id ?? $sale->sold_by;
         $item->service_name = 'Servicio '.$sale->items()->count();
         $item->duration_minutes = 30;
         $item->unit_price = $lineTotal;

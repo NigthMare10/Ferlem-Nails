@@ -9,6 +9,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\AuthorizeAppointmentDepositResolution;
 use App\Support\Permissions;
 use Illuminate\Support\Facades\Route;
 
@@ -55,6 +56,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/appointments/availability', [AppointmentController::class, 'availability'])
         ->middleware('permission:'.Permissions::APPOINTMENTS_ACCESS)
         ->name('appointments.availability');
+    Route::get('/appointments/history', [AppointmentController::class, 'history'])
+        ->middleware('permission:'.Permissions::APPOINTMENTS_ACCESS)
+        ->name('appointments.history');
     Route::get('/appointments/{appointment}', [AppointmentController::class, 'show'])
         ->middleware('permission:'.Permissions::APPOINTMENTS_ACCESS)
         ->name('appointments.show');
@@ -70,16 +74,38 @@ Route::middleware(['auth', 'active'])->group(function () {
             'permission:'.Permissions::APPOINTMENTS_UPDATE,
         ])
         ->name('appointments.reschedule');
+    Route::post('/appointments/{appointment}/deposit', [AppointmentController::class, 'storeDeposit'])
+        ->middleware([
+            'permission:'.Permissions::APPOINTMENTS_ACCESS,
+            'permission:'.Permissions::APPOINTMENTS_MANAGE_DEPOSIT,
+        ])
+        ->name('appointments.deposit');
+    Route::post('/appointments/{appointment}/deposit/refund-excess', [AppointmentController::class, 'refundDepositExcess'])
+        ->middleware([
+            'permission:'.Permissions::APPOINTMENTS_ACCESS,
+            'permission:'.Permissions::APPOINTMENTS_RESOLVE_DEPOSIT,
+        ])
+        ->name('appointments.deposit.refund-excess');
+    Route::post('/appointments/{appointment}/checkout', [AppointmentController::class, 'checkout'])
+        ->middleware([
+            'permission:'.Permissions::APPOINTMENTS_ACCESS,
+            'permission:'.Permissions::APPOINTMENTS_CONVERT_TO_SALE,
+            'permission:'.Permissions::SALES_ACCESS,
+            'permission:'.Permissions::SALES_CREATE,
+        ])
+        ->name('appointments.checkout');
     Route::post('/appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])
         ->middleware([
             'permission:'.Permissions::APPOINTMENTS_ACCESS,
             'permission:'.Permissions::APPOINTMENTS_CANCEL,
+            AuthorizeAppointmentDepositResolution::class,
         ])
         ->name('appointments.cancel');
     Route::post('/appointments/{appointment}/no-show', [AppointmentController::class, 'markNoShow'])
         ->middleware([
             'permission:'.Permissions::APPOINTMENTS_ACCESS,
             'permission:'.Permissions::APPOINTMENTS_MARK_NO_SHOW,
+            AuthorizeAppointmentDepositResolution::class,
         ])
         ->name('appointments.no-show');
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');

@@ -449,8 +449,8 @@ class Phase4AAppointmentUpdateTest extends TestCase
         $this->assertTrue(Route::has('appointments.reschedule'));
         $this->assertTrue(Route::has('appointments.cancel'));
         $this->assertTrue(Route::has('appointments.no-show'));
-        $this->assertFalse(Route::has('appointments.deposit'));
-        $this->assertFalse(Route::has('appointments.checkout'));
+        $this->assertTrue(Route::has('appointments.deposit'));
+        $this->assertTrue(Route::has('appointments.checkout'));
         $this->delete('/appointments/1')->assertStatus(405);
     }
 
@@ -498,7 +498,7 @@ class Phase4AAppointmentUpdateTest extends TestCase
         $other = $this->user('employee', ['name' => 'César']);
         $appointment = $this->sharedAppointment($owner, $employee, $other);
 
-        $this->actingAs($employee)->get("/appointments?view=day&date=2026-07-21")
+        $this->actingAs($employee)->get('/appointments?view=day&date=2026-07-21')
             ->assertInertia(fn ($page) => $page
                 ->has('appointments.0.visible_items', 1)
                 ->where('appointments.0.visible_items.0.assigned_to.name', 'Melany')

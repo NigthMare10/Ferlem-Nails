@@ -20,6 +20,8 @@ class CreateAppointmentAction
 
     private const MAX_AMOUNT_CENTS = 999999999999;
 
+    public function __construct(private RecordAppointmentDepositAction $recordDeposit) {}
+
     public function execute(User $user, array $data): Appointment
     {
         if (! $user->is_active || ! $user->hasPermissionTo(Permissions::APPOINTMENTS_ACCESS) || ! $user->hasPermissionTo(Permissions::APPOINTMENTS_CREATE)) {
@@ -122,7 +124,11 @@ class CreateAppointmentAction
             $event->new_values = ['items' => $this->eventItems($appointment->items), 'status' => Appointment::STATUS_SCHEDULED];
             $event->save();
 
-            return $appointment->load(['assignedTo:id,name', 'items.assignedTo:id,name']);
+            if ($data['has_deposit'] ?? false) {
+                $this->recordDeposit->execute($user, $appointment, $data['deposit']);
+            }
+
+            return $appointment->load(['assignedTo:id,name', 'items.assignedTo:id,name', 'deposit']);
         }, 3);
     }
 

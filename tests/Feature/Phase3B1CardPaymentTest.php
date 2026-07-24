@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Actions\Reports\BuildSalesSummaryAction;
 use App\Actions\Sales\CreateSaleAction;
 use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Models\SalePayment;
 use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
@@ -300,6 +302,28 @@ class Phase3B1CardPaymentTest extends TestCase
         $sale->save();
         $sale->sale_number = 'SL-'.str_pad((string) $sale->id, 6, '0', STR_PAD_LEFT);
         $sale->save();
+
+        $item = new SaleItem;
+        $item->sale_id = $sale->id;
+        $item->performed_by = $seller->id;
+        $item->service_name = 'Servicio histórico';
+        $item->duration_minutes = 45;
+        $item->unit_price = number_format(((float) $total) / $services, 2, '.', '');
+        $item->quantity = $services;
+        $item->line_total = $total;
+        $item->allocated_card_fee_amount = $fee;
+        $item->net_line_amount = $net;
+        $item->save();
+
+        $payment = new SalePayment;
+        $payment->sale_id = $sale->id;
+        $payment->type = SalePayment::TYPE_FINAL_PAYMENT;
+        $payment->method = $paymentMethod;
+        $payment->amount = $total;
+        $payment->card_fee_rate = $sale->card_fee_rate;
+        $payment->card_fee_amount = $fee;
+        $payment->net_amount = $net;
+        $payment->save();
 
         return $sale;
     }

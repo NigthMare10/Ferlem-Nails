@@ -14,6 +14,12 @@ class AppointmentResource extends JsonResource
         $user = $request->user();
         $viewAll = $user?->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL) ?? false;
         $canAssign = $user?->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN) ?? false;
+        $canManageDeposit = $user?->hasPermissionTo(Permissions::APPOINTMENTS_MANAGE_DEPOSIT) ?? false;
+        $canResolveDeposit = $user?->hasPermissionTo(Permissions::APPOINTMENTS_RESOLVE_DEPOSIT) ?? false;
+        $canCheckout = ($user?->hasPermissionTo(Permissions::APPOINTMENTS_CONVERT_TO_SALE) ?? false)
+            && ($user?->hasPermissionTo(Permissions::SALES_ACCESS) ?? false)
+            && ($user?->hasPermissionTo(Permissions::SALES_CREATE) ?? false);
+        $deposit = $this->deposit;
         $visibleItems = $this->items
             ->when(! $viewAll, fn ($items) => $items->where('assigned_to', $user->getKey()))
             ->sortBy('position')
@@ -48,9 +54,14 @@ class AppointmentResource extends JsonResource
             'can_reschedule' => $this->status === 'scheduled'
                 && ($canAssign || ! $this->items->contains(fn ($item) => $item->assigned_to !== $user->getKey())),
             'can_change_status' => $this->status === 'scheduled'
-                && ($viewAll || ! $this->items->contains(fn ($item) => $item->assigned_to !== $user->getKey())),
+                && ($viewAll || ! $this->items->contains(fn ($item) => $item->assigned_to !== $user->getKey()))
+                && ($deposit?->status !== 'pending' || $canResolveDeposit),
             'can_mark_no_show_now' => $this->status === 'scheduled'
                 && ! $this->scheduled_start->greaterThan(now('UTC')),
+            'can_record_deposit' => $this->status === 'scheduled' && ! $deposit && $canManageDeposit,
+            'has_pending_deposit' => $deposit?->status === 'pending',
+            'can_resolve_deposit' => $deposit?->status === 'pending' && $canResolveDeposit,
+            'can_checkout' => $this->status === 'scheduled' && ! $this->sale && $canCheckout,
             'status_reason' => match ($this->status) {
                 'canceled' => $this->cancellation_reason,
                 'no_show' => $this->no_show_reason,

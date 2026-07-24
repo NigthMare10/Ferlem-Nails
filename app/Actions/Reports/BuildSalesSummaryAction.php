@@ -3,166 +3,156 @@
 namespace App\Actions\Reports;
 
 use App\Models\Sale;
+use App\Models\SaleItem;
+use App\Support\Money;
+use App\Support\ReportPeriod;
 use Carbon\CarbonImmutable;
-use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
-use RuntimeException;
 
 final class BuildSalesSummaryAction
 {
-    public const TIMEZONE = 'America/Tegucigalpa';
+    public const TIMEZONE = ReportPeriod::TIMEZONE;
 
     public function execute(array $filters): array
     {
         $period = $filters['period'] ?? 'today';
-        [$localStart, $localEnd, $referenceDate] = $this->periodBounds($period, $filters);
-        $baseQuery = $this->baseQuery(
-            $localStart,
-            $localEnd,
-            $filters['employee_id'] ?? null,
-            $filters['payment_method'] ?? null,
-        );
+        [$localStart, $localEnd, $referenceDate] = ReportPeriod::bounds($filters);
+        $employeeId = isset($filters['employee_id']) ? (int) $filters['employee_id'] : null;
+        $paymentMethod = $filters['payment_method'] ?? null;
+        $sales = $this->salesQuery($localStart, $localEnd, $paymentMethod);
+        $items = $this->itemsQuery($localStart, $localEnd, $paymentMethod)
+            ->when($employeeId !== null, fn (Builder $query) => $query->where('sale_items.performed_by', $employeeId));
 
-        $totals = (clone $baseQuery)
-            ->toBase()
-            ->selectRaw('COUNT(*) as sales_count')
-            ->selectRaw('COALESCE(SUM(sales.total_services), 0) as services_count')
-            ->selectRaw('COALESCE(SUM(sales.total), 0) as total_sold')
-            ->selectRaw('COALESCE(SUM(sales.card_fee_amount), 0) as card_fee_amount')
-            ->selectRaw('COALESCE(SUM(sales.net_amount), 0) as net_amount')
-            ->first();
+        if ($employeeId === null) {
+            $totals = (clone $sales)->toBase()
+                ->selectRaw('COUNT(*) as sales_count')
+                ->selectRaw('COALESCE(SUM(sales.total_services), 0) as services_count')
+                ->selectRaw('COALESCE(SUM(sales.total), 0) as total_sold')
+                ->selectRaw('COALESCE(SUM(sales.card_fee_amount), 0) as card_fee_amount')
+                ->selectRaw('COALESCE(SUM(sales.net_amount), 0) as net_amount')
+                ->first();
+        } else {
+            $totals = (clone $items)->toBase()
+                ->selectRaw('COUNT(DISTINCT sale_items.sale_id) as sales_count')
+                ->selectRaw('COALESCE(SUM(sale_items.quantity), 0) as services_count')
+                ->selectRaw('COALESCE(SUM(sale_items.line_total), 0) as total_sold')
+                ->selectRaw('COALESCE(SUM(sale_items.allocated_card_fee_amount), 0) as card_fee_amount')
+                ->selectRaw('COALESCE(SUM(sale_items.net_line_amount), 0) as net_amount')
+                ->first();
+        }
 
-        $totalCents = $this->toCents($totals->total_sold);
+        $totalCents = Money::toCents((string) $totals->total_sold);
         $salesCount = (int) $totals->sales_count;
+        $summary = [
+            'total_sold' => Money::fromCents($totalCents),
+            'card_fee_amount' => Money::fromCents(Money::toCents((string) $totals->card_fee_amount)),
+            'net_amount' => Money::fromCents(Money::toCents((string) $totals->net_amount)),
+            'sales_count' => $salesCount,
+            'services_count' => (int) $totals->services_count,
+            'average_sale' => Money::fromCents($this->averageCents($totalCents, $salesCount)),
+        ];
 
-        $employees = (clone $baseQuery)
-            ->join('users', 'users.id', '=', 'sales.sold_by')
-            ->select(['sales.sold_by', 'users.name'])
-            ->selectRaw('COUNT(*) as sales_count')
-            ->selectRaw('COALESCE(SUM(sales.total_services), 0) as services_count')
-            ->selectRaw('COALESCE(SUM(sales.total), 0) as total_sold')
-            ->selectRaw('COALESCE(SUM(sales.card_fee_amount), 0) as card_fee_amount')
-            ->selectRaw('COALESCE(SUM(sales.net_amount), 0) as net_amount')
-            ->groupBy('sales.sold_by', 'users.name')
-            ->orderByRaw('SUM(sales.total) DESC')
+        $employees = (clone $items)
+            ->join('users', 'users.id', '=', 'sale_items.performed_by')
+            ->select(['sale_items.performed_by', 'users.name'])
+            ->selectRaw('COUNT(DISTINCT sale_items.sale_id) as sales_count')
+            ->selectRaw('COALESCE(SUM(sale_items.quantity), 0) as services_count')
+            ->selectRaw('COALESCE(SUM(sale_items.line_total), 0) as total_sold')
+            ->selectRaw('COALESCE(SUM(sale_items.allocated_card_fee_amount), 0) as card_fee_amount')
+            ->selectRaw('COALESCE(SUM(sale_items.net_line_amount), 0) as net_amount')
+            ->groupBy('sale_items.performed_by', 'users.name')
+            ->orderByRaw('SUM(sale_items.line_total) DESC')
             ->get()
             ->map(function ($row) {
-                $employeeTotalCents = $this->toCents($row->total_sold);
-                $employeeSalesCount = (int) $row->sales_count;
+                $totalCents = Money::toCents((string) $row->total_sold);
+                $salesCount = (int) $row->sales_count;
 
                 return [
-                    'id' => (int) $row->sold_by,
+                    'id' => (int) $row->performed_by,
                     'name' => $row->name,
-                    'sales_count' => $employeeSalesCount,
+                    'sales_count' => $salesCount,
                     'services_count' => (int) $row->services_count,
-                    'total_sold' => $this->formatCents($employeeTotalCents),
-                    'card_fee_amount' => $this->formatCents($this->toCents($row->card_fee_amount)),
-                    'net_amount' => $this->formatCents($this->toCents($row->net_amount)),
-                    'average_sale' => $this->formatCents($this->averageCents($employeeTotalCents, $employeeSalesCount)),
+                    'total_sold' => Money::fromCents($totalCents),
+                    'card_fee_amount' => Money::fromCents(Money::toCents((string) $row->card_fee_amount)),
+                    'net_amount' => Money::fromCents(Money::toCents((string) $row->net_amount)),
+                    'average_sale' => Money::fromCents($this->averageCents($totalCents, $salesCount)),
                 ];
             })
             ->values()
             ->all();
 
-        $daily = $this->dailySummary($baseQuery);
+        $daily = $this->dailySummary($employeeId === null ? $sales : $items, $employeeId !== null);
 
         return [
             'filters' => [
                 'period' => $period,
+                'mode' => $filters['mode'] ?? 'actual',
                 'date' => $period === 'custom' ? null : $referenceDate->format('Y-m-d'),
                 'date_from' => $period === 'custom' ? $localStart->format('Y-m-d') : null,
                 'date_to' => $period === 'custom' ? $localEnd->subDay()->format('Y-m-d') : null,
-                'employee_id' => isset($filters['employee_id']) ? (int) $filters['employee_id'] : null,
-                'payment_method' => $filters['payment_method'] ?? null,
+                'employee_id' => $employeeId,
+                'payment_method' => $paymentMethod,
             ],
             'period' => [
-                'label' => $this->periodLabel($period, $localStart, $localEnd),
+                'label' => ReportPeriod::label($period, $localStart, $localEnd),
                 'start_date' => $localStart->format('Y-m-d'),
                 'end_date' => $localEnd->subDay()->format('Y-m-d'),
                 'timezone' => self::TIMEZONE,
                 'week_starts_on' => 'monday',
             ],
-            'summary' => [
-                'total_sold' => $this->formatCents($totalCents),
-                'card_fee_amount' => $this->formatCents($this->toCents($totals->card_fee_amount)),
-                'net_amount' => $this->formatCents($this->toCents($totals->net_amount)),
-                'sales_count' => $salesCount,
-                'services_count' => (int) $totals->services_count,
-                'average_sale' => $this->formatCents($this->averageCents($totalCents, $salesCount)),
+            'actual' => [
+                'gross_revenue' => $summary['total_sold'],
+                'pos_fee' => $summary['card_fee_amount'],
+                'net_income' => $summary['net_amount'],
+                'completed_sales_count' => $summary['sales_count'],
+                'performed_services_count' => $summary['services_count'],
+                'average_sale' => $summary['average_sale'],
             ],
+            'summary' => $summary,
             'employees' => $employees,
             'daily' => $daily,
         ];
     }
 
-    private function periodBounds(string $period, array $filters): array
+    private function salesQuery(CarbonImmutable $start, CarbonImmutable $end, mixed $paymentMethod): Builder
     {
-        $today = CarbonImmutable::now(self::TIMEZONE)->startOfDay();
-        $reference = isset($filters['date'])
-            ? CarbonImmutable::createFromFormat('Y-m-d', $filters['date'], self::TIMEZONE)->startOfDay()
-            : $today;
-
-        return match ($period) {
-            'today' => [$reference, $reference->addDay(), $reference],
-            'week' => [
-                $reference->startOfWeek(CarbonInterface::MONDAY),
-                $reference->startOfWeek(CarbonInterface::MONDAY)->addWeek(),
-                $reference,
-            ],
-            'month' => [$reference->startOfMonth(), $reference->startOfMonth()->addMonth(), $reference],
-            'custom' => $this->customBounds($filters, $today),
-            default => throw new RuntimeException('Periodo de reporte no soportado.'),
-        };
-    }
-
-    private function customBounds(array $filters, CarbonImmutable $fallback): array
-    {
-        $start = CarbonImmutable::createFromFormat('Y-m-d', $filters['date_from'], self::TIMEZONE)->startOfDay();
-        $end = CarbonImmutable::createFromFormat('Y-m-d', $filters['date_to'], self::TIMEZONE)->startOfDay()->addDay();
-
-        return [$start, $end, $fallback];
-    }
-
-    private function baseQuery(
-        CarbonImmutable $localStart,
-        CarbonImmutable $localEnd,
-        mixed $employeeId,
-        mixed $paymentMethod,
-    ): Builder {
         return Sale::query()
             ->where('sales.status', Sale::STATUS_COMPLETED)
-            ->where('sales.sold_at', '>=', $localStart->utc())
-            ->where('sales.sold_at', '<', $localEnd->utc())
-            ->when($employeeId !== null, fn (Builder $query) => $query->where('sales.sold_by', (int) $employeeId))
-            ->when($paymentMethod !== null, fn (Builder $query) => $query->where('sales.payment_method', $paymentMethod));
+            ->where('sales.sold_at', '>=', $start->utc())
+            ->where('sales.sold_at', '<', $end->utc())
+            ->when($paymentMethod !== null, fn (Builder $query) => $query->whereHas(
+                'payments', fn (Builder $payments) => $payments->where('method', $paymentMethod),
+            ));
     }
 
-    private function dailySummary(Builder $baseQuery): array
+    private function itemsQuery(CarbonImmutable $start, CarbonImmutable $end, mixed $paymentMethod): Builder
+    {
+        return SaleItem::query()
+            ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+            ->where('sales.status', Sale::STATUS_COMPLETED)
+            ->where('sales.sold_at', '>=', $start->utc())
+            ->where('sales.sold_at', '<', $end->utc())
+            ->when($paymentMethod !== null, fn (Builder $query) => $query->whereHas(
+                'sale.payments', fn (Builder $payments) => $payments->where('method', $paymentMethod),
+            ));
+    }
+
+    private function dailySummary(Builder $query, bool $usesItems): array
     {
         $days = [];
+        $columns = $usesItems
+            ? ['sales.sold_at', 'sale_items.sale_id', 'sale_items.quantity', 'sale_items.line_total', 'sale_items.allocated_card_fee_amount', 'sale_items.net_line_amount']
+            : ['sales.id', 'sales.sold_at', 'sales.total', 'sales.total_services', 'sales.card_fee_amount', 'sales.net_amount'];
 
-        foreach ((clone $baseQuery)->get([
-            'sales.sold_at',
-            'sales.total',
-            'sales.total_services',
-            'sales.card_fee_amount',
-            'sales.net_amount',
-        ]) as $sale) {
-            $date = $sale->sold_at->setTimezone(self::TIMEZONE)->format('Y-m-d');
-            $days[$date] ??= [
-                'sales_count' => 0,
-                'services_count' => 0,
-                'total_cents' => 0,
-                'card_fee_cents' => 0,
-                'net_amount_cents' => 0,
-            ];
-            $days[$date]['sales_count']++;
-            $days[$date]['services_count'] += $sale->total_services;
-            $days[$date]['total_cents'] += $this->toCents($sale->total);
-            $days[$date]['card_fee_cents'] += $this->toCents($sale->card_fee_amount);
-            $days[$date]['net_amount_cents'] += $this->toCents($sale->net_amount);
+        foreach ((clone $query)->get($columns) as $row) {
+            $date = CarbonImmutable::parse((string) $row->sold_at, 'UTC')->setTimezone(self::TIMEZONE)->format('Y-m-d');
+            $days[$date] ??= ['sale_ids' => [], 'services_count' => 0, 'total_cents' => 0, 'card_fee_cents' => 0, 'net_cents' => 0];
+            $days[$date]['sale_ids'][(int) ($usesItems ? $row->sale_id : $row->id)] = true;
+            $days[$date]['services_count'] += (int) ($usesItems ? $row->quantity : $row->total_services);
+            $days[$date]['total_cents'] += Money::toCents((string) ($usesItems ? $row->line_total : $row->total));
+            $days[$date]['card_fee_cents'] += Money::toCents((string) ($usesItems ? $row->allocated_card_fee_amount : $row->card_fee_amount));
+            $days[$date]['net_cents'] += Money::toCents((string) ($usesItems ? $row->net_line_amount : $row->net_amount));
         }
-
         krsort($days);
 
         return collect($days)->map(function (array $values, string $date) {
@@ -171,55 +161,17 @@ final class BuildSalesSummaryAction
             return [
                 'date' => $date,
                 'date_label' => $localDate->translatedFormat('j \\d\\e F \\d\\e Y'),
-                'sales_count' => $values['sales_count'],
+                'sales_count' => count($values['sale_ids']),
                 'services_count' => $values['services_count'],
-                'total_sold' => $this->formatCents($values['total_cents']),
-                'card_fee_amount' => $this->formatCents($values['card_fee_cents']),
-                'net_amount' => $this->formatCents($values['net_amount_cents']),
+                'total_sold' => Money::fromCents($values['total_cents']),
+                'card_fee_amount' => Money::fromCents($values['card_fee_cents']),
+                'net_amount' => Money::fromCents($values['net_cents']),
             ];
         })->values()->all();
     }
 
-    private function periodLabel(string $period, CarbonImmutable $start, CarbonImmutable $end): string
-    {
-        $inclusiveEnd = $end->subDay();
-
-        return match ($period) {
-            'today' => $start->locale('es')->translatedFormat('j \\d\\e F \\d\\e Y'),
-            'month' => ucfirst($start->locale('es')->translatedFormat('F \\d\\e Y')),
-            default => $start->format('d/m/Y').' al '.$inclusiveEnd->format('d/m/Y'),
-        };
-    }
-
-    private function toCents(mixed $amount): int
-    {
-        $value = trim((string) ($amount ?? '0'));
-
-        if (! preg_match('/^(\d+)(?:\.(\d+))?$/', $value, $matches)) {
-            throw new RuntimeException('La base de datos devolvió un importe no válido.');
-        }
-
-        $fraction = str_pad($matches[2] ?? '', 3, '0');
-        $cents = ((int) $matches[1] * 100) + (int) substr($fraction, 0, 2);
-
-        if ((int) $fraction[2] >= 5) {
-            $cents++;
-        }
-
-        return $cents;
-    }
-
     private function averageCents(int $totalCents, int $salesCount): int
     {
-        if ($salesCount === 0) {
-            return 0;
-        }
-
-        return intdiv($totalCents + intdiv($salesCount, 2), $salesCount);
-    }
-
-    private function formatCents(int $cents): string
-    {
-        return intdiv($cents, 100).'.'.str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
+        return $salesCount === 0 ? 0 : intdiv($totalCents + intdiv($salesCount, 2), $salesCount);
     }
 }

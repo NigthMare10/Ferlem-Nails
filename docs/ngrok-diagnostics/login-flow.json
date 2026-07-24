@@ -1,0 +1,18 @@
+{
+  "consoleErrors": [],
+  "pageErrors": [],
+  "failedRequests": [],
+  "inertiaRequests": [
+    "https://radiator-provider-punch.ngrok-free.dev/login"
+  ],
+  "afterLogin": {
+    "location": "https://radiator-provider-punch.ngrok-free.dev/",
+    "title": "Inicio",
+    "bodyText": "SL\nStudio Lemus\nADMINISTRACIÓN\nPrincipal\nInicio\nNueva venta\nAgenda\nGanancias Generales\nConfiguración\nSesión activa\nNgrok Diagnostic\nInicio\nND\nPanel principal\nHola, Ngrok Diagnostic\n\nTodo lo esencial de Studio Lemus, en un solo lugar.\n\n0\nServicios activos\n1\nUsuarios activos\nAccesos rápidos\n\nContinúa "
+  },
+  "afterReload": {
+    "location": "https://radiator-provider-punch.ngrok-free.dev/",
+    "authenticated": true,
+    "appChildCount": 1
+  }
+}

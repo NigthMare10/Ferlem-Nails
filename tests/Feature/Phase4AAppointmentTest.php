@@ -390,8 +390,9 @@ class Phase4AAppointmentTest extends TestCase
         $this->assertTrue(Route::has('appointments.reschedule'));
         $this->assertTrue(Route::has('appointments.cancel'));
         $this->assertTrue(Route::has('appointments.no-show'));
-        $this->assertFalse(Route::has('appointments.deposit'));
-        $this->assertFalse(Route::has('appointments.checkout'));
+        $this->assertTrue(Route::has('appointments.deposit'));
+        $this->assertTrue(Route::has('appointments.checkout'));
+        $this->assertTrue(Route::has('appointments.history'));
         $this->delete('/appointments/1')->assertStatus(405);
     }
 

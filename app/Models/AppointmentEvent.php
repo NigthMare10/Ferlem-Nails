@@ -18,6 +18,14 @@ class AppointmentEvent extends Model
 
     public const TYPE_NO_SHOW = 'no_show';
 
+    public const TYPE_DEPOSIT_RECORDED = 'deposit_recorded';
+
+    public const TYPE_DEPOSIT_RESOLVED = 'deposit_resolved';
+
+    public const TYPE_COMPLETED = 'completed';
+
+    public const TYPE_DEPOSIT_EXCESS_REFUNDED = 'deposit_excess_refunded';
+
     protected $guarded = ['*'];
 
     protected function casts(): array

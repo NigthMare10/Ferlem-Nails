@@ -8,6 +8,20 @@ Este documento define el orden operativo y los limites de las fases 2A a 2I, y r
 
 El modulo de Agenda y Citas se gobierna mediante `docs/STUDIO_LEMUS_APPOINTMENTS_PLAN.md`. Ese plan separado no modifica los estados, dependencias o aprobaciones de las fases actuales de este documento.
 
+## Integración actual de Agenda y Citas (2026-07-24)
+
+- Gobierno y estados: `docs/STUDIO_LEMUS_APPOINTMENTS_PLAN.md` sigue siendo la fuente oficial. 4A está `Aprobada / Sí`; 4B, 4C, 4D, 4E y 4F están `En pruebas / No`. Esta integración no cambia estados, dependencias ni aprobaciones POS: 3A conserva `Aprobada / Sí`; 3B y 3B.1 conservan `En pruebas / No`; 3C-3E conservan `Pendiente / No`.
+- Migraciones reales: existen las migraciones aditivas de `appointments`, `appointment_items`, segmentos por item, `appointment_events`, razón no-show, `appointment_deposits`, `appointment_deposit_refunds`, vínculo único `sales.appointment_id`, propósito de devolución, snapshots de checkout en `sale_items` y `sale_payments`. La orquestación final aplicó correctamente las seis migraciones nuevas de 4C/4D en MySQL como batch 8, sin `migrate:fresh`; 4F no creó migraciones.
+- Modelos activos: `Appointment`, `AppointmentItem` y `AppointmentEvent` conservan snapshots, segmentos y auditoría append-only. `AppointmentDeposit` y `AppointmentDepositRefund` conservan monto original, fee POS, disponible, resolución y devoluciones inmutables. `Sale`, `SaleItem` y `SalePayment` se relacionan con la cita, el item reservado y la persona ejecutora; una cita tiene como máximo una venta y los registros financieros confirmados no se eliminan físicamente.
+- Permisos: Agenda compone `appointments.access`, `view_own`, `view_all`, `create`, `perform`, `update`, `assign`, `cancel`, `mark_no_show`, `manage_deposit`, `resolve_deposit`, `convert_to_sale` y `view_projection`. Historial no inventa un permiso adicional: requiere usuario activo, `appointments.access` y `view_all|view_own`. Comprobantes mantienen `sales.reprint` más owner o `sales.view_own` sobre venta propia.
+- Rutas: `GET /appointments` conserva calendario mensual y Agenda diaria solo `scheduled`; existen store, disponibilidad, detalle, update, reprogramación, adelanto, devolución de excedente, checkout, cancelación y no-show. `GET /appointments/history` lista los cuatro estados antes de la ruta dinámica y abre el mismo detalle autorizado en modo de solo lectura. Checkout usa `/sales/new?appointment={id}`, confirma por `POST /appointments/{appointment}/checkout` y termina en el comprobante existente. Proyección permanece separada en `GET /earnings`.
+- Contratos y scopes: owner/`view_all` consulta todos los segmentos autorizados y filtra personal. Employee/`view_own` requiere `appointment_items.assigned_to = usuario`, recibe solo sus segmentos y no puede filtrar otra persona ni inferir servicios ajenos en una cita compartida. Historial filtra fecha local Honduras, estado, personal, clienta y nombre snapshot de servicio, pagina 20 registros y conserva filtros. Los detalles traducen auditoría segura sin mostrar JSON técnico.
+- Fechas, dinero y estados: timestamps se almacenan UTC; días Honduras usan intervalos semiabiertos y rangos máximos de 366 días. Totales y fees se calculan en centavos. Solo `scheduled` bloquea disponibilidad; `completed`, `canceled` y `no_show` son terminales. Adelanto disponible = `amount - refunded - retained - applied`; la venta final conserva el valor completo y la proyección solo incluye citas programadas, separada de ventas, retenciones y devoluciones.
+- UI actual: Agenda ofrece calendario mensual y vista diaria, Nueva cita, detalle, reprogramación, estados, adelanto y `Atender y cobrar`. Historial usa tabla desktop, cards móviles, filtros colapsables móviles y exactamente `Ver detalle`/`Ver comprobante` cuando está autorizado. Las completadas muestran hora y venta vinculada sin controles mutables. No existen vista semanal, recordatorios, WhatsApp, reserva pública, CRM, recurrencia, waitlist, inventario, factura fiscal, comisión laboral ni sucursales.
+- Pruebas automáticas: 4F pasó 13 pruebas/230 aserciones y la suite permitida sin `NgrokPreviewTest` pasó 238/2,105. `php artisan test` directo no pasó: 13 pruebas/124 aserciones correctas y 228 errores `could not find driver`. Con SQLite cargado solo por proceso, la suite literal tuvo 238 correctas/2,113 aserciones y 3 fallos exclusivos de la prueba ngrok no rastreada por expectativas protegidas de Vite/host/bootstrap. Pint dirigido, `git diff --check` y build Vite pasaron; build transformó 1,205 módulos, con CSS 840.80 kB, JS 921.71 kB y la advertencia conocida de chunk mayor de 500 kB.
+- Verificación MySQL: `optimize:clear`, `migrate`, `db:seed`, `route:list` y `migrate:status` terminaron correctamente. Las seis migraciones nuevas están en batch 8. Se conservaron 10 ventas, 15 líneas y 6 citas; las ventas históricas recibieron exactamente 10 pagos y no se crearon adelantos demo.
+- Riesgos y validación manual pendiente: revisar planes SQL, volumen y concurrencia multiproceso MySQL; ejecutar E2E y comparación visual; validar filtros/scopes/compartidas/comprobantes/adelantos en 1440x900, 1024x768, 768x1024 y 390x844. SQLite sigue deshabilitado globalmente. Los archivos y pruebas ngrok permanecen aislados y sin cambios. Un proceso Vite preexistente en 5179 mantiene `public/hot`; no pertenece a esta implementación y `public/build` quedó compilado.
+
 ## Tablero de progreso
 
 | Fase | Nombre | Estado | Dependencias | Aprobacion |
@@ -161,7 +175,7 @@ Cambio aprobado por el usuario el 2026-07-19. El roadmap 2B-2I se conserva como 
 - Pruebas manuales pendientes: ventas reales de L 1,000 en efectivo/tarjeta; validar total, recibo, bruto/comision/neto y manipulacion; revisar filtros/empleados/dias; confirmar 403 employee y responsive en 1440x900, 1024x768, 768x1024 y 390x844.
 - Riesgos: las ventas anteriores se clasifican como efectivo segun regla aprobada porque el metodo real no era recuperable; `net_amount` no es ganancia neta contable; no existen referencias, conciliacion bancaria o pagos mixtos; SQLite no carga por defecto; el bundle supera 500 kB. No se crearon ventas demo o de tarjeta en MySQL.
 
-## Diagnostico del estado actual
+## Diagnostico histórico previo al módulo de Agenda
 
 ### Arquitectura existente
 
@@ -170,7 +184,7 @@ Cambio aprobado por el usuario el 2026-07-19. El roadmap 2B-2I se conserva como 
 - Los controladores son directos y usan Eloquent, Form Requests, Resources y respuestas Inertia. No existe una capa de servicios, acciones de dominio, policies, auditoria ni precedentes de `DB::transaction` o `lockForUpdate`.
 - `AppServiceProvider` comparte con Inertia usuario, roles, permisos y mensajes flash. Un `Gate::before` concede al owner todas las capacidades del backend.
 - Los enlaces frontend usan rutas literales. La seguridad real debe continuar en middleware, controladores o Form Requests; ocultar una opcion no autoriza ni protege una ruta.
-- Existen `User`, `Service`, `Sale` y `SaleItem` como modelos activos. `CashSession` y su tabla permanecen como legado sin uso. Existe el reporte agregado Ganancias Generales; no existen pagos, clientes, anulaciones, movimientos, gastos, historial o detalle de ventas.
+- En este diagnóstico previo existían `User`, `Service`, `Sale` y `SaleItem` como modelos activos. `CashSession` y su tabla permanecían como legado sin uso. Existía el reporte agregado Ganancias Generales y no existían pagos, clientes, anulaciones, movimientos, gastos, historial o detalle de ventas. La parte sobre pagos e Historial queda superada: hoy existen `SalePayment`, adelantos y el Historial de citas; aún no existen CRM de clientes, anulaciones de venta, gastos ni Historial general de ventas 3C.
 - `services.price` ya usa `decimal(12,2)`. Los servicios pueden cambiar o eliminarse fisicamente, por lo que las ventas futuras deben conservar snapshots historicos.
 - La zona horaria de Laravel es UTC, mientras la interfaz usa `es-HN` y HNL. Los dias operativos requieren una decision explicita.
 - Las pruebas usan SQLite en memoria; la aplicacion local usa MySQL. La concurrencia real, bloqueos y restricciones especificas deben comprobarse tambien contra MySQL.
@@ -205,7 +219,7 @@ Cambio aprobado por el usuario el 2026-07-19. El roadmap 2B-2I se conserva como 
 3. El backend es autoridad para permisos, precios, descuentos, totales, caja activa y estados.
 4. Dinero se almacena en `decimal(12,2)` o una precision mayor justificada; nunca `float`.
 5. Ventas, pagos, anulaciones, cierres y comprobantes deben conservar historia inmutable.
-6. El MVP no es un ERP, CRM, inventario, agenda, recursos humanos ni plataforma multiempresa.
+6. Regla histórica del POS: el MVP no era un ERP, CRM, inventario, agenda, recursos humanos ni plataforma multiempresa. La exclusión de Agenda queda superada exclusivamente por el módulo 4A-4F; las demás exclusiones continúan vigentes.
 7. Una fase debe poder probarse y aprobarse antes de iniciar la siguiente.
 
 ## Reglas globales obligatorias

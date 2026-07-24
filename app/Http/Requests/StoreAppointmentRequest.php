@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Support\Permissions;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreAppointmentRequest extends FormRequest
 {
@@ -11,17 +12,28 @@ class StoreAppointmentRequest extends FormRequest
     {
         $user = $this->user();
 
-        return (bool) $user?->is_active
+        $canCreate = (bool) $user?->is_active
             && $user->hasPermissionTo(Permissions::APPOINTMENTS_ACCESS)
             && $user->hasPermissionTo(Permissions::APPOINTMENTS_CREATE);
+
+        return $canCreate
+            && (! $this->boolean('has_deposit') || $user->hasPermissionTo(Permissions::APPOINTMENTS_MANAGE_DEPOSIT));
     }
 
     protected function prepareForValidation(): void
     {
+        $deposit = $this->input('deposit');
+        if (is_array($deposit)) {
+            $deposit['note'] = is_string($deposit['note'] ?? null) && trim($deposit['note']) !== ''
+                ? trim($deposit['note'])
+                : null;
+        }
+
         $this->merge([
             'client_name' => is_string($this->client_name) ? trim($this->client_name) : $this->client_name,
             'client_phone' => is_string($this->client_phone) && trim($this->client_phone) !== '' ? trim($this->client_phone) : null,
             'notes' => is_string($this->notes) && trim($this->notes) !== '' ? trim($this->notes) : null,
+            'deposit' => $deposit,
         ]);
     }
 
@@ -38,6 +50,11 @@ class StoreAppointmentRequest extends FormRequest
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:20'],
             'items.*.duration_minutes' => ['required', 'integer', 'min:5', 'max:480', 'multiple_of:5'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'has_deposit' => ['sometimes', 'boolean'],
+            'deposit' => [Rule::requiredIf($this->boolean('has_deposit')), 'nullable', 'array'],
+            'deposit.amount' => [Rule::requiredIf($this->boolean('has_deposit')), 'nullable', 'regex:/^(\d{1,10})(?:\.(\d{1,2}))?$/'],
+            'deposit.payment_method' => [Rule::requiredIf($this->boolean('has_deposit')), 'nullable', Rule::in(['cash', 'card'])],
+            'deposit.note' => ['nullable', 'string', 'max:500'],
         ];
     }
 
@@ -58,6 +75,11 @@ class StoreAppointmentRequest extends FormRequest
             'items.*.duration_minutes.max' => 'La duración máxima es 480 minutos.',
             'items.*.duration_minutes.multiple_of' => 'La duración debe usar intervalos de 5 minutos.',
             'notes.max' => 'Las notas no pueden superar 1000 caracteres.',
+            'deposit.amount.required' => 'Escribe el monto del adelanto.',
+            'deposit.amount.regex' => 'El monto del adelanto debe ser válido y usar máximo dos decimales.',
+            'deposit.payment_method.required' => 'Selecciona el método de pago del adelanto.',
+            'deposit.payment_method.in' => 'El método de pago del adelanto no es válido.',
+            'deposit.note.max' => 'La nota del adelanto no puede superar 500 caracteres.',
         ];
     }
 }

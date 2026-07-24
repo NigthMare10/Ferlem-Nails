@@ -162,6 +162,18 @@ function canReprogram(appointment: Appointment): boolean {
         && appointment.can_reschedule;
 }
 
+function canCheckout(appointment: Appointment): boolean {
+    return appointment.status === 'scheduled'
+        && can('appointments.convert_to_sale')
+        && can('sales.access')
+        && can('sales.create')
+        && appointment.can_checkout;
+}
+
+function checkout(appointment: Appointment): void {
+    router.visit(`/sales/new?appointment=${appointment.id}`);
+}
+
 function canCancelAppointment(appointment: Appointment): boolean {
     return appointment.status === 'scheduled'
         && can('appointments.cancel')
@@ -188,7 +200,7 @@ function openAppointment(appointment: Appointment, mode: AppointmentDialogMode =
 }
 
 function handleSaved(mode: string): void {
-    if (mode === 'edit' || mode === 'reschedule') {
+    if (mode === 'edit' || mode === 'reschedule' || mode === 'deposit') {
         selectedDialogMode.value = 'detail';
         void loadDetails();
     }
@@ -209,6 +221,9 @@ function clearDetails(): void {
     <AppLayout title="Agenda">
         <PageHeader title="Agenda" :description="pageDescription">
             <template #actions>
+                <VBtn variant="tonal" prepend-icon="mdi-history" href="/appointments/history">
+                    Historial
+                </VBtn>
                 <VBtn v-if="can('appointments.create')" color="primary" prepend-icon="mdi-calendar-plus" @click="formOpen = true">
                     Nueva cita
                 </VBtn>
@@ -341,18 +356,21 @@ function clearDetails(): void {
 
                                     <div class="appointment-actions desktop-appointment-actions">
                                         <VBtn size="small" variant="text" color="primary" prepend-icon="mdi-eye-outline" @click="openAppointment(appointment)">Ver detalle</VBtn>
+                                        <VBtn v-if="canCheckout(appointment)" size="small" variant="tonal" color="primary" prepend-icon="mdi-cash-register" @click="checkout(appointment)">Atender y cobrar</VBtn>
                                         <VBtn v-if="canReprogram(appointment)" size="small" variant="text" prepend-icon="mdi-calendar-sync-outline" @click="openAppointment(appointment, 'reschedule')">Reprogramar</VBtn>
                                         <VBtn v-if="canCancelAppointment(appointment)" size="small" variant="text" color="error" prepend-icon="mdi-calendar-remove-outline" @click="openAppointment(appointment, 'cancel')">Cancelar</VBtn>
                                         <VBtn v-if="canMarkNoShow(appointment)" size="small" variant="text" color="warning" prepend-icon="mdi-account-off-outline" @click="openAppointment(appointment, 'no_show')">No llegó</VBtn>
                                     </div>
 
                                     <div class="appointment-actions mobile-appointment-actions">
-                                        <VBtn size="small" variant="tonal" color="primary" prepend-icon="mdi-eye-outline" @click="openAppointment(appointment)">Ver detalle</VBtn>
+                                        <VBtn v-if="canCheckout(appointment)" size="small" variant="tonal" color="primary" prepend-icon="mdi-cash-register" @click="checkout(appointment)">Atender y cobrar</VBtn>
+                                        <VBtn v-else size="small" variant="tonal" color="primary" prepend-icon="mdi-eye-outline" @click="openAppointment(appointment)">Ver detalle</VBtn>
                                         <VMenu v-if="hasMoreActions(appointment)" location="bottom end">
                                             <template #activator="{ props: menuProps }">
                                                 <VBtn v-bind="menuProps" size="small" variant="text" append-icon="mdi-chevron-down">Más acciones</VBtn>
                                             </template>
                                             <VList density="compact" min-width="210">
+                                                <VListItem v-if="canCheckout(appointment)" prepend-icon="mdi-eye-outline" title="Ver detalle" @click="openAppointment(appointment)" />
                                                 <VListItem v-if="canReprogram(appointment)" prepend-icon="mdi-calendar-sync-outline" title="Reprogramar" @click="openAppointment(appointment, 'reschedule')" />
                                                 <VListItem v-if="canCancelAppointment(appointment)" prepend-icon="mdi-calendar-remove-outline" title="Cancelar" base-color="error" @click="openAppointment(appointment, 'cancel')" />
                                                 <VListItem v-if="canMarkNoShow(appointment)" prepend-icon="mdi-account-off-outline" title="No llegó" base-color="warning" @click="openAppointment(appointment, 'no_show')" />
@@ -368,8 +386,8 @@ function clearDetails(): void {
         </Transition>
 
         <VBtn v-if="can('appointments.create')" class="mobile-create-button" color="primary" icon="mdi-calendar-plus" aria-label="Nueva cita" size="large" @click="formOpen = true" />
-        <AppointmentFormDialog v-model="formOpen" :date="date" :assignees="assignees" :services="services" :can-assign="can('appointments.assign')" />
-        <AppointmentDetailsDialog v-model="detailsOpen" :appointment="selectedAppointment" :initial-mode="selectedDialogMode" :loading="detailsLoading" :error="detailsError" :assignees="assignees" :can-update="can('appointments.update')" :can-assign="can('appointments.assign')" :can-view-all="can('appointments.view_all')" :can-cancel="can('appointments.cancel')" :can-mark-no-show="can('appointments.mark_no_show')" @retry="loadDetails" @saved="handleSaved" @closed="clearDetails" />
+        <AppointmentFormDialog v-model="formOpen" :date="date" :assignees="assignees" :services="services" :can-assign="can('appointments.assign')" :can-manage-deposit="can('appointments.manage_deposit')" />
+        <AppointmentDetailsDialog v-model="detailsOpen" :appointment="selectedAppointment" :initial-mode="selectedDialogMode" :loading="detailsLoading" :error="detailsError" :assignees="assignees" :can-update="can('appointments.update')" :can-assign="can('appointments.assign')" :can-view-all="can('appointments.view_all')" :can-cancel="can('appointments.cancel')" :can-mark-no-show="can('appointments.mark_no_show')" :can-manage-deposit="can('appointments.manage_deposit')" :can-resolve-deposit="can('appointments.resolve_deposit')" @retry="loadDetails" @saved="handleSaved" @closed="clearDetails" />
     </AppLayout>
 </template>
 

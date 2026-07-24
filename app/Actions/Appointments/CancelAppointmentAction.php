@@ -10,7 +10,7 @@ class CancelAppointmentAction
 {
     public function __construct(private TransitionAppointmentStatusAction $transition) {}
 
-    public function execute(User $user, Appointment $appointment, string $reason): Appointment
+    public function execute(User $user, Appointment $appointment, string $reason, array $depositResolution = []): Appointment
     {
         return $this->transition->execute(
             $user,
@@ -18,6 +18,7 @@ class CancelAppointmentAction
             $reason,
             Appointment::STATUS_CANCELED,
             Permissions::APPOINTMENTS_CANCEL,
+            $depositResolution,
         );
     }
 }

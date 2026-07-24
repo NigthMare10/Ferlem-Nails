@@ -4,7 +4,7 @@ import { useForm } from '@inertiajs/vue3';
 import { useDisplay } from 'vuetify';
 import type { AppointmentAssignee, AppointmentService } from '../../types/appointments';
 
-const props = defineProps<{ modelValue: boolean; date: string; assignees: AppointmentAssignee[]; services: AppointmentService[]; canAssign: boolean }>();
+const props = defineProps<{ modelValue: boolean; date: string; assignees: AppointmentAssignee[]; services: AppointmentService[]; canAssign: boolean; canManageDeposit: boolean }>();
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>();
 const { xs } = useDisplay();
 const selectedServiceIds = ref<number[]>([]);
@@ -15,11 +15,18 @@ const availabilityLoaded = ref(false);
 const availableTimes = ref<string[]>([]);
 const availabilityMessage = ref('Selecciona los servicios para consultar horarios disponibles.');
 let availabilityTimer: ReturnType<typeof setTimeout> | undefined;
-const form = useForm({ client_name: '', client_phone: '', date: props.date, start_time: '', items: [] as Array<{ service_id: number; assigned_to: number | null; quantity: number; duration_minutes: number }>, notes: '' });
+const form = useForm({
+    client_name: '', client_phone: '', date: props.date, start_time: '',
+    items: [] as Array<{ service_id: number; assigned_to: number | null; quantity: number; duration_minutes: number }>,
+    notes: '', has_deposit: false, deposit: { amount: '', payment_method: 'cash', note: '' },
+});
 const selectedItems = computed(() => form.items.map((item, index) => ({ item, index, service: props.services.find(service => service.id === item.service_id) })).filter(entry => entry.service));
 const duration = computed(() => form.items.reduce((sum, item) => sum + item.duration_minutes * item.quantity, 0));
 const total = computed(() => selectedItems.value.reduce((sum, entry) => sum + Number(entry.service!.price) * entry.item.quantity, 0));
-const canSave = computed(() => availableTimes.value.includes(form.start_time) && !availabilityLoading.value && !form.processing);
+const depositIsValid = computed(() => !form.has_deposit || (Number(form.deposit.amount) > 0 && Number(form.deposit.amount) <= total.value));
+const canSave = computed(() => availableTimes.value.includes(form.start_time) && depositIsValid.value && !availabilityLoading.value && !form.processing);
+const depositFee = computed(() => form.deposit.payment_method === 'card' ? Math.round(Number(form.deposit.amount || 0) * 4) / 100 : 0);
+const depositNet = computed(() => Math.max(0, Number(form.deposit.amount || 0) - depositFee.value));
 
 function segment(index: number, item: { duration_minutes: number; quantity: number }): string {
     const [hours, minutes] = form.start_time.split(':').map(Number);
@@ -77,7 +84,7 @@ watch(() => props.modelValue, open => {
     availabilityLoaded.value = false;
     availableTimes.value = [];
     availabilityMessage.value = 'Selecciona los servicios para consultar horarios disponibles.';
-    form.defaults({ client_name: '', client_phone: '', date: props.date, start_time: '', items: [], notes: '' }).reset().clearErrors();
+    form.defaults({ client_name: '', client_phone: '', date: props.date, start_time: '', items: [], notes: '', has_deposit: false, deposit: { amount: '', payment_method: 'cash', note: '' } }).reset().clearErrors();
 });
 watch(selectedServiceIds, ids => {
     const previous = new Map(form.items.map(item => [item.service_id, item]));
@@ -100,6 +107,7 @@ function money(value: number | string): string { return new Intl.NumberFormat('e
                 <template v-if="canAssign"><VSwitch v-if="selectedItems.length" v-model="samePerson" label="Una misma persona realizará todos los servicios" color="primary" hide-details class="mb-3" /><VSelect v-if="samePerson && selectedItems.length" v-model="commonAssignee" label="Persona asignada" :items="assignees" item-title="name" item-value="id" /></template>
                 <VCard v-for="entry in selectedItems" :key="entry.item.service_id" variant="outlined" class="pa-4 mb-3" rounded="lg"><div class="font-weight-bold">{{ entry.service!.name }} · {{ money(entry.service!.price) }}</div><div class="text-caption text-medium-emphasis mb-3">Tiempo habitual: {{ entry.service!.duration_minutes }} min</div><VRow><VCol cols="6"><VTextField v-model.number="entry.item.duration_minutes" type="number" min="5" max="480" step="5" label="Duración reservada" suffix="min" /></VCol><VCol cols="6"><VTextField v-model.number="entry.item.quantity" type="number" min="1" max="20" label="Cantidad" /></VCol></VRow><VSelect v-if="canAssign && !samePerson" v-model="entry.item.assigned_to" label="Persona asignada" :items="assignees" item-title="name" item-value="id" /><div class="text-caption text-primary">Horario: {{ segment(entry.index, entry.item) }}</div></VCard>
                 <div class="form-section-title mt-5">Horario disponible</div><VProgressLinear v-if="availabilityLoading" indeterminate color="primary" class="mb-3" /><VSelect v-model="form.start_time" label="Hora" :items="availableTimes" :loading="availabilityLoading" :disabled="!availableTimes.length" :error-messages="form.errors.start_time" /><VAlert v-if="availabilityMessage" :type="availabilityLoaded ? 'warning' : 'info'" variant="tonal" density="compact" class="mb-4">{{ availabilityMessage }}</VAlert>
+                <section v-if="canManageDeposit" class="mt-5"><div class="form-section-title">Adelanto</div><VRadioGroup v-model="form.has_deposit" inline hide-details class="mb-3"><VRadio label="Sin adelanto" :value="false" /><VRadio label="Registrar adelanto" :value="true" /></VRadioGroup><VCard v-if="form.has_deposit" variant="outlined" rounded="lg" class="pa-4 mb-4"><VRow><VCol cols="12" sm="6"><VTextField v-model="form.deposit.amount" type="number" min="0.01" step="0.01" :max="total" label="Monto recibido" prefix="L" :error-messages="form.errors['deposit.amount']" /></VCol><VCol cols="12" sm="6"><VSelect v-model="form.deposit.payment_method" label="Método de pago" :items="[{ title: 'Efectivo', value: 'cash' }, { title: 'Tarjeta', value: 'card' }]" :error-messages="form.errors['deposit.payment_method']" /></VCol></VRow><VTextarea v-model="form.deposit.note" label="Nota del adelanto (opcional)" rows="2" counter="500" :error-messages="form.errors['deposit.note']" /><VAlert v-if="form.deposit.payment_method === 'card'" type="info" variant="tonal" density="compact">Comisión POS 4%: {{ money(depositFee) }} · Neto estimado: {{ money(depositNet) }}</VAlert></VCard></section>
                 <VTextarea v-model="form.notes" label="Notas (opcional)" rows="3" counter="1000" :error-messages="form.errors.notes" /><div class="summary-grid mt-4"><div><span>Duración</span><strong>{{ duration }} min</strong></div><div><span>Total estimado</span><strong>{{ money(total) }}</strong></div></div></VForm></VCardText>
             <VDivider /><VCardActions class="pa-4 dialog-actions"><VBtn variant="text" :disabled="form.processing" @click="close">Cancelar</VBtn><VSpacer /><VBtn color="primary" :loading="form.processing" :disabled="!canSave" @click="save">Guardar cita</VBtn></VCardActions>
         </VCard>

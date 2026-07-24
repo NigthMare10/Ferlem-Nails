@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AppointmentItem extends Model
 {
@@ -36,5 +37,10 @@ class AppointmentItem extends Model
     public function assignedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function saleItem(): HasOne
+    {
+        return $this->hasOne(SaleItem::class);
     }
 }

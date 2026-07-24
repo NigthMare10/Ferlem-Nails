@@ -25,6 +25,8 @@ class RoleSeeder extends Seeder
             Permissions::APPOINTMENTS_VIEW_ALL, Permissions::APPOINTMENTS_CREATE,
             Permissions::APPOINTMENTS_UPDATE, Permissions::APPOINTMENTS_ASSIGN,
             Permissions::APPOINTMENTS_CANCEL, Permissions::APPOINTMENTS_MARK_NO_SHOW,
+            Permissions::APPOINTMENTS_MANAGE_DEPOSIT,
+            Permissions::APPOINTMENTS_CONVERT_TO_SALE,
         ]);
         $employee->syncPermissions([
             Permissions::SALES_ACCESS,
@@ -38,6 +40,7 @@ class RoleSeeder extends Seeder
             Permissions::APPOINTMENTS_UPDATE,
             Permissions::APPOINTMENTS_CANCEL,
             Permissions::APPOINTMENTS_MARK_NO_SHOW,
+            Permissions::APPOINTMENTS_CONVERT_TO_SALE,
         ]);
     }
 }

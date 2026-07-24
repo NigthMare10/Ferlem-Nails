@@ -1,0 +1,44 @@
+{
+  "url": "http://127.0.0.1:8000/login",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "failedRequests": [],
+  "responses": [
+    {
+      "url": "http://127.0.0.1:8000/build/assets/app-BYFL0YwX.css",
+      "status": 200,
+      "mimeType": "text/css",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "headers": {}
+    },
+    {
+      "url": "http://127.0.0.1:8000/build/assets/app-DdGWFmlY.js",
+      "status": 200,
+      "mimeType": "application/javascript",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "headers": {}
+    },
+    {
+      "url": "http://127.0.0.1:8000/build/assets/materialdesignicons-webfont-Dp5v-WZN.woff2?v=7.4.47",
+      "status": 200,
+      "mimeType": "font/woff2",
+      "fromDiskCache": false,
+      "fromServiceWorker": false,
+      "headers": {}
+    }
+  ],
+  "serviceWorkers": [],
+  "dom": {
+    "location": "http://127.0.0.1:8000/login",
+    "title": "Iniciar sesión",
+    "appExists": true,
+    "appChildCount": 1,
+    "dataPageExists": true,
+    "emailVisible": true,
+    "passwordVisible": true,
+    "submitVisible": true,
+    "bodyText": "SL\nStudio Lemus\nADMINISTRACIÓN\nTu estudio, en orden\nAdministración sencilla para tu estudio\n\nUn espacio claro y práctico para cuidar cada detalle de Studio Lemus.\n\nBienvenida\n\nIngresa tus datos para continuar\n\nCorreo electrónico\nContraseña\nRecordarme\nIniciar sesión\n\nAcceso exclusivo para el equipo de Studio Lemus"
+  }
+}

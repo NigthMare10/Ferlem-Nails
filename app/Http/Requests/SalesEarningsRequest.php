@@ -23,6 +23,10 @@ class SalesEarningsRequest extends FormRequest
     {
         $normalized = [
             'period' => $this->input('period', 'today'),
+            'mode' => $this->input(
+                'mode',
+                $this->user()?->can(Permissions::APPOINTMENTS_VIEW_PROJECTION) ? 'both' : 'actual',
+            ),
         ];
 
         foreach (['date', 'date_from', 'date_to', 'employee_id', 'payment_method'] as $field) {
@@ -37,6 +41,12 @@ class SalesEarningsRequest extends FormRequest
     {
         return [
             'period' => ['required', Rule::in(['today', 'week', 'month', 'custom'])],
+            'mode' => [
+                'required',
+                Rule::in($this->user()?->can(Permissions::APPOINTMENTS_VIEW_PROJECTION)
+                    ? ['actual', 'projection', 'both']
+                    : ['actual']),
+            ],
             'date' => ['nullable', 'date_format:Y-m-d'],
             'date_from' => ['nullable', 'required_if:period,custom', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'required_if:period,custom', 'date_format:Y-m-d', 'after_or_equal:date_from'],
@@ -67,6 +77,7 @@ class SalesEarningsRequest extends FormRequest
         return [
             'period.required' => 'Selecciona un periodo.',
             'period.in' => 'El periodo seleccionado no es válido.',
+            'mode.in' => 'No tienes permiso para consultar la proyección seleccionada.',
             'date.date_format' => 'La fecha de referencia debe usar el formato año-mes-día.',
             'date_from.required_if' => 'Selecciona la fecha inicial.',
             'date_from.date_format' => 'La fecha inicial debe usar el formato año-mes-día.',

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { useDisplay } from 'vuetify';
 import AppLayout from '../../Layouts/AppLayout.vue';
 import EmptyState from '../../Components/EmptyState.vue';
@@ -8,18 +8,45 @@ import PageHeader from '../../Components/PageHeader.vue';
 import ConfirmSaleDialog from '../../Components/Sales/ConfirmSaleDialog.vue';
 import SaleCart from '../../Components/Sales/SaleCart.vue';
 import ServiceCard from '../../Components/Sales/ServiceCard.vue';
-import type { PaymentMethod, SaleCartItem, SaleService } from '../../types/sales';
+import type { AppointmentCheckoutContext, AppointmentSaleCartItem, PaymentMethod, SaleCartItem, SaleService } from '../../types/sales';
 
-const props = defineProps<{ services: SaleService[] }>();
+const props = defineProps<{
+    services: SaleService[];
+    appointment: AppointmentCheckoutContext | null;
+    assignees: Array<{ id: number; name: string }>;
+}>();
+const page = usePage<{ auth: { user: { id: number; name: string } } }>();
 const { smAndDown } = useDisplay();
 const search = ref('');
 const cart = ref<SaleCartItem[]>([]);
 const mobileCart = ref(false);
 const confirmDialog = ref(false);
+const appointmentCart = ref<AppointmentSaleCartItem[]>((props.appointment?.items ?? []).map(item => ({
+    key: `reserved-${item.appointment_item_id}`,
+    appointment_item_id: item.appointment_item_id,
+    service_id: item.service_id,
+    name: item.name,
+    description: item.description,
+    duration_minutes: item.duration_minutes,
+    price: item.price,
+    quantity: item.quantity,
+    performed_by: item.performed_by.id,
+    performer_name: item.performed_by.name,
+    reserved: true,
+})));
+const removedReserved = ref<number[]>([]);
+const removalPending = ref<string | null>(null);
+let additionalSequence = 0;
 const form = useForm({
     checkout_token: crypto.randomUUID(),
     payment_method: 'cash' as PaymentMethod,
-    items: [] as { service_id: number; quantity: number }[],
+    items: [] as Array<{ service_id: number | null; appointment_item_id?: number | null; quantity: number; performed_by?: number }>,
+    removed_appointment_item_ids: [] as number[],
+});
+const excessRefundForm = useForm({
+    amount: '',
+    operation_token: crypto.randomUUID(),
+    note: '',
 });
 
 const cents = (value: string) => {
@@ -41,6 +68,11 @@ const filteredServices = computed(() => {
 });
 const totalServices = computed(() => cart.value.reduce((total, item) => total + item.quantity, 0));
 const totalCents = computed(() => cart.value.reduce((total, item) => total + (cents(item.price) * item.quantity), 0));
+const appointmentTotalCents = computed(() => appointmentCart.value.reduce((total, item) => total + (cents(item.price) * item.quantity), 0));
+const depositCents = computed(() => props.appointment?.deposit ? cents(props.appointment.deposit.available_amount) : 0);
+const appointmentBalanceCents = computed(() => Math.max(0, appointmentTotalCents.value - depositCents.value));
+const appointmentBelowDeposit = computed(() => appointmentTotalCents.value < depositCents.value);
+const depositExcessCents = computed(() => Math.max(0, depositCents.value - appointmentTotalCents.value));
 const cardFeeCents = computed(() => form.payment_method === 'card' ? Math.floor(((totalCents.value * 4) + 50) / 100) : 0);
 const netAmountCents = computed(() => totalCents.value - cardFeeCents.value);
 const saleError = computed(() => {
@@ -51,6 +83,16 @@ const saleError = computed(() => {
         || Object.entries(errors).find(([key]) => key.startsWith('items.'))?.[1]
         || '';
 });
+const confirmationItems = computed<SaleCartItem[]>(() => (props.appointment
+    ? appointmentCart.value.map((item, index) => ({
+        id: index + 1,
+        name: item.name,
+        description: item.description,
+        duration_minutes: item.duration_minutes,
+        price: item.price,
+        quantity: item.quantity,
+    }))
+    : cart.value));
 
 const quantityFor = (serviceId: number) => cart.value.find(item => item.id === serviceId)?.quantity ?? 0;
 const add = (service: SaleService) => {
@@ -84,10 +126,83 @@ const openConfirmation = () => {
     confirmDialog.value = true;
 };
 const submit = () => {
+    if (props.appointment) {
+        if (!appointmentCart.value.length || appointmentBelowDeposit.value || form.processing) return;
+        form.items = appointmentCart.value.map(item => ({
+            appointment_item_id: item.appointment_item_id,
+            service_id: item.service_id,
+            quantity: item.quantity,
+            performed_by: item.performed_by,
+        }));
+        form.removed_appointment_item_ids = removedReserved.value;
+        form.post(`/appointments/${props.appointment.id}/checkout`, { preserveScroll: true });
+        return;
+    }
     if (!cart.value.length || form.processing) return;
     form.items = cart.value.map(item => ({ service_id: item.id, quantity: item.quantity }));
     form.post('/sales', { preserveScroll: true });
 };
+
+function addAppointmentService(service: SaleService): void {
+    const existing = appointmentCart.value.find(item => !item.reserved && item.service_id === service.id);
+    if (existing) {
+        if (existing.quantity < 50) existing.quantity++;
+        return;
+    }
+    const defaultPerformer = props.appointment?.can_assign
+        ? props.assignees[0]
+        : page.props.auth.user;
+    if (!defaultPerformer) return;
+    appointmentCart.value.push({
+        key: `additional-${++additionalSequence}`,
+        appointment_item_id: null,
+        service_id: service.id,
+        name: service.name,
+        description: service.description,
+        duration_minutes: service.duration_minutes,
+        price: service.price,
+        quantity: 1,
+        performed_by: defaultPerformer.id,
+        performer_name: defaultPerformer.name,
+        reserved: false,
+    });
+}
+
+function removeAppointmentLine(item: AppointmentSaleCartItem): void {
+    if (item.reserved && removalPending.value !== item.key) {
+        removalPending.value = item.key;
+        return;
+    }
+    if (item.appointment_item_id) removedReserved.value.push(item.appointment_item_id);
+    appointmentCart.value = appointmentCart.value.filter(line => line.key !== item.key);
+    removalPending.value = null;
+}
+
+function updateAppointmentPerformer(item: AppointmentSaleCartItem, performerId: number): void {
+    item.performed_by = performerId;
+    item.performer_name = props.assignees.find(person => person.id === performerId)?.name ?? '';
+}
+
+function openAppointmentConfirmation(): void {
+    if (!appointmentCart.value.length || appointmentBelowDeposit.value || form.processing) return;
+    form.clearErrors();
+    confirmDialog.value = true;
+}
+
+function decimalAmount(value: number): string {
+    return `${Math.floor(value / 100)}.${String(value % 100).padStart(2, '0')}`;
+}
+
+function refundExcess(): void {
+    if (!props.appointment || depositExcessCents.value <= 0 || excessRefundForm.processing) return;
+    excessRefundForm.amount = decimalAmount(depositExcessCents.value);
+    excessRefundForm.post(`/appointments/${props.appointment.id}/deposit/refund-excess`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            excessRefundForm.defaults({ amount: '', operation_token: crypto.randomUUID(), note: '' }).reset().clearErrors();
+        },
+    });
+}
 </script>
 
 <template>
@@ -95,12 +210,81 @@ const submit = () => {
     <AppLayout title="Nueva venta">
         <div class="sales-create-page" :class="{ 'sales-create-page--mobile-cart': smAndDown && cart.length }">
             <PageHeader
-                eyebrow="Venta rápida"
-                title="Nueva venta"
-                description="Selecciona los servicios realizados y genera el comprobante."
+                :eyebrow="appointment ? 'Cita programada' : 'Venta rápida'"
+                :title="appointment ? 'Atender y cobrar' : 'Nueva venta'"
+                :description="appointment ? `Registra el trabajo realizado para ${appointment.client_name}.` : 'Selecciona los servicios realizados y genera el comprobante.'"
             />
 
-            <VRow align="start">
+            <template v-if="appointment">
+                <VAlert type="info" variant="tonal" class="mb-5">
+                    Abrir esta pantalla no completa la cita. Permanecerá programada hasta confirmar el cobro.
+                </VAlert>
+                <VRow align="start">
+                    <VCol cols="12" lg="7">
+                        <VCard class="surface-card mb-5" rounded="xl">
+                            <VCardItem class="pa-5">
+                                <VCardTitle class="font-weight-bold">{{ appointment.client_name }}</VCardTitle>
+                                <VCardSubtitle>{{ appointment.client_phone || 'Sin teléfono' }} · {{ appointment.reserved_duration_minutes }} min reservados</VCardSubtitle>
+                            </VCardItem>
+                            <VDivider />
+                            <VCardText class="pa-4 pa-sm-5">
+                                <div class="text-overline text-primary mb-3">Trabajo realizado</div>
+                                <VCard v-for="item in appointmentCart" :key="item.key" variant="outlined" rounded="lg" class="appointment-line mb-3">
+                                    <VCardText class="pa-4">
+                                        <div class="d-flex justify-space-between ga-3">
+                                            <div><strong>{{ item.name }}</strong><VChip v-if="item.reserved" size="x-small" color="primary" variant="tonal" class="ml-2">Reservado</VChip><div class="text-caption text-medium-emphasis mt-1">{{ money(cents(item.price)) }} cada uno · {{ item.duration_minutes }} min</div></div>
+                                            <strong>{{ money(cents(item.price) * item.quantity) }}</strong>
+                                        </div>
+                                        <VAlert v-if="removalPending === item.key" type="warning" variant="tonal" density="compact" class="mt-3">
+                                            Confirma que este servicio reservado no se realizó.
+                                            <template #append><div class="d-flex ga-1"><VBtn size="small" variant="text" @click="removalPending = null">Conservar</VBtn><VBtn size="small" color="error" variant="text" @click="removeAppointmentLine(item)">Quitar</VBtn></div></template>
+                                        </VAlert>
+                                        <div v-else class="appointment-line__controls mt-3">
+                                            <div class="d-flex align-center ga-1"><VBtn icon="mdi-minus" size="small" variant="outlined" :disabled="item.quantity <= 1 || form.processing" @click="item.quantity--" /><strong class="px-2">{{ item.quantity }}</strong><VBtn icon="mdi-plus" size="small" variant="outlined" :disabled="item.quantity >= 50 || form.processing" @click="item.quantity++" /></div>
+                                            <VSelect v-if="appointment.can_assign" :model-value="item.performed_by" label="Realizado por" :items="assignees" item-title="name" item-value="id" density="compact" hide-details :disabled="form.processing" @update:model-value="updateAppointmentPerformer(item, $event)" />
+                                            <div v-else class="text-body-2"><span class="text-medium-emphasis">Realizado por </span><strong>{{ item.performer_name }}</strong></div>
+                                            <VBtn icon="mdi-delete-outline" color="error" variant="text" :disabled="form.processing" :aria-label="`Quitar ${item.name}`" @click="removeAppointmentLine(item)" />
+                                        </div>
+                                    </VCardText>
+                                </VCard>
+                                <VAlert v-if="!appointmentCart.length" type="warning" variant="tonal">Agrega al menos un servicio realizado.</VAlert>
+                            </VCardText>
+                        </VCard>
+
+                        <VTextField v-model="search" label="Buscar servicios adicionales" prepend-inner-icon="mdi-magnify" clearable hide-details class="mb-4" />
+                        <VRow dense><VCol v-for="service in filteredServices" :key="service.id" cols="12" sm="6"><ServiceCard :service="service" :selected-quantity="appointmentCart.find(item => !item.reserved && item.service_id === service.id)?.quantity ?? 0" @add="addAppointmentService" /></VCol></VRow>
+                    </VCol>
+                    <VCol cols="12" lg="5">
+                        <VCard class="surface-card appointment-summary" rounded="xl">
+                            <VCardItem class="pa-5"><VCardTitle class="font-weight-bold">Resumen de cobro</VCardTitle><VCardSubtitle>La venta conserva el valor completo del trabajo.</VCardSubtitle></VCardItem>
+                            <VDivider />
+                            <VCardText class="pa-5">
+                                <div class="summary-row"><span>Total de servicios</span><strong>{{ money(appointmentTotalCents) }}</strong></div>
+                                <div v-if="appointment.deposit" class="summary-row"><span>Adelanto disponible ({{ appointment.deposit.payment_method_label }})</span><strong>− {{ money(depositCents) }}</strong></div>
+                                <div class="summary-row summary-row--total"><span>Saldo final</span><strong>{{ money(appointmentBalanceCents) }}</strong></div>
+                                <VSwitch v-if="appointmentBalanceCents > 0" :model-value="form.payment_method === 'card'" label="Saldo pagado con tarjeta" color="primary" inset hide-details class="mt-4" :disabled="form.processing" @update:model-value="form.payment_method = $event ? 'card' : 'cash'" />
+                                <VAlert v-if="appointmentBelowDeposit" type="error" variant="tonal" density="compact" class="mt-4">
+                                    El adelanto disponible supera los servicios por {{ money(depositExcessCents) }}. Debe devolverse exactamente ese excedente antes de completar.
+                                </VAlert>
+                                <VCard v-if="appointmentBelowDeposit" variant="outlined" rounded="lg" class="pa-4 mt-3">
+                                    <template v-if="appointment.can_resolve_deposit">
+                                        <div class="font-weight-bold mb-1">Devolver excedente</div>
+                                        <div class="text-body-2 text-medium-emphasis mb-3">Se devolverán {{ money(depositExcessCents) }}. El monto y la comisión originales del adelanto no cambiarán.</div>
+                                        <VTextarea v-model="excessRefundForm.note" label="Nota (opcional)" rows="2" counter="500" :disabled="excessRefundForm.processing" :error-messages="excessRefundForm.errors.note" />
+                                        <VAlert v-if="excessRefundForm.errors.amount || excessRefundForm.errors.operation_token || excessRefundForm.errors.deposit || excessRefundForm.errors.appointment" type="error" variant="tonal" density="compact" class="mb-3">{{ excessRefundForm.errors.amount || excessRefundForm.errors.operation_token || excessRefundForm.errors.deposit || excessRefundForm.errors.appointment }}</VAlert>
+                                        <VBtn block color="error" variant="tonal" prepend-icon="mdi-cash-refund" :loading="excessRefundForm.processing" :disabled="form.processing" @click="refundExcess">Devolver excedente de {{ money(depositExcessCents) }}</VBtn>
+                                    </template>
+                                    <VAlert v-else type="warning" variant="tonal" density="compact">Solicita a una persona responsable con permiso para resolver adelantos que devuelva el excedente.</VAlert>
+                                </VCard>
+                                <VAlert v-if="saleError" type="error" variant="tonal" density="compact" class="mt-4">{{ saleError }}</VAlert>
+                                <VBtn block color="primary" size="large" prepend-icon="mdi-check-circle-outline" class="mt-5" :loading="form.processing" :disabled="form.processing || !appointmentCart.length || appointmentBelowDeposit" @click="openAppointmentConfirmation">Completar y cobrar {{ money(appointmentBalanceCents) }}</VBtn>
+                            </VCardText>
+                        </VCard>
+                    </VCol>
+                </VRow>
+            </template>
+
+            <VRow v-else align="start">
                 <VCol cols="12" md="7" lg="8">
                     <VTextField
                         v-model="search"
@@ -149,7 +333,7 @@ const submit = () => {
                 </VCol>
             </VRow>
 
-            <div v-if="smAndDown && cart.length" class="mobile-checkout-bar">
+            <div v-if="!appointment && smAndDown && cart.length" class="mobile-checkout-bar">
                 <VBtn variant="text" class="mobile-checkout-bar__summary" @click="mobileCart = true">
                     <span class="text-left">
                         <strong>{{ totalServices }} {{ totalServices === 1 ? 'servicio' : 'servicios' }}</strong>
@@ -161,7 +345,7 @@ const submit = () => {
                 </VBtn>
             </div>
 
-            <VBottomSheet v-model="mobileCart" :disabled="form.processing" max-height="88dvh">
+            <VBottomSheet v-if="!appointment" v-model="mobileCart" :disabled="form.processing" max-height="88dvh">
                 <SaleCart
                     :items="cart"
                     :total-cents="totalCents"
@@ -180,12 +364,15 @@ const submit = () => {
 
             <ConfirmSaleDialog
                 v-model="confirmDialog"
-                :items="cart"
-                :total-cents="totalCents"
-                :total-services="totalServices"
+                :items="confirmationItems"
+                :total-cents="appointment ? appointmentTotalCents : totalCents"
+                :total-services="appointment ? appointmentCart.reduce((total, item) => total + item.quantity, 0) : totalServices"
                 :payment-method="form.payment_method"
-                :card-fee-cents="cardFeeCents"
-                :net-amount-cents="netAmountCents"
+                :card-fee-cents="appointment ? 0 : cardFeeCents"
+                :net-amount-cents="appointment ? appointmentTotalCents : netAmountCents"
+                :appointment-mode="Boolean(appointment)"
+                :deposit-cents="depositCents"
+                :balance-cents="appointmentBalanceCents"
                 :processing="form.processing"
                 :error="saleError"
                 @confirm="submit"
@@ -199,6 +386,11 @@ const submit = () => {
     position: sticky;
     top: 88px;
 }
+
+.appointment-line__controls { display: grid; grid-template-columns: auto minmax(150px, 1fr) auto; align-items: center; gap: 14px; }
+.appointment-summary { position: sticky; top: 88px; }
+.summary-row { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.summary-row--total { align-items: baseline; margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)); font-size: 1.2rem; }
 
 .mobile-checkout-bar {
     position: fixed;
@@ -247,4 +439,6 @@ const submit = () => {
         padding-bottom: 70px;
     }
 }
+
+@media (max-width: 599px) { .appointment-line__controls { grid-template-columns: 1fr auto; }.appointment-line__controls :deep(.v-select) { grid-column: 1 / -1; grid-row: 2; }.appointment-line__controls > .text-body-2 { grid-column: 1 / -1; grid-row: 2; } }
 </style>

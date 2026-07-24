@@ -17,7 +17,13 @@ class Phase4AAppointmentMigrationTest extends TestCase
         $events = require database_path('migrations/2026_07_20_100200_create_appointment_events_table.php');
         $segments = require database_path('migrations/2026_07_20_101000_add_segments_to_appointment_items_table.php');
         $terminalReasons = require database_path('migrations/2026_07_21_100000_add_no_show_reason_to_appointments_table.php');
+        $deposits = require database_path('migrations/2026_07_24_100000_create_appointment_deposits_table.php');
+        $refunds = require database_path('migrations/2026_07_24_100100_create_appointment_deposit_refunds_table.php');
+        $refundPurpose = require database_path('migrations/2026_07_24_110050_add_purpose_to_appointment_deposit_refunds_table.php');
 
+        $refundPurpose->down();
+        $refunds->down();
+        $deposits->down();
         $terminalReasons->down();
         $segments->down();
         $events->down();
@@ -33,6 +39,9 @@ class Phase4AAppointmentMigrationTest extends TestCase
         $events->up();
         $segments->up();
         $terminalReasons->up();
+        $deposits->up();
+        $refunds->up();
+        $refundPurpose->up();
 
         $this->assertTrue(Schema::hasColumns('appointments', [
             'client_name',
@@ -77,9 +86,37 @@ class Phase4AAppointmentMigrationTest extends TestCase
             'new_values',
             'notes',
         ]));
+        $this->assertTrue(Schema::hasColumns('appointment_deposits', [
+            'appointment_id',
+            'amount',
+            'payment_method',
+            'card_fee_rate',
+            'card_fee_amount',
+            'net_amount',
+            'status',
+            'paid_at',
+            'recorded_by',
+            'applied_amount',
+            'refunded_amount',
+            'retained_amount',
+            'resolved_at',
+            'resolved_by',
+            'resolution_notes',
+        ]));
+        $this->assertTrue(Schema::hasColumns('appointment_deposit_refunds', [
+            'appointment_deposit_id',
+            'amount',
+            'purpose',
+            'refunded_at',
+            'refunded_by',
+            'notes',
+            'operation_token',
+        ]));
 
         $indexNames = collect(Schema::getIndexes('appointments'))->pluck('name');
         $this->assertTrue($indexNames->contains('appointments_assignee_status_start_index'));
         $this->assertTrue($indexNames->contains('appointments_status_start_index'));
+        $this->assertTrue(collect(Schema::getIndexes('appointment_deposits'))->pluck('name')->contains('appointment_deposits_appointment_id_unique'));
+        $this->assertTrue(collect(Schema::getIndexes('appointment_deposit_refunds'))->pluck('name')->contains('appointment_deposit_refunds_operation_token_unique'));
     }
 }

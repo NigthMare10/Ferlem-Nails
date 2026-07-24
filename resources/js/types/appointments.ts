@@ -52,13 +52,17 @@ export interface Appointment {
     can_reschedule: boolean;
     can_change_status: boolean;
     can_mark_no_show_now: boolean;
+    can_record_deposit: boolean;
+    has_pending_deposit: boolean;
+    can_resolve_deposit: boolean;
+    can_checkout: boolean;
     status_reason: string | null;
     visible_items: AppointmentItem[];
 }
 
 export interface AppointmentEvent {
     id: number;
-    type: 'created' | 'updated' | 'rescheduled' | 'canceled' | 'no_show';
+    type: 'created' | 'updated' | 'rescheduled' | 'canceled' | 'no_show' | 'deposit_recorded' | 'deposit_resolved' | 'deposit_excess_refunded' | 'completed';
     type_label: string;
     changes: Array<{
         label: string;
@@ -71,6 +75,29 @@ export interface AppointmentEvent {
     notes: string | null;
 }
 
+export interface AppointmentDeposit {
+    id: number;
+    amount: string;
+    available_amount?: string;
+    payment_method: 'cash' | 'card';
+    payment_method_label: string;
+    status: 'pending' | 'applied' | 'refunded' | 'partially_refunded' | 'retained';
+    status_label: string;
+    applied_amount: string;
+    refunded_amount?: string;
+    retained_amount?: string;
+    estimated_balance: string;
+    paid_at: string;
+    paid_at_display: string;
+    card_fee_rate?: string;
+    card_fee_amount?: string;
+    net_amount?: string;
+    resolved_at?: string | null;
+    resolved_at_display?: string | null;
+    resolved_by?: AppointmentAssignee | null;
+    resolution_notes?: string | null;
+}
+
 export interface AppointmentDetails extends Appointment {
     date: string;
     created_by?: AppointmentAssignee;
@@ -79,5 +106,33 @@ export interface AppointmentDetails extends Appointment {
     status_changed_at: string | null;
     status_changed_at_display: string | null;
     status_changed_by: AppointmentAssignee | null;
+    can_manage_deposit: boolean;
+    can_resolve_deposit: boolean;
+    deposit: AppointmentDeposit | null;
+    completed_at: string | null;
+    completed_at_display: string | null;
+    linked_sale: null | { id: number; sale_number: string; total: string; receipt_url: string; can_view_receipt: boolean };
     events: AppointmentEvent[];
+}
+
+export interface AppointmentHistoryItem {
+    id: number;
+    client_name: string;
+    status: Appointment['status'];
+    status_label: string;
+    date: string;
+    date_display: string;
+    start_time: string;
+    end_time: string;
+    visible_services: Array<{ name: string; duration_minutes: number; quantity: number }>;
+    personnel?: string[];
+    visible_total: string;
+    deposit: null | {
+        status: string;
+        status_label: string;
+        amount?: string;
+        available_amount?: string;
+    };
+    linked_sale: null | { sale_number: string; total: string; receipt_url: string };
+    completed_at_display: string | null;
 }

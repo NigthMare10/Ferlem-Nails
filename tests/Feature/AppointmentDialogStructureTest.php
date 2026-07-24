@@ -107,7 +107,7 @@ class AppointmentDialogStructureTest extends TestCase
 
         $this->assertNotFalse($component);
         $this->assertStringContainsString('max-width="780"', $component);
-        $this->assertStringNotContainsString("\n        scrollable\n", $component);
+        $this->assertStringContainsString(':scrollable="false"', $component);
         $this->assertStringContainsString('max-height: 85vh', $component);
         $this->assertStringContainsString('flex: 0 1 auto !important', $component);
         $this->assertStringContainsString('height: 100dvh', $component);
@@ -116,7 +116,21 @@ class AppointmentDialogStructureTest extends TestCase
         $this->assertStringContainsString('v-if="showFooter"', $component);
     }
 
-    public function test_phase_four_b_states_share_the_existing_dialog_shell_without_future_features(): void
+    public function test_appointment_shell_provides_csrf_token_for_availability_requests(): void
+    {
+        $view = file_get_contents(resource_path('views/app.blade.php'));
+        $createDialog = file_get_contents(resource_path('js/Components/Appointments/AppointmentFormDialog.vue'));
+        $detailsDialog = file_get_contents(resource_path('js/Components/Appointments/AppointmentDetailsDialog.vue'));
+
+        $this->assertNotFalse($view);
+        $this->assertNotFalse($createDialog);
+        $this->assertNotFalse($detailsDialog);
+        $this->assertStringContainsString('<meta name="csrf-token" content="{{ csrf_token() }}">', $view);
+        $this->assertStringContainsString('meta[name="csrf-token"]', $createDialog);
+        $this->assertStringContainsString('meta[name="csrf-token"]', $detailsDialog);
+    }
+
+    public function test_phase_four_c_deposits_share_the_existing_dialog_shell_without_later_features(): void
     {
         $component = file_get_contents(resource_path('js/Components/Appointments/AppointmentDetailsDialog.vue'));
 
@@ -128,8 +142,10 @@ class AppointmentDialogStructureTest extends TestCase
         $this->assertStringContainsString('Confirmar cancelación', $component);
         $this->assertStringContainsString('Marcar No llegó', $component);
         $this->assertStringContainsString("emit('update:modelValue', false)", $component);
-        $this->assertStringNotContainsString('adelanto', strtolower($component));
-        $this->assertStringNotContainsString('depósito', strtolower($component));
+        $this->assertStringContainsString("mode === 'deposit'", $component);
+        $this->assertStringContainsString('Registrar adelanto', $component);
+        $this->assertStringContainsString('Resolución obligatoria', $component);
+        $this->assertStringContainsString('full_refund', $component);
         $this->assertStringNotContainsString('Atender y cobrar', $component);
     }
 }
