@@ -54,6 +54,8 @@ class AppointmentHistoryResource extends JsonResource
             'linked_sale' => $canViewReceipt ? [
                 'sale_number' => $this->sale->sale_number,
                 'total' => $this->sale->total,
+                'status' => $this->sale->status,
+                'status_label' => $this->sale->status === 'canceled' ? 'Anulada' : 'Completada',
                 'receipt_url' => route('sales.receipt', $this->sale),
             ] : null,
             'completed_at_display' => $this->completed_at?->setTimezone(CreateAppointmentAction::TIMEZONE)

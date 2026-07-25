@@ -26,6 +26,8 @@ class AppointmentEvent extends Model
 
     public const TYPE_DEPOSIT_EXCESS_REFUNDED = 'deposit_excess_refunded';
 
+    public const TYPE_SALE_CANCELED = 'sale_canceled';
+
     protected $guarded = ['*'];
 
     protected function casts(): array

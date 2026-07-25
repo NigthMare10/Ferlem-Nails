@@ -40,6 +40,11 @@ class User extends Authenticatable
         return $this->hasMany(Sale::class, 'sold_by');
     }
 
+    public function canceledSales(): HasMany
+    {
+        return $this->hasMany(Sale::class, 'canceled_by');
+    }
+
     public function performedSaleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class, 'performed_by');

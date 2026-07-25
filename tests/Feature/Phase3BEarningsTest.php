@@ -268,7 +268,9 @@ class Phase3BEarningsTest extends TestCase
                 ->where('summary.services_count', 0)
                 ->where('summary.average_sale', '0.00')
                 ->has('employees', 0)
-                ->has('daily', 0));
+                ->has('daily', 1)
+                ->where('daily.0.date', '2026-07-19')
+                ->where('daily.0.total_sold', '0.00'));
     }
 
     public function test_report_uses_three_sales_queries_and_never_queries_cash_sessions(): void
@@ -281,7 +283,7 @@ class Phase3BEarningsTest extends TestCase
         app(BuildSalesSummaryAction::class)->execute(['period' => 'today', 'date' => '2026-07-19']);
 
         $queries = collect(DB::getQueryLog())->pluck('query');
-        $this->assertCount(3, $queries);
+        $this->assertCount(4, $queries);
         $this->assertFalse($queries->contains(fn (string $query) => str_contains(strtolower($query), 'cash_sessions')));
         $this->assertFalse(Schema::hasTable('daily_closures'));
         $this->assertFalse(Route::has('cash.close'));

@@ -11,10 +11,12 @@ class SaleCheckoutStructureTest extends TestCase
         $page = file_get_contents(resource_path('js/Pages/Sales/Create.vue'));
         $cart = file_get_contents(resource_path('js/Components/Sales/SaleCart.vue'));
         $dialog = file_get_contents(resource_path('js/Components/Sales/ConfirmSaleDialog.vue'));
+        $mobile = file_get_contents(resource_path('js/Components/Sales/SaleMobileCheckout.vue'));
 
         $this->assertNotFalse($page);
         $this->assertNotFalse($cart);
         $this->assertNotFalse($dialog);
+        $this->assertNotFalse($mobile);
         $this->assertStringContainsString('<SaleLineItem v-for="item in appointmentCart"', $page);
         $this->assertStringContainsString('<SalePaymentMethod v-model="form.payment_method"', $page);
         $this->assertStringContainsString('<SaleCheckoutSummary', $page);
@@ -22,6 +24,12 @@ class SaleCheckoutStructureTest extends TestCase
         $this->assertStringContainsString('<SalePaymentMethod', $cart);
         $this->assertStringContainsString('<SaleCheckoutSummary', $cart);
         $this->assertStringContainsString('<SaleCheckoutSummary', $dialog);
+        $this->assertStringContainsString('<SaleMobileCheckout', $page);
+        $this->assertStringContainsString('v-if="showMobileCheckout"', $page);
+        $this->assertStringContainsString('appointmentCart', $page);
+        $this->assertStringNotContainsString('mobile-checkout-bar__summary {\n        display: none', $page);
+        $this->assertStringContainsString('env(safe-area-inset-bottom', $mobile);
+        $this->assertStringContainsString('data-testid="sale-mobile-summary"', $mobile);
     }
 
     public function test_both_backend_flows_use_the_same_financial_writer(): void

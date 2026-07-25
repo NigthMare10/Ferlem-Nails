@@ -11,6 +11,8 @@ class Sale extends Model
 {
     public const STATUS_COMPLETED = 'completed';
 
+    public const STATUS_CANCELED = 'canceled';
+
     public const PAYMENT_METHOD_CASH = 'cash';
 
     public const PAYMENT_METHOD_CARD = 'card';
@@ -23,6 +25,7 @@ class Sale extends Model
     {
         return [
             'sold_at' => 'immutable_datetime',
+            'canceled_at' => 'immutable_datetime',
             'subtotal' => 'decimal:2',
             'total' => 'decimal:2',
             'total_services' => 'integer',
@@ -38,6 +41,18 @@ class Sale extends Model
             if ($sale->isDirty('sale_number') && $sale->getOriginal('sale_number') !== null) {
                 throw new LogicException('El número de venta es inmutable.');
             }
+            if ($sale->getOriginal('sale_number') === null
+                && array_diff(array_keys($sale->getDirty()), ['sale_number', 'updated_at']) === []) {
+                return;
+            }
+            $allowed = ['status', 'canceled_at', 'canceled_by', 'cancellation_reason', 'updated_at'];
+            if ($sale->getOriginal('status') === self::STATUS_COMPLETED
+                && $sale->status === self::STATUS_CANCELED
+                && array_diff(array_keys($sale->getDirty()), $allowed) === []) {
+                return;
+            }
+
+            throw new LogicException('Las ventas confirmadas solo pueden anularse una vez.');
         });
         static::deleting(fn () => throw new LogicException('Las ventas no pueden eliminarse físicamente.'));
     }
@@ -50,6 +65,11 @@ class Sale extends Model
     public function appointment(): BelongsTo
     {
         return $this->belongsTo(Appointment::class);
+    }
+
+    public function canceledBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'canceled_by');
     }
 
     public function items(): HasMany

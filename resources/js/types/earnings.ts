@@ -4,6 +4,7 @@ export type EarningsFilters = {
     period: 'today' | 'week' | 'month' | 'custom';
     mode: EarningsMode;
     date: string | null;
+    month: string | null;
     date_from: string | null;
     date_to: string | null;
     employee_id: number | null;
@@ -34,6 +35,8 @@ export type ActualResults = {
     completed_sales_count: number;
     performed_services_count: number;
     average_sale: string;
+    canceled_sales_count: number;
+    canceled_amount: string;
 };
 
 export type AppointmentProjection = {

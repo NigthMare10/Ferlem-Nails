@@ -29,7 +29,7 @@ class SalesEarningsRequest extends FormRequest
             ),
         ];
 
-        foreach (['date', 'date_from', 'date_to', 'employee_id', 'payment_method'] as $field) {
+        foreach (['date', 'month', 'date_from', 'date_to', 'employee_id', 'payment_method'] as $field) {
             $value = $this->input($field);
             $normalized[$field] = is_string($value) && trim($value) === '' ? null : $value;
         }
@@ -48,6 +48,7 @@ class SalesEarningsRequest extends FormRequest
                     : ['actual']),
             ],
             'date' => ['nullable', 'date_format:Y-m-d'],
+            'month' => ['nullable', 'date_format:Y-m'],
             'date_from' => ['nullable', 'required_if:period,custom', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'required_if:period,custom', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'employee_id' => ['nullable', 'integer', 'exists:users,id'],

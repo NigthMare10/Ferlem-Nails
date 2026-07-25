@@ -29,6 +29,7 @@ const form = useForm({
     period: props.filters.period,
     mode: props.filters.mode,
     date: props.filters.date ?? '',
+    month: props.filters.month ?? '',
     date_from: props.filters.date_from ?? '',
     date_to: props.filters.date_to ?? '',
     employee_id: props.filters.employee_id ?? null as number | null,
@@ -78,6 +79,7 @@ const actualMetrics = computed(() => props.actual ? [
     { label: 'Ingreso neto real', value: money(props.actual.net_income) },
     { label: 'Ventas completadas', value: count(props.actual.completed_sales_count) },
     { label: 'Servicios realizados', value: count(props.actual.performed_services_count) },
+    { label: 'Ventas anuladas', value: count(props.actual.canceled_sales_count), hint: `Monto anulado: ${money(props.actual.canceled_amount)}` },
 ] : []);
 const projectionMetrics = computed(() => props.projection ? [
     { label: 'Ingreso bruto proyectado', value: money(props.projection.projected_gross) },
@@ -128,8 +130,11 @@ function resetFilters(): void {
                         <VCol cols="12" sm="6" lg="2">
                             <VSelect v-model="form.period" label="Periodo" :items="periodOptions" :error-messages="form.errors.period" :disabled="form.processing" />
                         </VCol>
-                        <VCol v-if="form.period !== 'custom'" cols="12" sm="6" lg="2">
+                        <VCol v-if="form.period === 'today' || form.period === 'week'" cols="12" sm="6" lg="2">
                             <VTextField v-model="form.date" type="date" label="Fecha de referencia" :error-messages="form.errors.date" :disabled="form.processing" />
+                        </VCol>
+                        <VCol v-else-if="form.period === 'month'" cols="12" sm="6" lg="2">
+                            <VTextField v-model="form.month" type="month" label="Mes" :error-messages="form.errors.month" :disabled="form.processing" />
                         </VCol>
                         <template v-else>
                             <VCol cols="12" sm="6" lg="2"><VTextField v-model="form.date_from" type="date" label="Desde" :error-messages="form.errors.date_from" :disabled="form.processing" /></VCol>
@@ -176,7 +181,7 @@ function resetFilters(): void {
 
         <VCard v-if="employees.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }">
             <VCardItem class="pa-5 pb-2"><VCardTitle>Rendimiento por empleado</VCardTitle><VCardSubtitle>Servicios atribuidos a quien los realiza, no a quien cobra</VCardSubtitle></VCardItem>
-            <VDataTable :headers="employeeHeaders" :items="employees" class="desktop-table" hide-default-footer>
+            <VDataTable :headers="employeeHeaders" :items="employees" class="desktop-table" :items-per-page="-1" hide-default-footer>
                 <template #item.total_sold="{ item }"><strong>{{ money(item.total_sold) }}</strong></template>
                 <template #item.card_fee_amount="{ item }">{{ money(item.card_fee_amount) }}</template>
                 <template #item.net_amount="{ item }"><strong>{{ money(item.net_amount) }}</strong></template>
@@ -201,7 +206,7 @@ function resetFilters(): void {
 
         <VCard v-if="daily?.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }">
             <VCardItem class="pa-5 pb-2"><VCardTitle>Resultados reales por día</VCardTitle><VCardSubtitle>Calculados desde ventas completadas</VCardSubtitle></VCardItem>
-            <VDataTable :headers="dailyHeaders" :items="daily" class="desktop-table" hide-default-footer>
+            <VDataTable :headers="dailyHeaders" :items="daily" class="desktop-table" :items-per-page="-1" hide-default-footer>
                 <template #item.total_sold="{ item }"><strong>{{ money(item.total_sold) }}</strong></template>
                 <template #item.card_fee_amount="{ item }">{{ money(item.card_fee_amount) }}</template>
                 <template #item.net_amount="{ item }"><strong>{{ money(item.net_amount) }}</strong></template>

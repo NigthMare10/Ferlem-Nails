@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Sales\CancelSaleAction;
 use App\Actions\Sales\CreateSaleAction;
+use App\Http\Requests\CancelSaleRequest;
 use App\Http\Requests\CreateSaleRequest;
 use App\Http\Resources\SaleReceiptResource;
 use App\Http\Resources\SaleServiceResource;
@@ -111,15 +113,23 @@ class SalesController extends Controller
     {
         $user = $request->user();
         $canView = $user->hasRole('owner')
+            || $user->can(Permissions::SALES_CANCEL)
             || ($user->can(Permissions::SALES_VIEW_OWN) && $sale->sold_by === $user->getKey());
 
         abort_unless($canView, 403);
 
-        $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
+        $sale->load(['soldBy:id,name', 'canceledBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
 
         return Inertia::render('Sales/Receipt', [
             'sale' => (new SaleReceiptResource($sale))->resolve($request),
         ]);
+    }
+
+    public function cancel(CancelSaleRequest $request, Sale $sale, CancelSaleAction $action): RedirectResponse
+    {
+        $action->execute($request->user(), $sale, $request->string('cancellation_reason')->toString());
+
+        return to_route('sales.receipt', $sale, 303)->with('success', 'La venta fue anulada correctamente.');
     }
 
     private function authorizeAppointmentCheckout(User $user, Appointment $appointment): void

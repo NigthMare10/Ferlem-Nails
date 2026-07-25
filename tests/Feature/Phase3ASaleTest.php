@@ -416,13 +416,13 @@ class Phase3ASaleTest extends TestCase
         $this->assertDatabaseCount('sales', 1);
     }
 
-    public function test_only_phase_3a_routes_exist(): void
+    public function test_sales_routes_include_the_audited_cancellation_extension(): void
     {
         $this->assertTrue(Route::has('sales.create'));
         $this->assertTrue(Route::has('sales.store'));
         $this->assertTrue(Route::has('sales.receipt'));
         $this->assertFalse(Route::has('sales.index'));
-        $this->assertFalse(Route::has('sales.cancel'));
+        $this->assertTrue(Route::has('sales.cancel'));
         $this->assertFalse(Route::has('cash.open'));
         $this->assertFalse(Route::has('cash.close'));
         $this->get('/sales')->assertStatus(405);
@@ -444,9 +444,11 @@ class Phase3ASaleTest extends TestCase
         foreach (['owner', 'administrator', 'employee'] as $role) {
             $this->assertTrue(Role::findByName($role)->hasAllPermissions($salesPermissions));
         }
+        $this->assertTrue(Role::findByName('owner')->hasPermissionTo(Permissions::SALES_CANCEL));
+        $this->assertFalse(Role::findByName('administrator')->hasPermissionTo(Permissions::SALES_CANCEL));
+        $this->assertFalse(Role::findByName('employee')->hasPermissionTo(Permissions::SALES_CANCEL));
         $this->assertSame(0, Permission::query()->whereIn('name', [
             'sales.view_all',
-            'sales.cancel',
             'sales.apply_discount',
         ])->count());
         $this->assertSame([Permissions::REPORTS_SALES_VIEW], Permission::query()

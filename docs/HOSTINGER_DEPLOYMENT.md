@@ -2,6 +2,8 @@
 
 Esta guia despliega Studio Lemus (Laravel 13, PHP 8.3 y MySQL) sin instalar Node.js en Hostinger. Los assets se compilan localmente y se publica `public/build` junto con el codigo.
 
+> La estabilizacion A-D agrega una migracion aditiva de anulacion de ventas. Antes de cualquier despliegue aprobado, respalde MySQL, confirme PHP CLI 8.3, ejecute `php artisan migrate --force` una sola vez y reconcilie que ventas, lineas, pagos, citas y adelantos existentes no cambiaron de cantidad. Nunca use `migrate:fresh` ni `migrate:rollback` a ciegas cuando existan ventas anuladas.
+
 > No use el auto-deploy de hPanel para este proyecto si su PHP no ofrece `proc_open`. Composer/Symfony Process no puede completar la instalacion en ese entorno. No se modifica Composer ni el codigo para evitarlo: use SSH manual solo cuando el PHP CLI tenga `proc_open`, o el release precompilado local descrito abajo.
 
 ## Despliegue confirmado en Hostinger
@@ -14,6 +16,7 @@ El despliegue inicial se realizo mediante SSH como transporte y release precompi
 - La base se detecto vacia y recibio `migrate --force`, seeders RBAC y el owner inicial autorizado.
 - El auto-deploy de hPanel no se utilizo. Desactive su integracion Git desde la interfaz hPanel para evitar que vuelva a intentar Composer con `proc_open` deshabilitado.
 - Para futuras versiones: genere el ZIP local, subalo por SSH/SFTP, active mantenimiento si ya existe una version publica, reemplace solo codigo privado y `public/`, conserve `.env` y `storage`, migre, cachee y ejecute el smoke test con `PUBLIC_ROOT=../public_html`.
+- Despliegue de estabilizacion 2026-07-25: se aplico `2026_07_25_130000_add_cancellation_fields_to_sales_table` como batch 2, se regeneraron caches y el smoke test HTTPS paso. `php artisan storage:link` falla porque `exec()` esta deshabilitado en PHP CLI; crear o restaurar el enlace desde shell SSH con `ln -s ../studio-lemus/storage/app/public ../public_html/storage` antes del smoke test.
 
 ## 1. Requisitos y decisiones
 

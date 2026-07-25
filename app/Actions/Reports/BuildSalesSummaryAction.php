@@ -51,6 +51,20 @@ final class BuildSalesSummaryAction
             'services_count' => (int) $totals->services_count,
             'average_sale' => Money::fromCents($this->averageCents($totalCents, $salesCount)),
         ];
+        $canceled = Sale::query()
+            ->where('sales.status', Sale::STATUS_CANCELED)
+            ->where('sales.sold_at', '>=', $localStart->utc())
+            ->where('sales.sold_at', '<', $localEnd->utc())
+            ->when($employeeId !== null, fn (Builder $query) => $query->whereHas(
+                'items', fn (Builder $items) => $items->where('performed_by', $employeeId),
+            ))
+            ->when($paymentMethod !== null, fn (Builder $query) => $query->whereHas(
+                'payments', fn (Builder $payments) => $payments->where('method', $paymentMethod),
+            ))
+            ->toBase()
+            ->selectRaw('COUNT(*) as sales_count')
+            ->selectRaw('COALESCE(SUM(total), 0) as amount')
+            ->first();
 
         $employees = (clone $items)
             ->join('users', 'users.id', '=', 'sale_items.performed_by')
@@ -81,13 +95,14 @@ final class BuildSalesSummaryAction
             ->values()
             ->all();
 
-        $daily = $this->dailySummary($employeeId === null ? $sales : $items, $employeeId !== null);
+        $daily = $this->dailySummary($employeeId === null ? $sales : $items, $employeeId !== null, $localStart, $localEnd);
 
         return [
             'filters' => [
                 'period' => $period,
                 'mode' => $filters['mode'] ?? 'actual',
                 'date' => $period === 'custom' ? null : $referenceDate->format('Y-m-d'),
+                'month' => $period === 'month' ? $localStart->format('Y-m') : null,
                 'date_from' => $period === 'custom' ? $localStart->format('Y-m-d') : null,
                 'date_to' => $period === 'custom' ? $localEnd->subDay()->format('Y-m-d') : null,
                 'employee_id' => $employeeId,
@@ -107,6 +122,8 @@ final class BuildSalesSummaryAction
                 'completed_sales_count' => $summary['sales_count'],
                 'performed_services_count' => $summary['services_count'],
                 'average_sale' => $summary['average_sale'],
+                'canceled_sales_count' => (int) $canceled->sales_count,
+                'canceled_amount' => Money::fromCents(Money::toCents((string) $canceled->amount)),
             ],
             'summary' => $summary,
             'employees' => $employees,
@@ -137,9 +154,12 @@ final class BuildSalesSummaryAction
             ));
     }
 
-    private function dailySummary(Builder $query, bool $usesItems): array
+    private function dailySummary(Builder $query, bool $usesItems, CarbonImmutable $start, CarbonImmutable $end): array
     {
         $days = [];
+        for ($date = $start; $date->lt($end); $date = $date->addDay()) {
+            $days[$date->format('Y-m-d')] = ['sale_ids' => [], 'services_count' => 0, 'total_cents' => 0, 'card_fee_cents' => 0, 'net_cents' => 0];
+        }
         $columns = $usesItems
             ? ['sales.sold_at', 'sale_items.sale_id', 'sale_items.quantity', 'sale_items.line_total', 'sale_items.allocated_card_fee_amount', 'sale_items.net_line_amount']
             : ['sales.id', 'sales.sold_at', 'sales.total', 'sales.total_services', 'sales.card_fee_amount', 'sales.net_amount'];

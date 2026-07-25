@@ -10,6 +10,7 @@ import SaleCart from '../../Components/Sales/SaleCart.vue';
 import SaleCheckoutSummary from '../../Components/Sales/SaleCheckoutSummary.vue';
 import SaleLineItem from '../../Components/Sales/SaleLineItem.vue';
 import SalePaymentMethod from '../../Components/Sales/SalePaymentMethod.vue';
+import SaleMobileCheckout from '../../Components/Sales/SaleMobileCheckout.vue';
 import ServiceCard from '../../Components/Sales/ServiceCard.vue';
 import type { AppointmentCheckoutContext, AppointmentSaleCartItem, PaymentMethod, SaleCartItem, SaleService } from '../../types/sales';
 import { centsToDecimal, decimalToCents, formatHnl, percentageOfCents } from '../../utils/money';
@@ -23,7 +24,7 @@ const page = usePage<{ auth: { user: { id: number; name: string } } }>();
 const { smAndDown } = useDisplay();
 const search = ref('');
 const cart = ref<SaleCartItem[]>([]);
-const mobileCart = ref(false);
+const mobileCheckoutHeight = ref(0);
 const confirmDialog = ref(false);
 const appointmentCart = ref<AppointmentSaleCartItem[]>((props.appointment?.items ?? []).map(item => ({
     key: `reserved-${item.appointment_item_id}`,
@@ -77,6 +78,12 @@ const netAmountCents = computed(() => totalCents.value - cardFeeCents.value);
 const appointmentBalanceFeeCents = computed(() => form.payment_method === 'card' ? percentageOfCents(appointmentBalanceCents.value, 4) : 0);
 const appointmentTotalFeeCents = computed(() => depositFeeCents.value + appointmentBalanceFeeCents.value);
 const appointmentNetAmountCents = computed(() => appointmentTotalCents.value - appointmentTotalFeeCents.value);
+const activeItemsCount = computed(() => props.appointment ? appointmentCart.value.length : cart.value.length);
+const activeServicesCount = computed(() => props.appointment ? appointmentTotalServices.value : totalServices.value);
+const activeChargeCents = computed(() => props.appointment ? appointmentBalanceCents.value : totalCents.value);
+const activeCheckoutDisabled = computed(() => Boolean(props.appointment && appointmentBelowDeposit.value));
+const activeCheckoutLabel = computed(() => props.appointment ? 'Completar y cobrar' : 'Cobrar');
+const showMobileCheckout = computed(() => smAndDown.value && activeItemsCount.value > 0);
 const saleError = computed(() => {
     const errors = form.errors as Record<string, string>;
     return errors.items
@@ -124,7 +131,6 @@ const remove = (serviceId: number) => {
 const openConfirmation = () => {
     if (!cart.value.length || form.processing) return;
     form.clearErrors();
-    mobileCart.value = false;
     confirmDialog.value = true;
 };
 const submit = () => {
@@ -191,6 +197,15 @@ function openAppointmentConfirmation(): void {
     confirmDialog.value = true;
 }
 
+function openActiveConfirmation(): void {
+    if (props.appointment) {
+        openAppointmentConfirmation();
+        return;
+    }
+
+    openConfirmation();
+}
+
 function refundExcess(): void {
     if (!props.appointment || depositExcessCents.value <= 0 || excessRefundForm.processing) return;
     excessRefundForm.amount = centsToDecimal(depositExcessCents.value);
@@ -206,7 +221,7 @@ function refundExcess(): void {
 <template>
     <Head title="Nueva venta" />
     <AppLayout title="Nueva venta">
-        <div class="sales-create-page" :class="{ 'sales-create-page--mobile-cart': smAndDown && cart.length }">
+        <div class="sales-create-page" :class="{ 'sales-create-page--mobile-cart': showMobileCheckout }" :style="{ '--sale-mobile-checkout-height': `${mobileCheckoutHeight}px` }">
             <PageHeader
                 :eyebrow="appointment ? 'Cita programada' : 'Venta rápida'"
                 :title="appointment ? 'Atender y cobrar' : 'Nueva venta'"
@@ -320,20 +335,18 @@ function refundExcess(): void {
                 </VCol>
             </VRow>
 
-            <div v-if="!appointment && smAndDown && cart.length" class="mobile-checkout-bar">
-                <VBtn variant="text" class="mobile-checkout-bar__summary" @click="mobileCart = true">
-                    <span class="text-left">
-                        <strong>{{ totalServices }} {{ totalServices === 1 ? 'servicio' : 'servicios' }}</strong>
-                        <small>Ver resumen</small>
-                    </span>
-                </VBtn>
-                <VBtn color="primary" :loading="form.processing" :disabled="form.processing" @click="openConfirmation">
-                    Cobrar {{ formatHnl(totalCents) }}
-                </VBtn>
-            </div>
-
-            <VBottomSheet v-if="!appointment" v-model="mobileCart" :disabled="form.processing" max-height="88dvh">
+            <SaleMobileCheckout
+                v-if="showMobileCheckout"
+                :services-count="activeServicesCount"
+                :charge-cents="activeChargeCents"
+                :checkout-label="activeCheckoutLabel"
+                :processing="form.processing"
+                :checkout-disabled="activeCheckoutDisabled"
+                @checkout="openActiveConfirmation"
+                @height="mobileCheckoutHeight = $event"
+            >
                 <SaleCart
+                    v-if="!appointment"
                     :items="cart"
                     :total-cents="totalCents"
                     :total-services="totalServices"
@@ -347,7 +360,18 @@ function refundExcess(): void {
                     @payment-method="form.payment_method = $event"
                     @checkout="openConfirmation"
                 />
-            </VBottomSheet>
+                <VCard v-else class="surface-card" rounded="xl">
+                    <VCardItem class="pa-5"><VCardTitle class="font-weight-bold">Resumen de cobro</VCardTitle></VCardItem>
+                    <VDivider />
+                    <VCardText class="pa-4">
+                        <SaleLineItem v-for="item in appointmentCart" :key="item.key" :item-key="item.key" :name="item.name" :price="item.price" :quantity="item.quantity" :duration-minutes="item.duration_minutes" :reserved="item.reserved" :processing="form.processing" @increase="item.quantity++" @decrease="item.quantity > 1 ? item.quantity-- : removeAppointmentLine(item)" @remove="removeAppointmentLine(item)" />
+                        <SalePaymentMethod v-model="form.payment_method" :amount-cents="appointmentBalanceCents" :processing="form.processing" :balance-payment="depositCents > 0" class="mt-4" />
+                        <SaleCheckoutSummary :total-cents="appointmentTotalCents" :total-services="appointmentTotalServices" :payment-method="form.payment_method" :deposit-cents="depositCents" :deposit-fee-cents="depositFeeCents" :balance-cents="appointmentBalanceCents" :balance-fee-cents="appointmentBalanceFeeCents" :total-fee-cents="appointmentTotalFeeCents" :net-amount-cents="appointmentNetAmountCents" />
+                        <VAlert v-if="appointmentBelowDeposit" type="error" variant="tonal" density="compact" class="mt-4">Debe devolverse el excedente del adelanto antes de completar.</VAlert>
+                        <VBtn block color="primary" size="large" class="mt-4" :loading="form.processing" :disabled="form.processing || appointmentBelowDeposit" @click="openAppointmentConfirmation">Completar y cobrar {{ formatHnl(appointmentBalanceCents) }}</VBtn>
+                    </VCardText>
+                </VCard>
+            </SaleMobileCheckout>
 
             <ConfirmSaleDialog
                 v-model="confirmDialog"
@@ -378,52 +402,8 @@ function refundExcess(): void {
 
 .appointment-summary { position: sticky; top: 88px; }
 
-.mobile-checkout-bar {
-    position: fixed;
-    z-index: 5;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: center;
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-    border-top: 1px solid rgba(var(--v-theme-on-surface), 0.1);
-    background: rgb(var(--v-theme-surface));
-    box-shadow: 0 -10px 35px rgba(55, 38, 44, 0.12);
-}
-
-.mobile-checkout-bar__summary {
-    min-width: 0;
-    justify-content: flex-start;
-}
-
-.mobile-checkout-bar__summary span {
-    display: grid;
-    min-width: 0;
-}
-
-.mobile-checkout-bar__summary small {
-    color: rgb(var(--v-theme-on-surface-variant));
-}
-
 .sales-create-page--mobile-cart {
-    padding-bottom: 82px;
-}
-
-@media (max-width: 420px) {
-    .mobile-checkout-bar {
-        grid-template-columns: 1fr;
-    }
-
-    .mobile-checkout-bar__summary {
-        display: none;
-    }
-
-    .sales-create-page--mobile-cart {
-        padding-bottom: 70px;
-    }
+    padding-bottom: calc(var(--sale-mobile-checkout-height, 88px) + 16px);
 }
 
 </style>

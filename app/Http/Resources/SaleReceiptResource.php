@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Sale;
+use App\Support\Permissions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,6 +21,17 @@ class SaleReceiptResource extends JsonResource
             'subtotal' => $this->subtotal,
             'total' => $this->total,
             'total_services' => $this->total_services,
+            'status' => $this->status,
+            'is_canceled' => $this->status === Sale::STATUS_CANCELED,
+            'cancellation' => $this->status === Sale::STATUS_CANCELED ? [
+                'canceled_at' => $this->canceled_at?->toISOString(),
+                'canceled_at_display' => $this->canceled_at?->setTimezone('America/Tegucigalpa')->translatedFormat('d/m/Y, h:i a'),
+                'canceled_by' => $this->canceledBy ? ['id' => $this->canceledBy->id, 'name' => $this->canceledBy->name] : null,
+                'reason' => $this->cancellation_reason,
+            ] : null,
+            'can_cancel' => $this->status === Sale::STATUS_COMPLETED
+                && $request->user()?->is_active
+                && $request->user()?->can(Permissions::SALES_CANCEL),
             'payment_method' => $this->payment_method,
             'payment_method_label' => $this->payment_method === Sale::PAYMENT_METHOD_CARD ? 'Tarjeta' : 'Efectivo',
             'client' => $this->appointment ? [

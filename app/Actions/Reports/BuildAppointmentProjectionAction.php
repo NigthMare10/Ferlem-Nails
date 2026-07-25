@@ -87,6 +87,7 @@ final class BuildAppointmentProjectionAction
                 'period' => $period,
                 'mode' => $filters['mode'] ?? 'projection',
                 'date' => $period === 'custom' ? null : $referenceDate->format('Y-m-d'),
+                'month' => $period === 'month' ? $localStart->format('Y-m') : null,
                 'date_from' => $period === 'custom' ? $localStart->format('Y-m-d') : null,
                 'date_to' => $period === 'custom' ? $localEnd->subDay()->format('Y-m-d') : null,
                 'employee_id' => $employeeId,

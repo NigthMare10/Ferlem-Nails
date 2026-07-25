@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
 
 type ReceiptItem = {
     id: number;
@@ -12,7 +13,7 @@ type ReceiptItem = {
     performed_by: { id: number; name: string } | null;
 };
 
-defineProps<{
+const { sale } = defineProps<{
     sale: {
         id: number;
         sale_number: string;
@@ -27,8 +28,22 @@ defineProps<{
         sold_by: { id: number; name: string };
         items: ReceiptItem[];
         payments: Array<{ id: number; type: 'deposit_applied' | 'final_payment'; type_label: string; method: 'cash' | 'card'; method_label: string; amount: string }>;
+        status: 'completed' | 'canceled';
+        is_canceled: boolean;
+        can_cancel: boolean;
+        cancellation: null | { canceled_at: string; canceled_at_display: string; canceled_by: { id: number; name: string } | null; reason: string };
     };
 }>();
+
+const cancelDialog = ref(false);
+const cancellationForm = useForm({ cancellation_reason: '' });
+
+function cancelSale(): void {
+    cancellationForm.post(`/sales/${sale.id}/cancel`, {
+        preserveScroll: true,
+        onSuccess: () => { cancelDialog.value = false; },
+    });
+}
 
 const money = (value: string) => new Intl.NumberFormat('es-HN', {
     style: 'currency',
@@ -44,6 +59,7 @@ const printReceipt = () => window.print();
             <div class="receipt-actions">
                 <VBtn variant="outlined" prepend-icon="mdi-plus" @click="router.visit('/sales/new')">Nueva venta</VBtn>
                 <VBtn color="primary" prepend-icon="mdi-printer-outline" @click="printReceipt">Imprimir</VBtn>
+                <VBtn v-if="sale.can_cancel" color="error" variant="tonal" prepend-icon="mdi-cancel" @click="cancelDialog = true">Anular venta</VBtn>
             </div>
 
             <article class="receipt-paper" aria-label="Comprobante de venta">
@@ -52,6 +68,13 @@ const printReceipt = () => window.print();
                     <h1>Studio Lemus</h1>
                     <p>Comprobante de venta</p>
                 </header>
+
+                <section v-if="sale.is_canceled && sale.cancellation" class="receipt-canceled" aria-label="Venta anulada">
+                    <strong>ANULADA</strong>
+                    <span>{{ sale.cancellation.canceled_at_display }}</span>
+                    <span v-if="sale.cancellation.canceled_by">Por {{ sale.cancellation.canceled_by.name }}</span>
+                    <p>{{ sale.cancellation.reason }}</p>
+                </section>
 
                 <div class="receipt-divider" />
 
@@ -96,6 +119,18 @@ const printReceipt = () => window.print();
                     <p>Gracias por confiar en Studio Lemus.</p>
                 </footer>
             </article>
+
+            <VDialog v-model="cancelDialog" max-width="520" :persistent="cancellationForm.processing">
+                <VCard rounded="xl">
+                    <VCardTitle class="pa-5">Anular comprobante {{ sale.sale_number }}</VCardTitle>
+                    <VCardText>
+                        <VAlert type="warning" variant="tonal" class="mb-4">Se retirará {{ money(sale.total) }} de los ingresos. Esta acción no elimina líneas ni pagos y no puede revertirse.</VAlert>
+                        <div class="text-body-2 mb-4"><strong>Atendido por:</strong> {{ sale.sold_by.name }}</div>
+                        <VTextarea v-model="cancellationForm.cancellation_reason" label="Motivo obligatorio" counter="500" :error-messages="cancellationForm.errors.cancellation_reason" :disabled="cancellationForm.processing" />
+                    </VCardText>
+                    <VCardActions class="pa-4"><VSpacer /><VBtn :disabled="cancellationForm.processing" @click="cancelDialog = false">Volver</VBtn><VBtn color="error" :loading="cancellationForm.processing" @click="cancelSale">Confirmar anulación</VBtn></VCardActions>
+                </VCard>
+            </VDialog>
         </VMain>
     </VApp>
 </template>
@@ -152,6 +187,19 @@ const printReceipt = () => window.print();
 .receipt-footer p {
     margin: 4px 0 0;
 }
+
+.receipt-canceled {
+    display: grid;
+    gap: 4px;
+    margin: 16px 0;
+    padding: 10px;
+    border: 2px solid #b3261e;
+    color: #8e1f19;
+    text-align: center;
+}
+
+.receipt-canceled strong { font-size: 20px; letter-spacing: .12em; }
+.receipt-canceled p { margin: 4px 0 0; }
 
 .receipt-divider {
     margin: 16px 0;

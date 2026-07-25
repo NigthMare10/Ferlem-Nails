@@ -88,10 +88,11 @@ class InternalNotificationTest extends TestCase
             ->assertNotFound();
         $this->assertNull($ownerNotification->fresh()->read_at);
 
-        $this->actingAs($owner)->getJson('/notifications')
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.type', 'test.created');
+        $this->actingAs($owner)->get('/notifications')
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Notifications/Index')
+                ->has('notifications.data', 1)
+                ->where('notifications.data.0.type', 'test.created'));
     }
 
     public function test_individual_and_bulk_read_are_idempotent_and_only_change_owned_rows(): void
@@ -102,11 +103,16 @@ class InternalNotificationTest extends TestCase
         $this->publish($owner, 'test.second', 'fact:second');
         $first = $owner->internalNotifications()->oldest()->firstOrFail();
 
-        $this->actingAs($owner)->patchJson("/notifications/{$first->id}/read")->assertOk();
-        $this->patchJson("/notifications/{$first->id}/read")->assertOk();
+        $this->actingAs($owner)->patchJson("/notifications/{$first->id}/read")
+            ->assertOk()
+            ->assertJsonPath('data.changed', true)
+            ->assertJsonPath('data.unread_count', 1);
+        $this->patchJson("/notifications/{$first->id}/read")
+            ->assertOk()
+            ->assertJsonPath('data.changed', false);
         $this->assertSame(1, $owner->internalNotifications()->whereNull('read_at')->count());
 
-        $this->patchJson('/notifications/read-all')->assertOk()->assertJsonPath('unread_count', 0);
+        $this->patchJson('/notifications/read-all')->assertOk()->assertJsonPath('data.unread_count', 0);
         $this->assertSame(0, $owner->internalNotifications()->whereNull('read_at')->count());
         $this->assertSame(2, $administrator->internalNotifications()->whereNull('read_at')->count());
     }

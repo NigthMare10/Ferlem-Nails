@@ -7,13 +7,12 @@ use App\Models\InternalNotification;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class NotificationController extends Controller
 {
-    public function index(Request $request): Response|AnonymousResourceCollection
+    public function index(Request $request): Response
     {
         $filter = $request->string('filter')->toString() === 'unread' ? 'unread' : 'all';
         $notifications = InternalNotificationResource::collection(
@@ -24,21 +23,15 @@ class NotificationController extends Controller
                 ->withQueryString(),
         );
 
-        if ($request->expectsJson()) {
-            return $notifications;
-        }
-
         return Inertia::render('Notifications/Index', [
             'notifications' => $notifications,
             'filters' => ['filter' => $filter],
         ]);
     }
 
-    public function recent(Request $request): AnonymousResourceCollection
+    public function recent(Request $request): JsonResponse
     {
-        return InternalNotificationResource::collection(
-            $this->owned($request->user())->latest()->limit(10)->get(),
-        );
+        return response()->json(['data' => $this->snapshot($request->user(), $request)]);
     }
 
     public function read(Request $request, string $notification): JsonResponse
@@ -48,14 +41,22 @@ class NotificationController extends Controller
             $owned->forceFill(['read_at' => now('UTC')])->save();
         }
 
-        return response()->json(['data' => (new InternalNotificationResource($owned))->resolve($request)]);
+        return response()->json(['data' => [
+            'notification' => (new InternalNotificationResource($owned))->resolve($request),
+            'unread_count' => $this->owned($request->user())->whereNull('read_at')->count(),
+            'changed' => $owned->wasChanged('read_at'),
+        ]]);
     }
 
     public function readAll(Request $request): JsonResponse
     {
-        $this->owned($request->user())->whereNull('read_at')->update(['read_at' => now('UTC')]);
+        $updated = $this->owned($request->user())->whereNull('read_at')->update(['read_at' => now('UTC')]);
 
-        return response()->json(['unread_count' => 0]);
+        return response()->json(['data' => [
+            'updated_count' => $updated,
+            'unread_count' => $this->owned($request->user())->whereNull('read_at')->count(),
+            'as_of' => now('UTC')->toIso8601String(),
+        ]]);
     }
 
     private function owned(User $user)
@@ -63,5 +64,16 @@ class NotificationController extends Controller
         return InternalNotification::query()
             ->where('notifiable_type', User::class)
             ->where('notifiable_id', $user->getKey());
+    }
+
+    private function snapshot(User $user, Request $request): array
+    {
+        $query = $this->owned($user);
+
+        return [
+            'unread_count' => (clone $query)->whereNull('read_at')->count(),
+            'recent' => InternalNotificationResource::collection((clone $query)->latest()->limit(10)->get())->resolve($request),
+            'as_of' => now('UTC')->toIso8601String(),
+        ];
     }
 }

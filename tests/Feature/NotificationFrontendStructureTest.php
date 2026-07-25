@@ -15,7 +15,8 @@ class NotificationFrontendStructureTest extends TestCase
         $this->assertNotFalse($bell);
         $this->assertStringContainsString('<NotificationBell', $layout);
         $this->assertStringContainsString('auth?.notifications', $bell);
-        $this->assertStringContainsString("only: ['auth']", $bell);
+        $this->assertStringContainsString('refreshNotifications', $bell);
+        $this->assertStringNotContainsString("only: ['auth']", $bell);
         $this->assertStringContainsString('60_000', $bell);
         $this->assertStringContainsString("document.addEventListener('visibilitychange'", $bell);
         $this->assertStringContainsString('stopPolling()', $bell);
@@ -36,8 +37,13 @@ class NotificationFrontendStructureTest extends TestCase
         }
         $this->assertStringContainsString('unread_count: number', $types);
         $this->assertStringContainsString('recent: NotificationItem[]', $types);
-        $this->assertStringContainsString('/notifications/${encodeURIComponent(notification.id)}/read', $bell);
-        $this->assertStringContainsString("router.patch('/notifications/read-all'", $page);
+        $composable = file_get_contents(resource_path('js/composables/useNotifications.ts'));
+        $this->assertNotFalse($composable);
+        $this->assertStringContainsString('/notifications/${encodeURIComponent(notification.id)}/read', $composable);
+        $this->assertStringContainsString("'/notifications/read-all', 'PATCH'", $composable);
+        $this->assertStringContainsString('fetch(url', $composable);
+        $this->assertStringNotContainsString('router.patch', $bell);
+        $this->assertStringNotContainsString('router.patch', $page);
         $this->assertStringContainsString("router.get('/notifications'", $page);
     }
 

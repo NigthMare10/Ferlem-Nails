@@ -66,6 +66,8 @@ class AppointmentDetailsResource extends JsonResource
                 'id' => $this->sale->id,
                 'sale_number' => $this->sale->sale_number,
                 'total' => $this->sale->total,
+                'status' => $this->sale->status,
+                'status_label' => $this->sale->status === 'canceled' ? 'Anulada' : 'Completada',
                 'receipt_url' => route('sales.receipt', $this->sale),
                 'can_view_receipt' => $canViewReceipt,
             ] : null,
@@ -109,10 +111,11 @@ class AppointmentDetailsResource extends JsonResource
                     'deposit_resolved' => 'Adelanto resuelto',
                     'deposit_excess_refunded' => 'Excedente del adelanto devuelto',
                     'completed' => 'Cita atendida y cobrada',
+                    'sale_canceled' => 'Venta anulada',
                     default => $event->type,
                 },
                 'changes' => $this->eventChanges($event->previous_values ?? [], $event->new_values ?? [], $viewAll, $visibleItemIds, $canViewFinancials),
-                'performed_by' => $this->when($viewAll || in_array($event->type, ['canceled', 'no_show'], true) || ($canViewFinancials && str_starts_with($event->type, 'deposit_')), [
+                'performed_by' => $this->when($viewAll || in_array($event->type, ['canceled', 'no_show', 'sale_canceled'], true) || ($canViewFinancials && str_starts_with($event->type, 'deposit_')), [
                     'id' => $event->performedBy->id,
                     'name' => $event->performedBy->name,
                 ]),
@@ -121,7 +124,7 @@ class AppointmentDetailsResource extends JsonResource
                     ->setTimezone(CreateAppointmentAction::TIMEZONE)
                     ->locale('es')
                     ->translatedFormat('j \d\e F \d\e Y, g:i a'),
-                'notes' => $this->when($viewAll || in_array($event->type, ['canceled', 'no_show'], true) || ($canViewFinancials && str_starts_with($event->type, 'deposit_')), $event->notes),
+                'notes' => $this->when($viewAll || in_array($event->type, ['canceled', 'no_show', 'sale_canceled'], true) || ($canViewFinancials && str_starts_with($event->type, 'deposit_')), $event->notes),
             ])->values(),
         ];
     }

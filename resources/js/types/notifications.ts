@@ -13,6 +13,10 @@ export interface AuthNotifications {
     recent: NotificationItem[];
 }
 
+export interface NotificationSnapshot extends AuthNotifications {
+    as_of: string;
+}
+
 export interface NotificationsPage {
     data: NotificationItem[];
     meta: {

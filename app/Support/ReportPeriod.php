@@ -17,6 +17,9 @@ final class ReportPeriod
         $reference = isset($filters['date'])
             ? CarbonImmutable::createFromFormat('Y-m-d', $filters['date'], self::TIMEZONE)->startOfDay()
             : $today;
+        $monthReference = isset($filters['month'])
+            ? CarbonImmutable::createFromFormat('Y-m', $filters['month'], self::TIMEZONE)->startOfMonth()
+            : $reference;
 
         return match ($period) {
             'today' => [$reference, $reference->addDay(), $reference],
@@ -25,7 +28,7 @@ final class ReportPeriod
                 $reference->startOfWeek(CarbonInterface::MONDAY)->addWeek(),
                 $reference,
             ],
-            'month' => [$reference->startOfMonth(), $reference->startOfMonth()->addMonth(), $reference],
+            'month' => [$monthReference->startOfMonth(), $monthReference->startOfMonth()->addMonth(), $monthReference],
             'custom' => [
                 CarbonImmutable::createFromFormat('Y-m-d', $filters['date_from'], self::TIMEZONE)->startOfDay(),
                 CarbonImmutable::createFromFormat('Y-m-d', $filters['date_to'], self::TIMEZONE)->startOfDay()->addDay(),

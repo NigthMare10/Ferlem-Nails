@@ -14,6 +14,8 @@ final class Permissions
 
     public const SALES_REPRINT = 'sales.reprint';
 
+    public const SALES_CANCEL = 'sales.cancel';
+
     public const REPORTS_SALES_VIEW = 'reports.sales.view';
 
     public const APPOINTMENTS_VIEW_PROJECTION = 'appointments.view_projection';
@@ -69,7 +71,7 @@ final class Permissions
     public static function all(): array
     {
         return [self::NOTIFICATIONS_ACCESS,
-            self::SALES_ACCESS, self::SALES_CREATE, self::SALES_VIEW_OWN, self::SALES_REPRINT,
+            self::SALES_ACCESS, self::SALES_CREATE, self::SALES_VIEW_OWN, self::SALES_REPRINT, self::SALES_CANCEL,
             self::REPORTS_SALES_VIEW, self::APPOINTMENTS_VIEW_PROJECTION,
             self::APPOINTMENTS_ACCESS, self::APPOINTMENTS_VIEW_OWN, self::APPOINTMENTS_VIEW_ALL,
             self::APPOINTMENTS_CREATE, self::APPOINTMENTS_PERFORM, self::APPOINTMENTS_UPDATE,

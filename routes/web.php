@@ -45,9 +45,10 @@ Route::middleware(['auth', 'active'])->group(function () {
             'permission:'.Permissions::SALES_CREATE,
         ])
         ->name('sales.store');
-    Route::get('/sales/{sale}/receipt', [SalesController::class, 'receipt'])
-        ->middleware('permission:'.Permissions::SALES_REPRINT)
-        ->name('sales.receipt');
+    Route::get('/sales/{sale}/receipt', [SalesController::class, 'receipt'])->name('sales.receipt');
+    Route::post('/sales/{sale}/cancel', [SalesController::class, 'cancel'])
+        ->middleware('permission:'.Permissions::SALES_CANCEL)
+        ->name('sales.cancel');
     Route::get('/earnings', EarningsController::class)
         ->middleware('permission:'.Permissions::REPORTS_SALES_VIEW)
         ->name('earnings.index');

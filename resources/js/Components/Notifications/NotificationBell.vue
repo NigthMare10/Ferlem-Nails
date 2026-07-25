@@ -4,12 +4,14 @@ import { router, usePage } from '@inertiajs/vue3';
 import { useDisplay } from 'vuetify';
 import NotificationListItem from './NotificationListItem.vue';
 import type { AuthNotifications, NotificationItem } from '../../types/notifications';
+import { useNotifications } from '../../composables/useNotifications';
 
 const page = usePage();
 const { mobile } = useDisplay();
 const menuOpen = ref(false);
-const polling = ref(false);
-let pollTimer: ReturnType<typeof setInterval> | undefined;
+const { initializeNotifications, loading, markRead, recent, refreshNotifications, unreadCount } = useNotifications();
+let pollTimer: ReturnType<typeof setTimeout> | undefined;
+let controller: AbortController | undefined;
 
 const notifications = computed<AuthNotifications | undefined>(() => {
     const auth = page.props.auth as { notifications?: AuthNotifications } | undefined;
@@ -17,46 +19,48 @@ const notifications = computed<AuthNotifications | undefined>(() => {
 });
 const authorized = computed(() => notifications.value !== undefined);
 const unreadLabel = computed(() => {
-    const count = notifications.value?.unread_count ?? 0;
+    const count = unreadCount.value;
     return count > 99 ? '99+' : String(count);
 });
 
-function visitNotification(notification: NotificationItem): void {
+async function visitNotification(notification: NotificationItem): Promise<void> {
     menuOpen.value = false;
-    if (notification.read_at) {
-        router.visit(notification.url);
-        return;
+    const read = await markRead(notification);
+    if (read.url.startsWith('/') && !read.url.startsWith('//')) {
+        router.visit(read.url);
+    } else {
+        router.visit('/notifications');
     }
-
-    router.patch(`/notifications/${encodeURIComponent(notification.id)}/read`, {}, {
-        preserveScroll: true,
-        onSuccess: () => router.visit(notification.url),
-    });
 }
 
 function pollNotifications(): void {
-    if (!authorized.value || document.hidden || polling.value) return;
-    polling.value = true;
-    router.reload({
-        only: ['auth'],
-        onFinish: () => { polling.value = false; },
-    });
+    if (!authorized.value || document.hidden || loading.value) return;
+    controller?.abort();
+    controller = new AbortController();
+    void refreshNotifications(controller.signal).catch(() => undefined).finally(schedulePolling);
 }
 
 function stopPolling(): void {
-    if (pollTimer) clearInterval(pollTimer);
+    if (pollTimer) clearTimeout(pollTimer);
     pollTimer = undefined;
 }
 
 function startPolling(): void {
     stopPolling();
     if (!authorized.value || document.hidden) return;
-    pollTimer = setInterval(pollNotifications, 60_000);
+    schedulePolling();
+}
+
+function schedulePolling(): void {
+    stopPolling();
+    if (!authorized.value || document.hidden) return;
+    pollTimer = setTimeout(pollNotifications, 60_000);
 }
 
 function handleVisibilityChange(): void {
     if (document.hidden) {
         stopPolling();
+        controller?.abort();
         return;
     }
     pollNotifications();
@@ -68,12 +72,16 @@ function openNotifications(): void {
 }
 
 onMounted(() => {
+    initializeNotifications(notifications.value);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     startPolling();
+    pollNotifications();
 });
+watch(notifications, initializeNotifications, { immediate: true });
 watch(authorized, startPolling);
 onBeforeUnmount(() => {
     stopPolling();
+    controller?.abort();
     document.removeEventListener('visibilitychange', handleVisibilityChange);
 });
 </script>
@@ -81,7 +89,7 @@ onBeforeUnmount(() => {
 <template>
     <VMenu v-if="authorized && !mobile" v-model="menuOpen" location="bottom end" :close-on-content-click="false" offset="6">
         <template #activator="{ props: activatorProps }">
-            <VBadge :model-value="(notifications?.unread_count ?? 0) > 0" :content="unreadLabel" color="primary" offset-x="5" offset-y="5">
+            <VBadge :model-value="unreadCount > 0" :content="unreadLabel" color="primary" offset-x="5" offset-y="5">
                 <VBtn v-bind="activatorProps" icon="mdi-bell-outline" variant="text" aria-label="Abrir notificaciones" />
             </VBadge>
         </template>
@@ -89,27 +97,27 @@ onBeforeUnmount(() => {
         <VCard class="notification-menu" width="390" max-width="calc(100vw - 24px)">
             <VCardItem class="px-4 py-3">
                 <VCardTitle class="text-subtitle-1 font-weight-bold">Notificaciones</VCardTitle>
-                <template #append><VChip v-if="notifications!.unread_count" color="primary" variant="tonal" size="small">{{ notifications!.unread_count }} nuevas</VChip></template>
+                <template #append><VChip v-if="unreadCount" color="primary" variant="tonal" size="small">{{ unreadCount }} nuevas</VChip></template>
             </VCardItem>
             <VDivider />
             <div class="notification-recents">
                 <NotificationListItem
-                    v-for="notification in notifications!.recent"
+                    v-for="notification in recent"
                     :key="notification.id"
                     :notification="notification"
                     compact
                     @open="visitNotification"
                 />
-                <div v-if="!notifications!.recent.length" class="pa-6 text-center text-body-2 text-medium-emphasis">No hay notificaciones recientes.</div>
+                <div v-if="!recent.length" class="pa-6 text-center text-body-2 text-medium-emphasis">No hay notificaciones recientes.</div>
             </div>
             <VDivider />
             <VCardActions class="pa-2">
-                <VBtn block variant="text" color="primary" append-icon="mdi-arrow-right" href="/notifications" @click="menuOpen = false">Ver todas</VBtn>
+                <VBtn block variant="text" color="primary" append-icon="mdi-arrow-right" @click="menuOpen = false; router.visit('/notifications')">Ver todas</VBtn>
             </VCardActions>
         </VCard>
     </VMenu>
 
-    <VBadge v-else-if="authorized" :model-value="(notifications?.unread_count ?? 0) > 0" :content="unreadLabel" color="primary" offset-x="5" offset-y="5">
+    <VBadge v-else-if="authorized" :model-value="unreadCount > 0" :content="unreadLabel" color="primary" offset-x="5" offset-y="5">
         <VBtn icon="mdi-bell-outline" variant="text" aria-label="Ver notificaciones" @click="openNotifications" />
     </VBadge>
 </template>

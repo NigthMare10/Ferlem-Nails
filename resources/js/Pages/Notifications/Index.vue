@@ -6,6 +6,7 @@ import NotificationListItem from '../../Components/Notifications/NotificationLis
 import PageHeader from '../../Components/PageHeader.vue';
 import AppLayout from '../../Layouts/AppLayout.vue';
 import type { AuthNotifications, NotificationFilter, NotificationItem, NotificationsPage } from '../../types/notifications';
+import { useNotifications } from '../../composables/useNotifications';
 
 const props = withDefaults(defineProps<{
     notifications: NotificationsPage;
@@ -16,14 +17,13 @@ const props = withDefaults(defineProps<{
 
 const loading = ref(false);
 const page = usePage();
-const markingId = ref<string | null>(null);
-const markingAll = ref(false);
+const { initializeNotifications, markAllRead: markAll, markRead: readNotification, markingAll, markingIds, unreadCount } = useNotifications();
 const records = computed(() => props.notifications.data ?? []);
 const activeFilter = computed<NotificationFilter>(() => props.filters.filter === 'unread' ? 'unread' : 'all');
 const hasUnread = computed(() => {
     const auth = page.props.auth as { notifications?: AuthNotifications } | undefined;
     return auth?.notifications
-        ? auth.notifications.unread_count > 0
+        ? unreadCount.value > 0
         : records.value.some(notification => !notification.read_at);
 });
 
@@ -38,30 +38,28 @@ function load(filter: NotificationFilter, page = 1): void {
     });
 }
 
-function markRead(notification: NotificationItem, visitAfter = false): void {
+async function markRead(notification: NotificationItem, visitAfter = false): Promise<void> {
     if (notification.read_at) {
         if (visitAfter) router.visit(notification.url);
         return;
     }
 
-    markingId.value = notification.id;
-    router.patch(`/notifications/${encodeURIComponent(notification.id)}/read`, {}, {
-        preserveScroll: true,
-        onSuccess: () => {
-            if (visitAfter) router.visit(notification.url);
-        },
-        onFinish: () => { markingId.value = null; },
-    });
+    const read = await readNotification(notification);
+    if (visitAfter) {
+        router.visit(read.url.startsWith('/') && !read.url.startsWith('//') ? read.url : '/notifications');
+        return;
+    }
+
+    load(activeFilter.value, props.notifications.meta.current_page);
 }
 
-function markAllRead(): void {
+async function markAllRead(): Promise<void> {
     if (markingAll.value || !hasUnread.value) return;
-    markingAll.value = true;
-    router.patch('/notifications/read-all', {}, {
-        preserveScroll: true,
-        onFinish: () => { markingAll.value = false; },
-    });
+    await markAll();
+    load(activeFilter.value, props.notifications.meta.current_page);
 }
+
+initializeNotifications((page.props.auth as { notifications?: AuthNotifications } | undefined)?.notifications);
 </script>
 
 <template>
@@ -91,7 +89,7 @@ function markAllRead(): void {
                     v-for="notification in records"
                     :key="notification.id"
                     :notification="notification"
-                    :marking="markingId === notification.id"
+                    :marking="markingIds.has(notification.id)"
                     @open="markRead($event, true)"
                     @read="markRead"
                 />

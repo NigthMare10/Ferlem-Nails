@@ -35,7 +35,7 @@ class BuildAppointmentHistoryAction
                         ->orderBy('id');
                 },
                 'deposit:id,appointment_id,amount,status,applied_amount,refunded_amount,retained_amount',
-                'sale:id,appointment_id,sold_by,sale_number,total',
+                'sale:id,appointment_id,sold_by,sale_number,total,status,canceled_at',
             ])
             ->when($filters['date_from'] ?? null, function ($query, string $date): void {
                 $start = CarbonImmutable::createFromFormat('!Y-m-d', $date, CreateAppointmentAction::TIMEZONE);

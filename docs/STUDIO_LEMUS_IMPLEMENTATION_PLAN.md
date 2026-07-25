@@ -26,6 +26,15 @@ El modulo de Agenda y Citas se gobierna mediante `docs/STUDIO_LEMUS_APPOINTMENTS
 
 **Estado:** En pruebas. **Aprobacion:** No. **Produccion:** Lista para desplegar; no desplegada ni verificada en una URL real.
 
+### Estabilizacion A-D posterior (2026-07-25)
+
+- Estado: permanece `En pruebas / No`; no se aprueba automaticamente ni se despliega.
+- Movil: venta normal y Atender y cobrar usan `SaleMobileCheckout`, sin ocultar `Ver resumen` en anchos estrechos. Safe areas, viewport fit y compensacion inferior medida protegen contenido y acciones.
+- Notificaciones: pagina Inertia separada de feed/mutaciones JSON con fetch; polling visible maximo cada 60 segundos; ownership, deduplicacion y contador autoritativo se conservan.
+- Anulacion: nueva migracion aditiva de `sales` agrega estado `canceled`, actor, fecha y motivo. `sales.cancel` se asigna al owner, no al administrator/employee por defecto. La transicion es bloqueada, unica, no borra lineas/pagos, mantiene cita completed y adelanto aplicado, marca comprobante e Historial y excluye ingresos reales.
+- Ganancias: mes explicito `YYYY-MM`, fechas/rangos Honduras, diarios completos incluidos ceros, secundarios de anulacion y filtros persistentes por query string. Ingreso neto mantiene el significado exclusivo posterior a POS.
+- Verificacion: el PHP predeterminado 8.2.12 falla antes de Artisan por el requisito >=8.3. Con PHP 8.3 de Laragon: `optimize:clear`, migracion batch 2, seeders, `route:list` y `migrate:status` pasaron; suite 257/2,297, Pint, typecheck, build y `git diff --check` pasaron. SQLite estaba disponible, sin configuracion temporal. No se uso `migrate:fresh` ni Git. Despliegue SSH a Hostinger el 2026-07-25: migracion aplicada, caches regenerados, enlace storage restaurado con `ln -s` porque PHP tiene `exec()` deshabilitado, y smoke test HTTPS correcto.
+
 - UX y checkout: Nueva cita cierra el selector de servicios tras cada seleccion sin perder chips. Nueva venta y Atender y cobrar comparten linea, metodo, resumen y confirmacion. `SaleFinancials` y `PersistCompletedSaleAction` son la autoridad comun de total, pagos, fee POS, neto, prorrateo y residuo en centavos. Adelanto y saldo conservan fees separados; el comprobante no expone fee ni neto.
 - Ganancias: la pantalla conserva resultados reales, proyeccion, rendimiento por empleado y resultados diarios. Se retiraron solo la UI, props y consultas exclusivas de Otros ingresos y Salidas; adelantos, retenciones, devoluciones y auditoria siguen persistidos.
 - Notificaciones: migracion `2026_07_24_120000_create_notifications_table` aplicada en batch 10. `notifications.access` pertenece a owner y administrator, no a employee. Las filas database son sincronas, transaccionales, deduplicadas por destinatario/hecho y cubren citas, adelantos, ventas, pagos con tarjeta, usuarios y servicios. La campana, recientes, pagina paginada, filtros y lectura individual/masiva respetan ownership y actualizan solo con navegacion o polling visible de 60 segundos.
