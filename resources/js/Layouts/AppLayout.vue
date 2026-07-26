@@ -16,12 +16,14 @@ const { can, canAny } = usePermissions();
 const drawer = ref(!mobile.value);
 const auth = computed(() => page.props.auth as any);
 const currentUrl = computed(() => page.url);
+const canNavigateToInvoices = () => canAny(['sales.view_own', 'sales.view_all']);
+const invoicesAreActive = computed(() => currentUrl.value.startsWith('/invoices'));
 
 watch(mobile, value => { drawer.value = !value; });
 
 const navigate = (href: string) => {
-    router.visit(href);
     if (mobile.value) drawer.value = false;
+    router.visit(href);
 };
 </script>
 
@@ -57,6 +59,15 @@ const navigate = (href: string) => {
                     color="primary"
                     rounded="lg"
                     @click="navigate('/sales/new')"
+                />
+                <VListItem
+                    v-if="canNavigateToInvoices()"
+                    prepend-icon="mdi-file-document-outline"
+                    title="Facturas"
+                    :active="invoicesAreActive"
+                    color="primary"
+                    rounded="lg"
+                    @click="navigate('/invoices')"
                 />
                 <VListItem
                     v-if="auth?.navigation?.appointments"

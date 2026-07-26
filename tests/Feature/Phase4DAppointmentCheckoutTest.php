@@ -17,6 +17,7 @@ use App\Support\Permissions;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -534,6 +535,28 @@ class Phase4DAppointmentCheckoutTest extends TestCase
                 ->missing('sale.card_fee_amount')
                 ->missing('sale.net_amount')
                 ->missing('sale.items.0.allocated_card_fee_amount'));
+    }
+
+    public function test_transfer_pays_only_final_balance_and_preserves_card_deposit_snapshot(): void
+    {
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $service = $this->service('Pedicura', '1000.00');
+        $appointment = $this->appointment($owner, [$this->line($service, $employee)]);
+        $this->deposit($owner, $appointment, '300.00', 'card');
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $this->checkoutPayload($appointment, method: 'transfer'))
+            ->assertStatus(303);
+
+        $payments = Sale::query()->firstOrFail()->payments()->orderBy('id')->get();
+        $this->assertSame(['card', 'transfer'], $payments->pluck('method')->all());
+        $this->assertSame(['300.00', '700.00'], $payments->pluck('amount')->all());
+        $this->assertSame('12.00', $payments[0]->card_fee_amount);
+        $this->assertSame('0.00', $payments[1]->card_fee_amount);
+        $this->assertSame('700.00', $payments[1]->net_amount);
+        $this->assertSame('María López', Sale::query()->firstOrFail()->client_name);
+        DB::table('appointments')->where('id', $appointment->id)->update(['client_name' => 'Nombre cambiado']);
+        $this->assertSame('María López', Sale::query()->firstOrFail()->client_name);
     }
 
     private function checkoutPayload(Appointment $appointment, ?string $token = null, string $method = 'cash'): array

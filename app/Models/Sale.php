@@ -17,6 +17,8 @@ class Sale extends Model
 
     public const PAYMENT_METHOD_CARD = 'card';
 
+    public const PAYMENT_METHOD_TRANSFER = 'transfer';
+
     public const CARD_FEE_RATE = '4.00';
 
     protected $guarded = ['*'];

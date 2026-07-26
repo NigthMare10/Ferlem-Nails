@@ -15,7 +15,7 @@ El despliegue inicial se realizo mediante SSH como transporte y release precompi
 - Se copiaron solamente los contenidos de `public/` al directorio publico y se ajusto `index.php` hacia `../studio-lemus`.
 - La base se detecto vacia y recibio `migrate --force`, seeders RBAC y el owner inicial autorizado.
 - El auto-deploy de hPanel no se utilizo. Desactive su integracion Git desde la interfaz hPanel para evitar que vuelva a intentar Composer con `proc_open` deshabilitado.
-- Para futuras versiones: genere el ZIP local, subalo por SSH/SFTP, active mantenimiento si ya existe una version publica, reemplace solo codigo privado y `public/`, conserve `.env` y `storage`, migre, cachee y ejecute el smoke test con `PUBLIC_ROOT=../public_html`.
+- Para futuras versiones: genere el ZIP local, subalo por SSH/SFTP, active mantenimiento si ya existe una version publica, reemplace solo codigo privado y `public/`, conserve `.env` y `storage`, restaure las rutas de `public_html/index.php` hacia `../studio-lemus`, migre, cachee y ejecute el smoke test con `PUBLIC_ROOT=../public_html`.
 - Despliegue de estabilizacion 2026-07-25: se aplico `2026_07_25_130000_add_cancellation_fields_to_sales_table` como batch 2, se regeneraron caches y el smoke test HTTPS paso. `php artisan storage:link` falla porque `exec()` esta deshabilitado en PHP CLI; crear o restaurar el enlace desde shell SSH con `ln -s ../studio-lemus/storage/app/public ../public_html/storage` antes del smoke test.
 
 ## 1. Requisitos y decisiones
@@ -77,14 +77,17 @@ ln -s "$HOME/apps/studio-lemus/public" \
 
 Compruebe primero que Hostinger permite seguir symlinks. Conserve temporalmente `public_html.initial` para rollback y eliminelo despues de verificar.
 
-Si el plan no admite symlinks ni cambiar el document root, mantenga la aplicacion en `$HOME/apps/studio-lemus`, vacie `public_html` y copie alli unicamente el contenido de `public/`. En el `public_html/index.php` copiado, sustituya las dos rutas relativas por rutas absolutas del usuario Hostinger:
+Si el plan no admite symlinks ni cambiar el document root, mantenga la aplicacion en `$HOME/apps/studio-lemus`, vacie `public_html` y copie alli unicamente el contenido de `public/`. En el `public_html/index.php` copiado, sustituya las tres rutas relativas, incluida la de mantenimiento, por rutas absolutas del usuario Hostinger:
 
 ```php
+if (file_exists($maintenance = '/home/[USUARIO_HOSTINGER]/apps/studio-lemus/storage/framework/maintenance.php')) {
+    require $maintenance;
+}
 require '/home/[USUARIO_HOSTINGER]/apps/studio-lemus/vendor/autoload.php';
 $app = require_once '/home/[USUARIO_HOSTINGER]/apps/studio-lemus/bootstrap/app.php';
 ```
 
-No copie `.env`, `app`, `config`, `database`, `storage`, `vendor` ni el resto del proyecto a `public_html`. Sincronice de nuevo el contenido de `public/`, incluido `build`, en cada despliegue y conserve el `index.php` ajustado. Verifique que `.env`, Composer, tests, documentacion y dumps respondan 403/404.
+No copie `.env`, `app`, `config`, `database`, `storage`, `vendor` ni el resto del proyecto a `public_html`. Sincronice de nuevo el contenido de `public/`, incluido `build`, en cada despliegue y vuelva a ajustar `index.php` despues de cada sincronizacion. Verifique que `.env`, Composer, tests, documentacion y dumps respondan 403/404.
 
 ## 4. Primer despliegue limpio por SFTP/archivo
 

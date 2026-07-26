@@ -64,7 +64,10 @@ class SaleCancellationTest extends TestCase
             ->assertInertia(fn ($page) => $page
                 ->where('actual.gross_revenue', '0.00')
                 ->where('actual.canceled_sales_count', 1)
-                ->where('actual.canceled_amount', $sale->total));
+                ->where('actual.canceled_amount', $sale->total)
+                ->where('payment_distribution.0.amount', '0.00')
+                ->where('payment_distribution.1.amount', '0.00')
+                ->where('payment_distribution.2.amount', '0.00'));
     }
 
     private function user(string $role): User

@@ -13,6 +13,37 @@ Alcance de esta intervencion: estabilizacion A-D implementada; pendiente de vali
 - Verificacion: el comando `php artisan test` con PHP predeterminado 8.2.12 falla antes de iniciar porque Composer exige >=8.3. Con PHP 8.3 de Laragon: `optimize:clear`, migracion batch 2, seeders, rutas y `migrate:status` pasaron; la suite paso 257 pruebas/2,297 aserciones; Pint, typecheck, build y `git diff --check` pasaron. SQLite estuvo disponible bajo PHP 8.3, por lo que no se uso configuracion temporal. Produccion se desplego por SSH el 2026-07-25 y el smoke test HTTPS paso; Hostinger mantiene `exec()` deshabilitado, por lo que el enlace de storage se restauro con `ln -s` desde SSH.
 - Riesgo manual pendiente: no existe navegador automatizado; validar 1440x900, 1024x768, 768x1024, 390x844, 360x800 y 320x700, Safari iPhone, Chrome Android, WebView WhatsApp, teclado y landscape.
 
+## Modulo Facturas - Prompt 1 de 2
+
+**Estado:** En pruebas / No. **Despliegue:** No realizado; pendiente de validacion manual del usuario.
+
+- Se agrego `Facturas` al sidebar entre Nueva venta y Agenda, visible por permiso efectivo y protegido en backend mediante alcance `sales.view_all|sales.view_own`.
+- No se creo una entidad Invoice. Listado, detalle, anulacion, impresion y capturas usan `Sale`, `SaleItem` y `SalePayment` existentes.
+- Nueva migracion reversible `2026_07_25_150000_add_client_name_to_sales_table.php`: snapshot nullable, backfill desde citas vinculadas y null seguro para ventas directas historicas.
+- Rutas nuevas: index/show, cancelacion reutilizada y POST/GET anidado de captura. El recibo termico existente permanece como unica implementacion de impresion.
+- Filtros backend: numero/clienta, desde/hasta Honduras, completed/canceled, cash/card/transfer/mixed, empleado autorizado y captura con/pending; paginacion 20 y orden reciente descendente.
+- Interfaz: tabla desktop, cards moviles, detalle por secciones, dialogo de anulacion y dialogo persistente de upload con vista previa. Ninguna accion sensible depende solo de Vue.
+- Carga posterior: una unica captura sobre pago transfer completed sin prueba previa; archivo privado aleatorio, MIME real, maximo 5 MB, rollback de archivo ante fallo y sin reemplazo en este prompt.
+- Permisos nuevos: `sales.view_all` y `sales.upload_transfer_proof`; owner todos, administrator all/upload/view proof sin cancel por defecto, employee upload solo bajo scope propio. Los seeders siguen idempotentes.
+- Seguridad: `SaleAccess` unifica listado, detalle, receipt y proof; pertenencia pago-venta obligatoria; no hay DELETE, rutas fisicas, symlink publico, costos internos ni datos sensibles.
+- Notificacion posterior deduplicada para responsables autorizados, sin adjuntar imagen.
+- Verificacion automatica: 273 pruebas y 2,520 aserciones pasan con PHP 8.3. Pint, typecheck, build y `git diff --check` pasan; permanece la advertencia no bloqueante por bundle mayor de 500 kB.
+- Pendiente manual: roles y URLs ajenas, filtros/paginacion, snapshot, Mixto, anulacion, carga/consulta privada, recibo y responsive. No se desplego en Hostinger.
+
+## Modulo Facturas - Prompt 2 de 2 (2026-07-26)
+
+**Estado:** En pruebas / No. **Despliegue:** Realizado; requiere validacion manual autenticada.
+
+- `AppLayout` ahora muestra Facturas mediante `canAny(['sales.view_own', 'sales.view_all'])` del composable existente, no mediante rol ni un booleano de navegacion derivado. Esta fue la causa de que el item pudiera no aparecer con acceso efectivo.
+- Orden final: Inicio, Nueva venta, Facturas, Agenda, Historial de citas, Ganancias Generales y Configuracion, cada uno bajo su permiso existente. Facturas usa `mdi-file-document-outline` y `/invoices`.
+- El estado activo usa prefijo `/invoices`, por lo que persiste en listado, filtros, paginacion, detalle, anulacion y captura. Nueva venta no se activa dentro de Facturas.
+- El drawer temporal movil usa el mismo item; cierra antes de navegar. No se agrego otro drawer, overlay ni CSS que introduzca scroll horizontal.
+- Inicio agrega `Ver facturas` solo con `sales.view_own|sales.view_all`; no hay metricas ni datos simulados nuevos.
+- `auth.permissions` sigue llegando desde `AppServiceProvider`; `usePermissions` consume ese arreglo. El seeder local idempotente confirma owner con own/all/reprint/cancel/upload/view proof; administrator con own/all/reprint/upload/view proof y sin cancel; employee con own/reprint/upload y sin all/cancel.
+- Validacion local: `optimize:clear`, `db:seed` y `route:list` correctos; Invoice 10/182; suite 274/2,567; Pint, typecheck y `git diff --check` correctos. Build correcto; advertencia no bloqueante por bundle mayor de 500 kB.
+- Hostinger: release precompilado por SSH, `.env` y `storage` preservados, sin `db:seed`. Solo se aplico `2026_07_25_150000_add_client_name_to_sales_table` porque estaba pendiente; caches config/route/view regenerados y manifest actual confirmado en `public_html/build`. Se corrigio el `index.php` del document root separado para apuntar a `../studio-lemus` despues de la sincronizacion de public.
+- URL publica: `https://violet-crow-104407.hostingersite.com/invoices` redirige a login correctamente; `/login` responde 200. Queda validar mediante sesiones reales que owner lista todas, employee solo propias, sidebar/drawer y ausencia de errores de consola.
+
 ## 0. Fuentes y estado real inspeccionado
 
 Se leyeron completamente:

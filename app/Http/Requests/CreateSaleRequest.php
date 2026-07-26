@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Support\Permissions;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\File;
 
 class CreateSaleRequest extends FormRequest
 {
@@ -24,13 +25,23 @@ class CreateSaleRequest extends FormRequest
         if (is_string($this->payment_method)) {
             $this->merge(['payment_method' => strtolower(trim($this->payment_method))]);
         }
+        if (is_string($this->client_name)) {
+            $name = trim($this->client_name);
+            $this->merge(['client_name' => $name === '' ? null : $name]);
+        }
     }
 
     public function rules(): array
     {
         return [
             'checkout_token' => ['required', 'uuid'],
-            'payment_method' => ['required', Rule::in(['cash', 'card'])],
+            'payment_method' => ['required', Rule::in(['cash', 'card', 'transfer'])],
+            'client_name' => ['nullable', 'string', 'max:120'],
+            'payment_proof' => [
+                'nullable',
+                'prohibited_unless:payment_method,transfer',
+                File::image()->types(['jpg', 'jpeg', 'png', 'webp'])->max(5 * 1024),
+            ],
             'items' => ['required', 'array', 'min:1', 'max:100'],
             'items.*.service_id' => ['required', 'integer', 'exists:services,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:50'],
@@ -43,7 +54,11 @@ class CreateSaleRequest extends FormRequest
             'checkout_token.required' => 'No se pudo identificar esta confirmación. Recarga la página e inténtalo nuevamente.',
             'checkout_token.uuid' => 'La confirmación de la venta no es válida.',
             'payment_method.required' => 'Selecciona el método de pago.',
-            'payment_method.in' => 'El método de pago debe ser efectivo o tarjeta.',
+            'payment_method.in' => 'El método de pago debe ser efectivo, tarjeta o transferencia.',
+            'client_name.max' => 'El nombre de la clienta no puede superar 120 caracteres.',
+            'payment_proof.prohibited_unless' => 'La captura solo puede adjuntarse a una transferencia.',
+            'payment_proof.mimes' => 'La captura debe ser JPG, PNG o WEBP.',
+            'payment_proof.max' => 'La captura no puede superar 5 MB.',
             'items.required' => 'Agrega al menos un servicio.',
             'items.array' => 'La selección de servicios no es válida.',
             'items.min' => 'Agrega al menos un servicio.',

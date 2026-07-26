@@ -26,6 +26,37 @@ El modulo de Agenda y Citas se gobierna mediante `docs/STUDIO_LEMUS_APPOINTMENTS
 
 **Estado:** En pruebas. **Aprobacion:** No. **Produccion:** Lista para desplegar; no desplegada ni verificada en una URL real.
 
+## Modulo Facturas - Prompt 1 de 2 (2026-07-25)
+
+**Estado:** En pruebas. **Aprobacion:** No. **Produccion:** No desplegado; pendiente de validacion manual.
+
+- Arquitectura: `Facturas` es una proyeccion funcional sobre `Sale`, `SaleItem` y `SalePayment`; no existe entidad, tabla o numeracion fiscal duplicada. Los documentos continúan siendo comprobantes internos, sin SAR, CAI, RTN, impuestos ni rangos autorizados.
+- Rutas: `GET /invoices`, `GET /invoices/{sale}`, `POST /invoices/{sale}/cancel`, `POST /invoices/{sale}/payments/{payment}/proof` y `GET /invoices/{sale}/payments/{payment}/proof`. La impresion reutiliza `GET /sales/{sale}/receipt`.
+- Permisos: se agregaron `sales.view_all` y `sales.upload_transfer_proof`. Owner recibe ambos; administrator recibe `view_all`, upload y view proof, pero no `sales.cancel`; employee conserva `view_own` y recibe upload limitado por backend a sus ventas. `SaleAccess` centraliza scope propio/todos para listado, detalle, recibo y captura.
+- Snapshot de clienta: la migracion aditiva `2026_07_25_150000_add_client_name_to_sales_table.php` agrega `sales.client_name nullable`, retrocarga ventas vinculadas desde citas y deja ventas directas historicas en null. Venta directa acepta nombre opcional; checkout de cita copia el nombre bloqueado de la cita. Cambios posteriores de cita no alteran la venta.
+- Listado: pagina `Invoices/Index` con busqueda por numero/clienta, fechas Honduras, estado, metodo incluido Mixto, empleado solo para `view_all` y captura con/sin pendiente. Los filtros viajan por query string, se combinan, se aplican con boton y paginan 20 ventas ordenadas por `sold_at`/ID descendente, sin duplicar ventas por pagos o lineas.
+- Responsive: tabla desktop y cards moviles independientes. Las cards muestran numero, clienta, fecha, total, metodo, estado, captura y menu de acciones sin scroll horizontal.
+- Detalle: `Invoices/Show` entrega snapshots de servicios, cantidades, ejecutores, pagos, adelanto/saldo, cita vinculada y anulacion, sin fees internos, tokens, JSON, rutas fisicas ni datos de tarjeta. `Ver comprobante` abre el recibo termico existente.
+- Anulacion: Facturas reutiliza `CancelSaleRequest` y `CancelSaleAction`. Solo una venta completed y usuario con `sales.cancel` puede anular; conserva venta, lineas, pagos, captura, cita completada y auditoria, y sigue fuera de Ganancias.
+- Captura posterior: `AttachTransferProofAction` bloquea venta/pago y permite una sola transicion desde prueba vacia para un pago transfer de factura completed autorizada. Reutiliza formatos JPG/JPEG/PNG/WEBP, limite 5 MB, nombre aleatorio y disco privado. No reemplaza, no crea otro pago y elimina el archivo si la transaccion falla.
+- Seguridad: rutas anidadas comprueban pertenencia pago-venta; employee no lista, consulta ni modifica ventas ajenas; view/upload/cancel son permisos separados; no existe DELETE de factura; el streaming privado conserva `nosniff` y nunca expone `proof_path` ni usa `public/storage`.
+- Notificacion: al agregar captura posterior se publica `Comprobante de transferencia agregado` para owner/administrator activos con acceso a notificaciones y permiso de visualizar captura. Usa dedupe `sale-payment-proof:{payment}` y enlaza a la factura sin incluir imagen.
+- Pruebas: suite completa PHP 8.3: 273 pruebas y 2,520 aserciones correctas. Incluye scopes, filtros, Mixto, fechas, snapshot/backfill, null historico, anulacion, Ganancias, upload privado, formatos, pertenencia, permiso, notificacion, paginacion y cards moviles. Pint, typecheck, build y `git diff --check` pasaron; el build conserva la advertencia no bloqueante por bundle mayor de 500 kB.
+- Riesgos y manuales pendientes: falta E2E de navegador y comparacion visual. Validar owner, administrator y dos employees; filtros combinados y pagina 2; venta mixta; nombre directo/cita; detalle y recibo; anulacion; upload y vista privada; errores de archivo; 1440x900, 1024x768, 768x1024 y 390x844. El reemplazo de capturas y Facturas Prompt 2 quedan fuera de alcance.
+
+## Modulo Facturas - Prompt 2 de 2 (2026-07-26)
+
+**Estado:** En pruebas. **Aprobacion:** No. **Produccion:** Desplegado; pendiente de validacion manual autenticada.
+
+- Causa de navegacion: `AppLayout` condicionaba Facturas con `auth.navigation.invoices`, un booleano compartido desde servidor, en vez de consultar los permisos ya compartidos con Inertia. La ruta y las paginas existian, pero el item podia quedar oculto aunque el usuario tuviera acceso efectivo.
+- Sidebar: Facturas usa `usePermissions().canAny(['sales.view_own', 'sales.view_all'])`, icono `mdi-file-document-outline`, URL `/invoices`, y queda entre Nueva venta y Agenda. No se condiciona por nombre de rol ni se debilita el backend.
+- Estado y movil: el item se mantiene activo para cualquier URL que inicia en `/invoices`, incluyendo detalle, filtros, paginacion y carga de captura. El mismo drawer temporal movil contiene Facturas; se cierra antes de `router.visit`, sin overlay residual ni un segundo menu.
+- Inicio: se agrego el acceso rapido `Ver facturas` con la misma condicion own/all. No agrega metricas, datos simulados ni acceso a usuarios sin permiso.
+- Permisos compartidos: `AppServiceProvider` entrega `auth.permissions` como permisos persistidos; `Permissions`, `RoleSeeder` y `usePermissions` contienen y consumen `sales.view_own`, `sales.view_all`, `sales.reprint`, `sales.cancel`, `sales.upload_transfer_proof` y `sales.view_transfer_proof`. Seed local idempotente verifico owner completo; administrator own/all/reprint/upload/view proof sin cancel; employee own/reprint/upload sin all/cancel.
+- Pruebas: se ampliaron `InvoiceModuleTest` para roles, permisos compartidos, 403 sin alcance, sidebar, estado activo index/show, drawer movil y acceso rapido. `php artisan test --filter=Invoice` paso 10 pruebas/182 aserciones; suite completa paso 274 pruebas/2,567 aserciones. Pint, typecheck y `git diff --check` pasaron. Build paso con advertencia no bloqueante por bundle mayor de 500 kB.
+- Despliegue SSH: se publico release precompilado sin sobrescribir `.env` ni `storage`, sin `db:seed` remoto. Se aplico solo la migracion pendiente `2026_07_25_150000_add_client_name_to_sales_table`; las caches config/route/view se regeneraron. El manifest de `public_html/build` contiene el bundle actual. La sincronizacion inicial de `public/` restauro temporalmente el `index.php` generico y produjo HTTP 500; se corrigieron sus tres rutas hacia `../studio-lemus`, segun la estructura productiva, antes de liberar trafico.
+- Verificacion publica: `https://violet-crow-104407.hostingersite.com/login` responde 200 y `https://violet-crow-104407.hostingersite.com/invoices` redirige correctamente a login. Falta validacion autenticada manual de owner/employee, drawer movil y consola; no se crearon usuarios o ventas de prueba en produccion.
+
 ### Estabilizacion A-D posterior (2026-07-25)
 
 - Estado: permanece `En pruebas / No`; no se aprueba automaticamente ni se despliega.

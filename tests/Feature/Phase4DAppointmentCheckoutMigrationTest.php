@@ -23,8 +23,10 @@ class Phase4DAppointmentCheckoutMigrationTest extends TestCase
             'name' => 'Histórico', 'duration_minutes' => 45, 'price' => '125.00', 'is_active' => true,
         ]);
         $payments = require database_path('migrations/2026_07_24_110200_create_sale_payments_table.php');
+        $transfer = require database_path('migrations/2026_07_25_140000_add_transfer_and_proof_fields_to_sale_payments.php');
         $items = require database_path('migrations/2026_07_24_110100_add_appointment_checkout_fields_to_sale_items_table.php');
         $appointment = require database_path('migrations/2026_07_24_110000_add_appointment_id_to_sales_table.php');
+        $transfer->down();
         $payments->down();
         $items->down();
         $appointment->down();
@@ -61,6 +63,7 @@ class Phase4DAppointmentCheckoutMigrationTest extends TestCase
         $appointment->up();
         $items->up();
         $payments->up();
+        $transfer->up();
 
         $item = DB::table('sale_items')->where('sale_id', $saleId)->first();
         $payment = DB::table('sale_payments')->where('sale_id', $saleId)->first();
@@ -73,6 +76,7 @@ class Phase4DAppointmentCheckoutMigrationTest extends TestCase
         $this->assertSame('3.25', (string) $payment->card_fee_rate);
         $this->assertSame('4.06', (string) $payment->card_fee_amount);
         $this->assertSame('120.94', (string) $payment->net_amount);
+        $this->assertNull($payment->proof_path);
         $this->assertTrue(Schema::hasColumn('sales', 'appointment_id'));
         $this->assertTrue(collect(Schema::getIndexes('sale_items'))->pluck('name')->contains('sale_items_sale_service_unique'));
         $this->assertSame(1, DB::table('sale_payments')->where('sale_id', $saleId)->count());

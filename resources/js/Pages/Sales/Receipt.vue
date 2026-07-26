@@ -22,12 +22,12 @@ const { sale } = defineProps<{
         subtotal: string;
         total: string;
         total_services: number;
-        payment_method: 'cash' | 'card';
+        payment_method: 'cash' | 'card' | 'transfer';
         payment_method_label: string;
         client: { name: string; phone: string | null } | null;
         sold_by: { id: number; name: string };
         items: ReceiptItem[];
-        payments: Array<{ id: number; type: 'deposit_applied' | 'final_payment'; type_label: string; method: 'cash' | 'card'; method_label: string; amount: string }>;
+        payments: Array<{ id: number; type: 'deposit_applied' | 'final_payment'; type_label: string; method: 'cash' | 'card' | 'transfer'; method_label: string; amount: string; proof_url: string | null }>;
         status: 'completed' | 'canceled';
         is_canceled: boolean;
         can_cancel: boolean;
@@ -120,6 +120,10 @@ const printReceipt = () => window.print();
                 </footer>
             </article>
 
+            <div class="receipt-proof-actions">
+                <VBtn v-for="payment in sale.payments.filter(item => item.proof_url)" :key="payment.id" :href="payment.proof_url!" target="_blank" rel="noopener" variant="tonal" prepend-icon="mdi-image-outline">Ver comprobante de transferencia</VBtn>
+            </div>
+
             <VDialog v-model="cancelDialog" max-width="520" :persistent="cancellationForm.processing">
                 <VCard rounded="xl">
                     <VCardTitle class="pa-5">Anular comprobante {{ sale.sale_number }}</VCardTitle>
@@ -149,6 +153,7 @@ const printReceipt = () => window.print();
     gap: 12px;
     margin: 0 auto 22px;
 }
+.receipt-proof-actions { display: flex; justify-content: center; margin: 18px auto 0; }
 
 .receipt-paper {
     box-sizing: border-box;
@@ -289,7 +294,8 @@ const printReceipt = () => window.print();
         background: #fff !important;
     }
 
-    .receipt-actions {
+    .receipt-actions,
+    .receipt-proof-actions {
         display: none !important;
     }
 

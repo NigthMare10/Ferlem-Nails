@@ -3,6 +3,7 @@ import { useDisplay } from 'vuetify';
 import type { PaymentMethod, SaleCartItem } from '../../types/sales';
 import { decimalToCents, formatHnl } from '../../utils/money';
 import SaleCheckoutSummary from './SaleCheckoutSummary.vue';
+import SalePaymentMethod from './SalePaymentMethod.vue';
 
 defineProps<{
     modelValue: boolean;
@@ -19,10 +20,13 @@ defineProps<{
     depositFeeCents?: number;
     balanceCents?: number;
     balanceFeeCents?: number;
+    paymentProof?: File | null;
 }>();
 
 const emit = defineEmits<{
     'update:modelValue': [value: boolean];
+    'update:paymentMethod': [value: PaymentMethod];
+    'update:paymentProof': [value: File | null];
     confirm: [];
 }>();
 const { xs } = useDisplay();
@@ -60,6 +64,7 @@ const { xs } = useDisplay();
                     </VListItem>
                 </VList>
                 <VDivider class="my-4" />
+                <SalePaymentMethod :model-value="paymentMethod" :amount-cents="appointmentMode ? (balanceCents ?? totalCents) : totalCents" :processing="processing" :balance-payment="appointmentMode && Boolean(depositCents)" :payment-proof="paymentProof" class="mb-4" @update:model-value="emit('update:paymentMethod', $event)" @update:payment-proof="emit('update:paymentProof', $event)" />
                 <SaleCheckoutSummary :total-cents="totalCents" :total-services="totalServices" :payment-method="paymentMethod" :deposit-cents="depositCents" :deposit-fee-cents="depositFeeCents" :balance-cents="appointmentMode ? (balanceCents ?? totalCents) : totalCents" :balance-fee-cents="balanceFeeCents ?? cardFeeCents" :total-fee-cents="cardFeeCents" :net-amount-cents="netAmountCents" />
                 <div class="d-flex justify-space-between align-end">
                     <span class="text-body-1 font-weight-bold">{{ appointmentMode ? 'Saldo final a cobrar' : 'Total a cobrar' }}</span>

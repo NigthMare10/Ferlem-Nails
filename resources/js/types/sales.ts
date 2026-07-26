@@ -10,7 +10,7 @@ export type SaleCartItem = SaleService & {
     quantity: number;
 };
 
-export type PaymentMethod = 'cash' | 'card';
+export type PaymentMethod = 'cash' | 'card' | 'transfer';
 
 export type AppointmentCheckoutContext = {
     id: number;

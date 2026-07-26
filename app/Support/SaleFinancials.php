@@ -15,14 +15,16 @@ final class SaleFinancials
         ?string $feeRate = null,
         ?int $appointmentDepositId = null,
     ): array {
-        if (! in_array($method, [Sale::PAYMENT_METHOD_CASH, Sale::PAYMENT_METHOD_CARD], true) || $amountCents < 0) {
+        if (! in_array($method, [Sale::PAYMENT_METHOD_CASH, Sale::PAYMENT_METHOD_CARD, Sale::PAYMENT_METHOD_TRANSFER], true) || $amountCents < 0) {
             throw ValidationException::withMessages(['payment_method' => 'El pago no tiene un método o monto válido.']);
         }
 
-        $rate = $feeRate ?? ($method === Sale::PAYMENT_METHOD_CARD ? Sale::CARD_FEE_RATE : '0.00');
-        $fee = $feeCents ?? ($method === Sale::PAYMENT_METHOD_CARD
-            ? Money::percentageOfCents($amountCents, $rate)
-            : 0);
+        $rate = $method === Sale::PAYMENT_METHOD_CARD
+            ? ($feeRate ?? Sale::CARD_FEE_RATE)
+            : '0.00';
+        $fee = $method === Sale::PAYMENT_METHOD_CARD
+            ? ($feeCents ?? Money::percentageOfCents($amountCents, $rate))
+            : 0;
 
         if ($fee < 0 || $fee > $amountCents) {
             throw ValidationException::withMessages(['payment_method' => 'La comisión del pago no es válida.']);

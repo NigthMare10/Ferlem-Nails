@@ -21,6 +21,7 @@ class PublishInternalNotificationAction
         array $entity,
         string $dedupeKey,
         CarbonInterface $occurredAt,
+        ?string $recipientPermission = null,
     ): void {
         $notification = new InternalNotification($type, $title, $message, $url, $actor, $entity, $occurredAt);
         $payload = json_encode($notification->toDatabase($actor), JSON_THROW_ON_ERROR);
@@ -30,6 +31,7 @@ class PublishInternalNotificationAction
             ->where('is_active', true)
             ->role(['owner', 'administrator'])
             ->permission(Permissions::NOTIFICATIONS_ACCESS)
+            ->when($recipientPermission, fn ($query) => $query->permission($recipientPermission))
             ->select('users.id')
             ->eachById(function (User $recipient) use ($dedupeKey, $now, $payload) {
                 DB::table((new InternalNotificationRecord)->getTable())->insertOrIgnore([

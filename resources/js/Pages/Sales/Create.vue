@@ -45,8 +45,10 @@ let additionalSequence = 0;
 const form = useForm({
     checkout_token: crypto.randomUUID(),
     payment_method: 'cash' as PaymentMethod,
+    client_name: props.appointment?.client_name ?? '',
     items: [] as Array<{ service_id: number | null; appointment_item_id?: number | null; quantity: number; performed_by?: number }>,
     removed_appointment_item_ids: [] as number[],
+    payment_proof: null as File | null,
 });
 const excessRefundForm = useForm({
     amount: '',
@@ -89,6 +91,7 @@ const saleError = computed(() => {
     return errors.items
         || errors.checkout_token
         || errors.payment_method
+        || errors.payment_proof
         || Object.entries(errors).find(([key]) => key.startsWith('items.'))?.[1]
         || '';
 });
@@ -143,12 +146,12 @@ const submit = () => {
             performed_by: item.performed_by,
         }));
         form.removed_appointment_item_ids = removedReserved.value;
-        form.post(`/appointments/${props.appointment.id}/checkout`, { preserveScroll: true });
+        form.post(`/appointments/${props.appointment.id}/checkout`, { preserveScroll: true, forceFormData: true });
         return;
     }
     if (!cart.value.length || form.processing) return;
     form.items = cart.value.map(item => ({ service_id: item.id, quantity: item.quantity }));
-    form.post('/sales', { preserveScroll: true });
+    form.post('/sales', { preserveScroll: true, forceFormData: true });
 };
 
 function addAppointmentService(service: SaleService): void {
@@ -228,6 +231,8 @@ function refundExcess(): void {
                 :description="appointment ? `Registra el trabajo realizado para ${appointment.client_name}.` : 'Selecciona los servicios realizados y genera el comprobante.'"
             />
 
+            <VTextField v-if="!appointment" v-model="form.client_name" label="Nombre de la clienta (opcional)" maxlength="120" counter="120" prepend-inner-icon="mdi-account-outline" :error-messages="form.errors.client_name" :disabled="form.processing" class="mb-5" />
+
             <template v-if="appointment">
                 <VAlert type="info" variant="tonal" class="mb-5">
                     Abrir esta pantalla no completa la cita. Permanecerá programada hasta confirmar el cobro.
@@ -263,7 +268,7 @@ function refundExcess(): void {
                             <VCardItem class="pa-5"><VCardTitle class="font-weight-bold">Resumen de cobro</VCardTitle><VCardSubtitle>La venta conserva el valor completo del trabajo.</VCardSubtitle></VCardItem>
                             <VDivider />
                             <VCardText class="pa-5">
-                                <SalePaymentMethod v-model="form.payment_method" :amount-cents="appointmentBalanceCents" :processing="form.processing" :balance-payment="depositCents > 0" class="mb-4" />
+                                <SalePaymentMethod v-model="form.payment_method" v-model:payment-proof="form.payment_proof" :amount-cents="appointmentBalanceCents" :processing="form.processing" :balance-payment="depositCents > 0" :proof-error="form.errors.payment_proof" class="mb-4" />
                                 <SaleCheckoutSummary :total-cents="appointmentTotalCents" :total-services="appointmentTotalServices" :payment-method="form.payment_method" :deposit-cents="depositCents" :deposit-fee-cents="depositFeeCents" :balance-cents="appointmentBalanceCents" :balance-fee-cents="appointmentBalanceFeeCents" :total-fee-cents="appointmentTotalFeeCents" :net-amount-cents="appointmentNetAmountCents" />
                                 <VAlert v-if="appointmentBelowDeposit" type="error" variant="tonal" density="compact" class="mt-4">
                                     El adelanto disponible supera los servicios por {{ formatHnl(depositExcessCents) }}. Debe devolverse exactamente ese excedente antes de completar.
@@ -325,10 +330,13 @@ function refundExcess(): void {
                             :card-fee-cents="cardFeeCents"
                             :net-amount-cents="netAmountCents"
                             :processing="form.processing"
+                            :payment-proof="form.payment_proof"
+                            :proof-error="form.errors.payment_proof"
                             @increase="increase"
                             @decrease="decrease"
                             @remove="remove"
                             @payment-method="form.payment_method = $event"
+                            @payment-proof="form.payment_proof = $event"
                             @checkout="openConfirmation"
                         />
                     </div>
@@ -354,10 +362,13 @@ function refundExcess(): void {
                     :card-fee-cents="cardFeeCents"
                     :net-amount-cents="netAmountCents"
                     :processing="form.processing"
+                    :payment-proof="form.payment_proof"
+                    :proof-error="form.errors.payment_proof"
                     @increase="increase"
                     @decrease="decrease"
                     @remove="remove"
                     @payment-method="form.payment_method = $event"
+                    @payment-proof="form.payment_proof = $event"
                     @checkout="openConfirmation"
                 />
                 <VCard v-else class="surface-card" rounded="xl">
@@ -365,7 +376,7 @@ function refundExcess(): void {
                     <VDivider />
                     <VCardText class="pa-4">
                         <SaleLineItem v-for="item in appointmentCart" :key="item.key" :item-key="item.key" :name="item.name" :price="item.price" :quantity="item.quantity" :duration-minutes="item.duration_minutes" :reserved="item.reserved" :processing="form.processing" @increase="item.quantity++" @decrease="item.quantity > 1 ? item.quantity-- : removeAppointmentLine(item)" @remove="removeAppointmentLine(item)" />
-                        <SalePaymentMethod v-model="form.payment_method" :amount-cents="appointmentBalanceCents" :processing="form.processing" :balance-payment="depositCents > 0" class="mt-4" />
+                        <SalePaymentMethod v-model="form.payment_method" v-model:payment-proof="form.payment_proof" :amount-cents="appointmentBalanceCents" :processing="form.processing" :balance-payment="depositCents > 0" :proof-error="form.errors.payment_proof" class="mt-4" />
                         <SaleCheckoutSummary :total-cents="appointmentTotalCents" :total-services="appointmentTotalServices" :payment-method="form.payment_method" :deposit-cents="depositCents" :deposit-fee-cents="depositFeeCents" :balance-cents="appointmentBalanceCents" :balance-fee-cents="appointmentBalanceFeeCents" :total-fee-cents="appointmentTotalFeeCents" :net-amount-cents="appointmentNetAmountCents" />
                         <VAlert v-if="appointmentBelowDeposit" type="error" variant="tonal" density="compact" class="mt-4">Debe devolverse el excedente del adelanto antes de completar.</VAlert>
                         <VBtn block color="primary" size="large" class="mt-4" :loading="form.processing" :disabled="form.processing || appointmentBelowDeposit" @click="openAppointmentConfirmation">Completar y cobrar {{ formatHnl(appointmentBalanceCents) }}</VBtn>
@@ -388,6 +399,9 @@ function refundExcess(): void {
                 :balance-fee-cents="appointmentBalanceFeeCents"
                 :processing="form.processing"
                 :error="saleError"
+                :payment-proof="form.payment_proof"
+                @update:payment-method="form.payment_method = $event"
+                @update:payment-proof="form.payment_proof = $event"
                 @confirm="submit"
             />
         </div>

@@ -9,38 +9,56 @@ use App\Models\User;
 use App\Support\Money;
 use App\Support\Permissions;
 use App\Support\SaleFinancials;
+use App\Support\TransferProofStorage;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class CreateSaleAction
 {
     private const MAX_AMOUNT_CENTS = 999999999999;
 
-    public function __construct(private readonly PersistCompletedSaleAction $persistCompletedSale) {}
+    public function __construct(
+        private readonly PersistCompletedSaleAction $persistCompletedSale,
+        private readonly TransferProofStorage $proofStorage,
+    ) {}
 
-    public function execute(User $user, array $items, string $checkoutToken, string $paymentMethod): Sale
-    {
+    public function execute(
+        User $user,
+        array $items,
+        string $checkoutToken,
+        string $paymentMethod,
+        ?UploadedFile $paymentProof = null,
+        ?string $clientName = null,
+    ): Sale {
         if (! $user->is_active || ! $user->can(Permissions::SALES_ACCESS) || ! $user->can(Permissions::SALES_CREATE)) {
             throw new AuthorizationException;
         }
 
-        if (! in_array($paymentMethod, [Sale::PAYMENT_METHOD_CASH, Sale::PAYMENT_METHOD_CARD], true)) {
+        if (! in_array($paymentMethod, [Sale::PAYMENT_METHOD_CASH, Sale::PAYMENT_METHOD_CARD, Sale::PAYMENT_METHOD_TRANSFER], true)) {
             throw ValidationException::withMessages([
-                'payment_method' => 'El método de pago debe ser efectivo o tarjeta.',
+                'payment_method' => 'El método de pago debe ser efectivo, tarjeta o transferencia.',
             ]);
+        }
+        if ($paymentProof && $paymentMethod !== Sale::PAYMENT_METHOD_TRANSFER) {
+            throw ValidationException::withMessages(['payment_proof' => 'La captura solo puede adjuntarse a una transferencia.']);
         }
 
         $normalizedItems = $this->normalizeItems($items);
-        $requestHash = $this->requestHash($normalizedItems);
+        $clientName = $clientName !== null && trim($clientName) !== '' ? trim($clientName) : null;
+        $requestHash = $this->requestHash($normalizedItems, $clientName);
 
         if ($existing = $this->findByToken($checkoutToken)) {
             return $this->resolveExisting($existing, $user, $requestHash, $paymentMethod);
         }
 
+        $proof = $paymentProof ? $this->storeProof($paymentProof, $user) : null;
+
         try {
-            return DB::transaction(function () use ($user, $normalizedItems, $checkoutToken, $requestHash, $paymentMethod) {
+            $sale = DB::transaction(function () use ($user, $normalizedItems, $checkoutToken, $requestHash, $paymentMethod, $proof, $clientName) {
                 if ($existing = $this->findByToken($checkoutToken)) {
                     return $this->resolveExisting($existing, $user, $requestHash, $paymentMethod);
                 }
@@ -103,25 +121,55 @@ class CreateSaleAction
                     ];
                 }
 
+                $payment = SaleFinancials::payment(SalePayment::TYPE_FINAL_PAYMENT, $paymentMethod, $subtotalCents);
+
                 return $this->persistCompletedSale->execute(
                     $user,
                     $preparedItems,
-                    [SaleFinancials::payment(SalePayment::TYPE_FINAL_PAYMENT, $paymentMethod, $subtotalCents)],
+                    [[...$payment, ...($proof ?? [])]],
                     $checkoutToken,
                     $requestHash,
+                    null,
+                    $clientName,
                 );
             }, 3);
+
+            if ($proof && ! $sale->payments->contains('proof_path', $proof['proof_path'])) {
+                $this->proofStorage->delete($proof);
+            }
+
+            return $sale;
         } catch (UniqueConstraintViolationException $exception) {
             if (! $this->isCheckoutTokenConflict($exception)) {
+                $this->proofStorage->delete($proof);
                 throw $exception;
             }
 
             $existing = $this->findByToken($checkoutToken);
             if (! $existing) {
+                $this->proofStorage->delete($proof);
                 throw $exception;
             }
 
-            return $this->resolveExisting($existing, $user, $requestHash, $paymentMethod);
+            $sale = $this->resolveExisting($existing, $user, $requestHash, $paymentMethod);
+            $this->proofStorage->delete($proof);
+
+            return $sale;
+        } catch (Throwable $exception) {
+            $this->proofStorage->delete($proof);
+
+            throw $exception;
+        }
+    }
+
+    private function storeProof(UploadedFile $file, User $user): array
+    {
+        try {
+            return $this->proofStorage->store($file, $user);
+        } catch (Throwable) {
+            throw ValidationException::withMessages([
+                'payment_proof' => 'No se pudo guardar la captura. Inténtalo nuevamente sin perder el carrito.',
+            ]);
         }
     }
 
@@ -151,11 +199,13 @@ class CreateSaleAction
         );
     }
 
-    private function requestHash(array $items): string
+    private function requestHash(array $items, ?string $clientName): string
     {
         usort($items, fn (array $left, array $right) => $left['service_id'] <=> $right['service_id']);
 
-        return hash('sha256', json_encode($items, JSON_THROW_ON_ERROR));
+        $payload = $clientName === null ? $items : ['items' => $items, 'client_name' => $clientName];
+
+        return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
     }
 
     private function findByToken(string $checkoutToken): ?Sale

@@ -6,6 +6,7 @@ use App\Http\Controllers\CashController;
 use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ServiceController;
@@ -45,7 +46,21 @@ Route::middleware(['auth', 'active'])->group(function () {
             'permission:'.Permissions::SALES_CREATE,
         ])
         ->name('sales.store');
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+    Route::get('/invoices/{sale}', [InvoiceController::class, 'show'])->name('invoices.show');
+    Route::post('/invoices/{sale}/cancel', [InvoiceController::class, 'cancel'])
+        ->middleware('permission:'.Permissions::SALES_CANCEL)
+        ->name('invoices.cancel');
+    Route::post('/invoices/{sale}/payments/{payment}/proof', [InvoiceController::class, 'storeProof'])
+        ->middleware('permission:'.Permissions::SALES_UPLOAD_TRANSFER_PROOF)
+        ->name('invoices.payments.proof.store');
+    Route::get('/invoices/{sale}/payments/{payment}/proof', [SalesController::class, 'proof'])
+        ->middleware('permission:'.Permissions::SALES_VIEW_TRANSFER_PROOF)
+        ->name('invoices.payments.proof.show');
     Route::get('/sales/{sale}/receipt', [SalesController::class, 'receipt'])->name('sales.receipt');
+    Route::get('/sales/{sale}/payments/{payment}/proof', [SalesController::class, 'proof'])
+        ->middleware('permission:'.Permissions::SALES_VIEW_TRANSFER_PROOF)
+        ->name('sales.payments.proof');
     Route::post('/sales/{sale}/cancel', [SalesController::class, 'cancel'])
         ->middleware('permission:'.Permissions::SALES_CANCEL)
         ->name('sales.cancel');

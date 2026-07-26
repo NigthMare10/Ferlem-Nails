@@ -54,6 +54,11 @@ final class LandingDestination
         return $user->hasPermissionTo(Permissions::SALES_ACCESS);
     }
 
+    public function canNavigateToInvoices(User $user): bool
+    {
+        return SaleAccess::canList($user);
+    }
+
     public function canNavigateToEarnings(User $user): bool
     {
         return $user->hasPermissionTo(Permissions::REPORTS_SALES_VIEW);

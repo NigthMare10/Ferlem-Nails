@@ -33,10 +33,10 @@ class SaleReceiptResource extends JsonResource
                 && $request->user()?->is_active
                 && $request->user()?->can(Permissions::SALES_CANCEL),
             'payment_method' => $this->payment_method,
-            'payment_method_label' => $this->payment_method === Sale::PAYMENT_METHOD_CARD ? 'Tarjeta' : 'Efectivo',
-            'client' => $this->appointment ? [
-                'name' => $this->appointment->client_name,
-                'phone' => $this->appointment->client_phone,
+            'payment_method_label' => $this->methodLabel($this->payment_method),
+            'client' => $this->client_name ? [
+                'name' => $this->client_name,
+                'phone' => $this->appointment?->client_phone,
             ] : null,
             'sold_by' => [
                 'id' => $this->soldBy->id,
@@ -60,9 +60,23 @@ class SaleReceiptResource extends JsonResource
                 'type' => $payment->type,
                 'type_label' => $payment->type === 'deposit_applied' ? 'Adelanto aplicado' : 'Saldo final pagado',
                 'method' => $payment->method,
-                'method_label' => $payment->method === Sale::PAYMENT_METHOD_CARD ? 'Tarjeta' : 'Efectivo',
+                'method_label' => $this->methodLabel($payment->method),
                 'amount' => $payment->amount,
+                'proof_url' => $payment->method === Sale::PAYMENT_METHOD_TRANSFER
+                    && $payment->proof_path
+                    && $request->user()?->can(Permissions::SALES_VIEW_TRANSFER_PROOF)
+                        ? route('sales.payments.proof', [$this->resource, $payment])
+                        : null,
             ])->values(),
         ];
+    }
+
+    private function methodLabel(string $method): string
+    {
+        return match ($method) {
+            Sale::PAYMENT_METHOD_CARD => 'Tarjeta',
+            Sale::PAYMENT_METHOD_TRANSFER => 'Transferencia',
+            default => 'Efectivo',
+        };
     }
 }

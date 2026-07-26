@@ -8,7 +8,7 @@ export type EarningsFilters = {
     date_from: string | null;
     date_to: string | null;
     employee_id: number | null;
-    payment_method: 'cash' | 'card' | null;
+    payment_method: 'cash' | 'card' | 'transfer' | null;
 };
 
 export type EarningsPeriod = {
@@ -59,6 +59,16 @@ export type EmployeeSummary = EarningsSummary & {
 export type DailySummary = Omit<EarningsSummary, 'average_sale'> & {
     date: string;
     date_label: string;
+    methods: Array<Pick<PaymentDistribution, 'method' | 'method_label' | 'amount'>>;
+};
+
+export type PaymentDistribution = {
+    method: 'cash' | 'card' | 'transfer';
+    method_label: string;
+    payments_count: number;
+    amount: string;
+    card_fee_amount: string;
+    net_amount: string;
 };
 
 export type EmployeeOption = {

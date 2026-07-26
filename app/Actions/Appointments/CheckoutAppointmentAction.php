@@ -15,11 +15,13 @@ use App\Models\User;
 use App\Support\Money;
 use App\Support\Permissions;
 use App\Support\SaleFinancials;
+use App\Support\TransferProofStorage;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class CheckoutAppointmentAction
 {
@@ -28,6 +30,7 @@ class CheckoutAppointmentAction
     public function __construct(
         private readonly PersistCompletedSaleAction $persistCompletedSale,
         private readonly PublishInternalNotificationAction $publishNotification,
+        private readonly TransferProofStorage $proofStorage,
     ) {}
 
     public function execute(User $user, Appointment $appointment, array $data): Sale
@@ -39,8 +42,10 @@ class CheckoutAppointmentAction
             return $this->resolveExisting($existing, $user, $appointment, $requestHash);
         }
 
+        $proof = isset($data['payment_proof']) ? $this->storeProof($data['payment_proof'], $user) : null;
+
         try {
-            return DB::transaction(function () use ($user, $appointment, $data, $requestHash) {
+            $sale = DB::transaction(function () use ($user, $appointment, $data, $requestHash, $proof) {
                 if ($existing = $this->findByToken($data['checkout_token'])) {
                     return $this->resolveExisting($existing, $user, $appointment, $requestHash);
                 }
@@ -80,9 +85,20 @@ class CheckoutAppointmentAction
                     $payments[] = SaleFinancials::payment(SalePayment::TYPE_DEPOSIT_APPLIED, $deposit->payment_method, $depositCents, $depositFeeCents, $deposit->card_fee_rate, $deposit->getKey());
                 }
                 if ($balanceCents > 0) {
-                    $payments[] = SaleFinancials::payment(SalePayment::TYPE_FINAL_PAYMENT, $data['payment_method'], $balanceCents);
+                    $finalPayment = SaleFinancials::payment(SalePayment::TYPE_FINAL_PAYMENT, $data['payment_method'], $balanceCents);
+                    $payments[] = [...$finalPayment, ...($proof ?? [])];
+                } elseif ($proof) {
+                    throw ValidationException::withMessages(['payment_proof' => 'No se puede adjuntar una captura porque el adelanto cubre todo el saldo.']);
                 }
-                $sale = $this->persistCompletedSale->execute($user, $prepared, $payments, $data['checkout_token'], $requestHash, $locked->getKey());
+                $sale = $this->persistCompletedSale->execute(
+                    $user,
+                    $prepared,
+                    $payments,
+                    $data['checkout_token'],
+                    $requestHash,
+                    $locked->getKey(),
+                    $locked->client_name,
+                );
 
                 if ($depositCents > 0 && $deposit) {
                     $deposit->status = AppointmentDeposit::STATUS_APPLIED;
@@ -120,16 +136,43 @@ class CheckoutAppointmentAction
 
                 return $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
             }, 3);
+
+            if ($proof && ! $sale->payments->contains('proof_path', $proof['proof_path'])) {
+                $this->proofStorage->delete($proof);
+            }
+
+            return $sale;
         } catch (UniqueConstraintViolationException $exception) {
             $existing = $this->findByToken($data['checkout_token']);
             if ($existing) {
-                return $this->resolveExisting($existing, $user, $appointment, $requestHash);
+                $sale = $this->resolveExisting($existing, $user, $appointment, $requestHash);
+                $this->proofStorage->delete($proof);
+
+                return $sale;
             }
             if ($sale = Sale::query()->useWritePdo()->where('appointment_id', $appointment->getKey())->first()) {
+                $this->proofStorage->delete($proof);
                 throw ValidationException::withMessages(['appointment' => "Esta cita ya fue convertida en la venta {$sale->sale_number}."]);
             }
 
+            $this->proofStorage->delete($proof);
+
             throw $exception;
+        } catch (Throwable $exception) {
+            $this->proofStorage->delete($proof);
+
+            throw $exception;
+        }
+    }
+
+    private function storeProof($file, User $user): array
+    {
+        try {
+            return $this->proofStorage->store($file, $user);
+        } catch (Throwable) {
+            throw ValidationException::withMessages([
+                'payment_proof' => 'No se pudo guardar la captura. Inténtalo nuevamente sin perder el cobro.',
+            ]);
         }
     }
 

@@ -35,7 +35,7 @@ class Phase3B1CardPaymentTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_payment_method_is_required_and_only_accepts_cash_or_card(): void
+    public function test_payment_method_is_required_and_only_accepts_supported_methods(): void
     {
         $employee = $this->user('employee');
         $service = $this->service();
@@ -45,9 +45,9 @@ class Phase3B1CardPaymentTest extends TestCase
         $this->actingAs($employee)->post('/sales', $payload)
             ->assertSessionHasErrors(['payment_method' => 'Selecciona el método de pago.']);
 
-        $payload['payment_method'] = 'transfer';
+        $payload['payment_method'] = 'crypto';
         $this->post('/sales', $payload)
-            ->assertSessionHasErrors(['payment_method' => 'El método de pago debe ser efectivo o tarjeta.']);
+            ->assertSessionHasErrors(['payment_method' => 'El método de pago debe ser efectivo, tarjeta o transferencia.']);
         $this->assertDatabaseCount('sales', 0);
     }
 
@@ -170,6 +170,10 @@ class Phase3B1CardPaymentTest extends TestCase
         $this->assertSame('960.00', collect($report['employees'])->firstWhere('name', 'Empleado')['net_amount']);
         $this->assertSame('40.00', $report['daily'][0]['card_fee_amount']);
         $this->assertSame('1960.00', $report['daily'][0]['net_amount']);
+        $this->assertSame('1000.00', $report['payment_distribution'][0]['amount']);
+        $this->assertSame('1000.00', $report['payment_distribution'][1]['amount']);
+        $this->assertSame('40.00', $report['payment_distribution'][1]['card_fee_amount']);
+        $this->assertSame(['cash', 'card'], array_column($report['daily'][0]['methods'], 'method'));
     }
 
     public function test_payment_method_filters_combine_with_employee_and_preserve_query_contract(): void
@@ -179,6 +183,7 @@ class Phase3B1CardPaymentTest extends TestCase
         $this->reportSale($owner, '2026-07-19 09:00:00', '100.00', 1, 'cash', '0.00', '100.00');
         $this->reportSale($owner, '2026-07-19 10:00:00', '200.00', 1, 'card', '8.00', '192.00');
         $this->reportSale($employee, '2026-07-19 11:00:00', '300.00', 1, 'card', '12.00', '288.00');
+        $this->reportSale($owner, '2026-07-19 12:00:00', '400.00', 1, 'transfer', '0.00', '400.00');
 
         $this->actingAs($owner)->get('/earnings?period=today&date=2026-07-19&payment_method=cash')
             ->assertInertia(fn (Assert $page) => $page
@@ -201,8 +206,11 @@ class Phase3B1CardPaymentTest extends TestCase
                 ->has('employees', 1)
                 ->where('employees.0.id', $owner->id));
 
-        $this->from('/earnings')->get('/earnings?payment_method=transfer')
-            ->assertSessionHasErrors('payment_method');
+        $this->get('/earnings?period=today&date=2026-07-19&payment_method=transfer')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('filters.payment_method', 'transfer')
+                ->where('summary.total_sold', '400.00')
+                ->where('payment_distribution.2.amount', '400.00'));
     }
 
     public function test_earnings_use_the_fee_snapshot_instead_of_recalculating_with_current_rate(): void

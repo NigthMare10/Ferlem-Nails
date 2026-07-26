@@ -12,6 +12,7 @@ import type {
     EarningsPeriod,
     EmployeeOption,
     EmployeeSummary,
+    PaymentDistribution,
 } from '../../types/earnings';
 
 const props = defineProps<{
@@ -23,6 +24,7 @@ const props = defineProps<{
     employees: EmployeeSummary[];
     daily?: DailySummary[];
     employeeOptions: EmployeeOption[];
+    payment_distribution?: PaymentDistribution[];
 }>();
 
 const form = useForm({
@@ -33,7 +35,7 @@ const form = useForm({
     date_from: props.filters.date_from ?? '',
     date_to: props.filters.date_to ?? '',
     employee_id: props.filters.employee_id ?? null as number | null,
-    payment_method: props.filters.payment_method ?? null as 'cash' | 'card' | null,
+    payment_method: props.filters.payment_method ?? null as 'cash' | 'card' | 'transfer' | null,
 });
 
 const periodOptions = [
@@ -52,6 +54,7 @@ const paymentMethodOptions = [
     { title: 'Todos', value: null },
     { title: 'Efectivo', value: 'cash' },
     { title: 'Tarjeta', value: 'card' },
+    { title: 'Transferencia', value: 'transfer' },
 ];
 const hasProjection = computed(() => Boolean(props.projection));
 const employeeHeaders = computed(() => [
@@ -60,6 +63,7 @@ const employeeHeaders = computed(() => [
     { title: 'Bruto por servicios', key: 'total_sold', align: 'end' as const },
     { title: 'Comisión POS asignada', key: 'card_fee_amount', align: 'end' as const },
     { title: 'Ingreso neto', key: 'net_amount', align: 'end' as const },
+    { title: 'Métodos', key: 'methods', sortable: false },
     ...(hasProjection.value ? [
         { title: 'Servicios proyectados', key: 'projected_services_count', align: 'end' as const },
         { title: 'Ingreso proyectado', key: 'projected_income', align: 'end' as const },
@@ -167,6 +171,15 @@ function resetFilters(): void {
             </VRow>
         </section>
 
+        <VCard v-if="actual && payment_distribution" class="surface-card report-section" :class="{ 'report-loading': form.processing }">
+            <VCardItem class="pa-5 pb-2"><VCardTitle>Distribución por método de pago</VCardTitle><VCardSubtitle>Distribución de pagos de ventas completadas</VCardSubtitle></VCardItem>
+            <VRow class="pa-3">
+                <VCol v-for="method in payment_distribution" :key="method.method" cols="12" md="4">
+                    <VCard variant="outlined" class="h-100"><VCardText><div class="font-weight-bold mb-3">{{ method.method_label }}</div><div class="mobile-stat"><span>Pagos</span><strong>{{ count(method.payments_count) }}</strong></div><div class="mobile-stat"><span>Monto bruto</span><strong>{{ money(method.amount) }}</strong></div><template v-if="method.method === 'card'"><div class="mobile-stat"><span>Comisión POS</span><strong>{{ money(method.card_fee_amount) }}</strong></div><div class="mobile-stat"><span>Ingreso neto</span><strong>{{ money(method.net_amount) }}</strong></div></template></VCardText></VCard>
+                </VCol>
+            </VRow>
+        </VCard>
+
         <section v-if="projection" class="report-section projection-section" :class="{ 'report-loading': form.processing }">
             <div class="section-heading">
                 <div><div class="text-overline text-primary">Agenda programada</div><h2 class="text-h5 font-weight-bold">Proyección</h2></div>
@@ -202,17 +215,17 @@ function resetFilters(): void {
             </div>
         </VCard>
 
-        <VCard v-if="actual && !actual.completed_sales_count" class="surface-card report-section"><EmptyState icon="mdi-chart-box-outline" title="No hay ventas reales en este periodo" description="Puedes consultar la proyección sin convertirla en resultados reales." /></VCard>
-
         <VCard v-if="daily?.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }">
             <VCardItem class="pa-5 pb-2"><VCardTitle>Resultados reales por día</VCardTitle><VCardSubtitle>Calculados desde ventas completadas</VCardSubtitle></VCardItem>
             <VDataTable :headers="dailyHeaders" :items="daily" class="desktop-table" :items-per-page="-1" hide-default-footer>
                 <template #item.total_sold="{ item }"><strong>{{ money(item.total_sold) }}</strong></template>
                 <template #item.card_fee_amount="{ item }">{{ money(item.card_fee_amount) }}</template>
                 <template #item.net_amount="{ item }"><strong>{{ money(item.net_amount) }}</strong></template>
+                <template #item.methods="{ item }"><div class="daily-methods"><span v-for="method in item.methods.filter(entry => Number(entry.amount) > 0)" :key="method.method">{{ method.method_label }}: <strong>{{ money(method.amount) }}</strong></span></div></template>
             </VDataTable>
-            <div class="mobile-cards pa-4 pt-2"><VCard v-for="day in daily" :key="day.date" variant="outlined" class="mb-3"><VCardTitle class="pa-4 pb-2 text-body-1">{{ day.date_label }}</VCardTitle><VCardText><div class="mobile-stat"><span>Ventas</span><strong>{{ count(day.sales_count) }}</strong></div><div class="mobile-stat"><span>Servicios</span><strong>{{ count(day.services_count) }}</strong></div><div class="mobile-stat"><span>Bruto</span><strong>{{ money(day.total_sold) }}</strong></div><div class="mobile-stat"><span>Comisión POS</span><strong>{{ money(day.card_fee_amount) }}</strong></div><div class="mobile-stat"><span>Ingreso neto</span><strong>{{ money(day.net_amount) }}</strong></div></VCardText></VCard></div>
+            <div class="mobile-cards pa-4 pt-2"><VCard v-for="day in daily" :key="day.date" variant="outlined" class="mb-3"><VCardTitle class="pa-4 pb-2 text-body-1">{{ day.date_label }}</VCardTitle><VCardText><div class="mobile-stat"><span>Ventas</span><strong>{{ count(day.sales_count) }}</strong></div><div class="mobile-stat"><span>Servicios</span><strong>{{ count(day.services_count) }}</strong></div><div class="mobile-stat"><span>Bruto</span><strong>{{ money(day.total_sold) }}</strong></div><div class="mobile-stat"><span>Comisión POS</span><strong>{{ money(day.card_fee_amount) }}</strong></div><div class="mobile-stat"><span>Ingreso neto</span><strong>{{ money(day.net_amount) }}</strong></div><div v-for="method in day.methods.filter(entry => Number(entry.amount) > 0)" :key="method.method" class="mobile-stat"><span>{{ method.method_label }}</span><strong>{{ money(method.amount) }}</strong></div></VCardText></VCard></div>
         </VCard>
+        <VCard v-else-if="actual" class="surface-card report-section"><EmptyState icon="mdi-chart-box-outline" title="No hay ventas en este periodo" description="Las ventas completadas aparecerán aquí automáticamente." /></VCard>
     </AppLayout>
 </template>
 
@@ -225,6 +238,7 @@ function resetFilters(): void {
 .report-loading { pointer-events: none; opacity: .58; transition: opacity 160ms ease; }
 .mobile-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 7px 0; color: rgba(var(--v-theme-on-surface), .68); }
 .mobile-stat strong { color: rgb(var(--v-theme-on-surface)); text-align: right; }
+.daily-methods { display: grid; gap: 3px; white-space: nowrap; }
 @media (max-width: 700px) {
     .filter-actions .v-btn { flex: 1 1 140px; }
     .section-heading { align-items: start; flex-direction: column; }

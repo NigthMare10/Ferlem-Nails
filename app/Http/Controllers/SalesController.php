@@ -11,15 +11,22 @@ use App\Http\Resources\SaleServiceResource;
 use App\Models\Appointment;
 use App\Models\AppointmentDeposit;
 use App\Models\Sale;
+use App\Models\SalePayment;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Money;
 use App\Support\Permissions;
+use App\Support\SaleAccess;
+use App\Support\TransferProofStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SalesController extends Controller
 {
@@ -104,6 +111,8 @@ class SalesController extends Controller
             $data['items'],
             $data['checkout_token'],
             $data['payment_method'],
+            $data['payment_proof'] ?? null,
+            $data['client_name'] ?? null,
         );
 
         return to_route('sales.receipt', $sale, 303);
@@ -112,11 +121,7 @@ class SalesController extends Controller
     public function receipt(Request $request, Sale $sale): Response
     {
         $user = $request->user();
-        $canView = $user->hasRole('owner')
-            || $user->can(Permissions::SALES_CANCEL)
-            || ($user->can(Permissions::SALES_VIEW_OWN) && $sale->sold_by === $user->getKey());
-
-        abort_unless($canView, 403);
+        abort_unless($user->can(Permissions::SALES_REPRINT) && SaleAccess::canView($user, $sale), 403);
 
         $sale->load(['soldBy:id,name', 'canceledBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
 
@@ -130,6 +135,36 @@ class SalesController extends Controller
         $action->execute($request->user(), $sale, $request->string('cancellation_reason')->toString());
 
         return to_route('sales.receipt', $sale, 303)->with('success', 'La venta fue anulada correctamente.');
+    }
+
+    public function proof(Request $request, Sale $sale, SalePayment $payment): StreamedResponse
+    {
+        abort_unless($request->user()->can(Permissions::SALES_VIEW_TRANSFER_PROOF), 403);
+        abort_unless(SaleAccess::canView($request->user(), $sale), 403);
+        abort_unless($payment->sale_id === $sale->getKey(), 404);
+        abort_unless($payment->method === Sale::PAYMENT_METHOD_TRANSFER && $payment->proof_path, 404);
+        abort_unless((bool) preg_match('/^\d{4}\/\d{2}\/[a-f0-9]{48}\.(jpg|png|webp)$/', $payment->proof_path), 404);
+
+        $disk = Storage::disk(TransferProofStorage::DISK);
+        abort_unless($disk->exists($payment->proof_path), 404);
+        $stream = $disk->readStream($payment->proof_path);
+        abort_if($stream === false, 404);
+        $disposition = HeaderUtils::makeDisposition(
+            ResponseHeaderBag::DISPOSITION_INLINE,
+            $payment->proof_original_name ?: 'comprobante-transferencia',
+            'comprobante-transferencia',
+        );
+
+        return response()->stream(function () use ($stream): void {
+            fpassthru($stream);
+            fclose($stream);
+        }, 200, [
+            'Content-Type' => $payment->proof_mime,
+            'Content-Disposition' => $disposition,
+            'Content-Length' => (string) $payment->proof_size,
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store, max-age=0',
+        ]);
     }
 
     private function authorizeAppointmentCheckout(User $user, Appointment $appointment): void

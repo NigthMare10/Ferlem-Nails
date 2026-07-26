@@ -42,6 +42,7 @@ class AppServiceProvider extends ServiceProvider
                 'navigation' => [
                     'home' => $landing->canAccessHome($user),
                     'sales' => $landing->canNavigateToSales($user),
+                    'invoices' => $landing->canNavigateToInvoices($user),
                     'appointments' => $landing->canNavigateToAppointments($user),
                     'earnings' => $landing->canNavigateToEarnings($user),
                 ],

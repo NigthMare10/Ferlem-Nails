@@ -15,6 +15,8 @@ class EarningsStructureTest extends TestCase
         $this->assertStringContainsString('Proyección', $page);
         $this->assertStringContainsString('Rendimiento por empleado', $page);
         $this->assertStringContainsString('Resultados reales por día', $page);
+        $this->assertStringContainsString('No hay ventas en este periodo', $page);
+        $this->assertStringContainsString('Las ventas completadas aparecerán aquí automáticamente.', $page);
         $this->assertStringContainsString('Todavía no incluye otros costos o gastos.', $page);
         $this->assertStringNotContainsString('Otros ingresos', $page);
         $this->assertStringNotContainsString('Salidas', $page);

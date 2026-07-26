@@ -21,6 +21,7 @@ class PersistCompletedSaleAction
         string $checkoutToken,
         string $requestHash,
         ?int $appointmentId = null,
+        ?string $clientName = null,
     ): Sale {
         $financials = SaleFinancials::summarize($lines, $payments);
         $summaryMethod = $payments[array_key_last($payments)]['method'];
@@ -28,6 +29,7 @@ class PersistCompletedSaleAction
 
         $sale = new Sale;
         $sale->appointment_id = $appointmentId;
+        $sale->client_name = $clientName;
         $sale->sold_by = $seller->getKey();
         $sale->sold_at = now('UTC');
         $sale->subtotal = Money::fromCents($financials['total_cents']);
@@ -74,6 +76,12 @@ class PersistCompletedSaleAction
             $payment->card_fee_amount = Money::fromCents($paymentData['fee_cents']);
             $payment->net_amount = Money::fromCents($paymentData['net_cents']);
             $payment->appointment_deposit_id = $paymentData['appointment_deposit_id'];
+            $payment->proof_path = $paymentData['proof_path'] ?? null;
+            $payment->proof_original_name = $paymentData['proof_original_name'] ?? null;
+            $payment->proof_mime = $paymentData['proof_mime'] ?? null;
+            $payment->proof_size = $paymentData['proof_size'] ?? null;
+            $payment->proof_uploaded_by = $paymentData['proof_uploaded_by'] ?? null;
+            $payment->proof_uploaded_at = $paymentData['proof_uploaded_at'] ?? null;
             $payment->save();
         }
 
@@ -82,7 +90,7 @@ class PersistCompletedSaleAction
             $seller,
             $fromAppointment ? 'sale.from_appointment' : 'sale.completed',
             $fromAppointment ? 'Venta desde cita registrada' : 'Venta registrada',
-            "Se registró la venta {$sale->sale_number}.",
+            $this->notificationMessage($sale->sale_number, $payments),
             "/sales/{$sale->getKey()}/receipt",
             ['type' => 'sale', 'id' => $sale->getKey(), 'appointment_id' => $appointmentId],
             "sale:{$sale->getKey()}:completed",
@@ -102,5 +110,21 @@ class PersistCompletedSaleAction
         }
 
         return $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
+    }
+
+    private function notificationMessage(string $saleNumber, array $payments): string
+    {
+        $methods = collect($payments)->pluck('method')->unique()->values();
+        if ($methods->count() > 1) {
+            return "La venta {$saleNumber} usa métodos diferentes para adelanto y saldo.";
+        }
+
+        $label = match ($methods->first()) {
+            Sale::PAYMENT_METHOD_CARD => 'con tarjeta',
+            Sale::PAYMENT_METHOD_TRANSFER => 'por transferencia',
+            default => 'en efectivo',
+        };
+
+        return "La venta {$saleNumber} fue cobrada {$label}.";
     }
 }

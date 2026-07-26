@@ -95,7 +95,13 @@ final class BuildSalesSummaryAction
             ->values()
             ->all();
 
-        $daily = $this->dailySummary($employeeId === null ? $sales : $items, $employeeId !== null, $localStart, $localEnd);
+        $daily = $this->dailySummary($employeeId === null ? $sales : $items, $employeeId !== null);
+        [$paymentDistribution, $dailyMethods] = $this->paymentDistribution($sales, $employeeId, $paymentMethod);
+        $daily = collect($daily)->map(function (array $day) use ($dailyMethods) {
+            $day['methods'] = $dailyMethods[$day['date']] ?? [];
+
+            return $day;
+        })->all();
 
         return [
             'filters' => [
@@ -127,6 +133,7 @@ final class BuildSalesSummaryAction
             ],
             'summary' => $summary,
             'employees' => $employees,
+            'payment_distribution' => $paymentDistribution,
             'daily' => $daily,
         ];
     }
@@ -154,12 +161,9 @@ final class BuildSalesSummaryAction
             ));
     }
 
-    private function dailySummary(Builder $query, bool $usesItems, CarbonImmutable $start, CarbonImmutable $end): array
+    private function dailySummary(Builder $query, bool $usesItems): array
     {
         $days = [];
-        for ($date = $start; $date->lt($end); $date = $date->addDay()) {
-            $days[$date->format('Y-m-d')] = ['sale_ids' => [], 'services_count' => 0, 'total_cents' => 0, 'card_fee_cents' => 0, 'net_cents' => 0];
-        }
         $columns = $usesItems
             ? ['sales.sold_at', 'sale_items.sale_id', 'sale_items.quantity', 'sale_items.line_total', 'sale_items.allocated_card_fee_amount', 'sale_items.net_line_amount']
             : ['sales.id', 'sales.sold_at', 'sales.total', 'sales.total_services', 'sales.card_fee_amount', 'sales.net_amount'];
@@ -188,6 +192,70 @@ final class BuildSalesSummaryAction
                 'net_amount' => Money::fromCents($values['net_cents']),
             ];
         })->values()->all();
+    }
+
+    private function paymentDistribution(Builder $sales, ?int $employeeId, ?string $paymentMethod): array
+    {
+        $methods = [
+            Sale::PAYMENT_METHOD_CASH => ['method' => Sale::PAYMENT_METHOD_CASH, 'method_label' => 'Efectivo', 'payments_count' => 0, 'amount_cents' => 0, 'fee_cents' => 0, 'net_cents' => 0],
+            Sale::PAYMENT_METHOD_CARD => ['method' => Sale::PAYMENT_METHOD_CARD, 'method_label' => 'Tarjeta', 'payments_count' => 0, 'amount_cents' => 0, 'fee_cents' => 0, 'net_cents' => 0],
+            Sale::PAYMENT_METHOD_TRANSFER => ['method' => Sale::PAYMENT_METHOD_TRANSFER, 'method_label' => 'Transferencia', 'payments_count' => 0, 'amount_cents' => 0, 'fee_cents' => 0, 'net_cents' => 0],
+        ];
+        $daily = [];
+        $saleIds = (clone $sales)->pluck('sales.id');
+        $includedSales = Sale::query()
+            ->whereKey($saleIds)
+            ->with(['payments', 'items' => fn ($query) => $query->orderBy('position')->orderBy('id')])
+            ->get();
+
+        foreach ($includedSales as $sale) {
+            $remainingAmount = $employeeId === null
+                ? Money::toCents($sale->total)
+                : Money::toCents($sale->items->where('performed_by', $employeeId)->sum('line_total'));
+            $remainingFee = $employeeId === null
+                ? Money::toCents($sale->card_fee_amount)
+                : Money::toCents($sale->items->where('performed_by', $employeeId)->sum('allocated_card_fee_amount'));
+            $date = $sale->sold_at->setTimezone(self::TIMEZONE)->format('Y-m-d');
+
+            foreach ($sale->payments as $payment) {
+                if ($paymentMethod !== null && $payment->method !== $paymentMethod) {
+                    continue;
+                }
+                $paymentAmount = Money::toCents($payment->amount);
+                $paymentFee = Money::toCents($payment->card_fee_amount);
+                $amount = $employeeId === null ? $paymentAmount : min($paymentAmount, $remainingAmount);
+                $fee = $employeeId === null ? $paymentFee : min($paymentFee, $remainingFee, $amount);
+                $remainingAmount -= $amount;
+                $remainingFee -= $fee;
+
+                if ($amount === 0) {
+                    continue;
+                }
+
+                $methods[$payment->method]['payments_count']++;
+                $methods[$payment->method]['amount_cents'] += $amount;
+                $methods[$payment->method]['fee_cents'] += $fee;
+                $methods[$payment->method]['net_cents'] += $amount - $fee;
+                $daily[$date][$payment->method] ??= ['method' => $payment->method, 'method_label' => $methods[$payment->method]['method_label'], 'amount_cents' => 0];
+                $daily[$date][$payment->method]['amount_cents'] += $amount;
+            }
+        }
+
+        return [
+            collect($methods)->map(fn (array $method) => [
+                'method' => $method['method'],
+                'method_label' => $method['method_label'],
+                'payments_count' => $method['payments_count'],
+                'amount' => Money::fromCents($method['amount_cents']),
+                'card_fee_amount' => Money::fromCents($method['fee_cents']),
+                'net_amount' => Money::fromCents($method['net_cents']),
+            ])->values()->all(),
+            collect($daily)->map(fn (array $day) => collect($day)->map(fn (array $method) => [
+                'method' => $method['method'],
+                'method_label' => $method['method_label'],
+                'amount' => Money::fromCents($method['amount_cents']),
+            ])->values()->all())->all(),
+        ];
     }
 
     private function averageCents(int $totalCents, int $salesCount): int

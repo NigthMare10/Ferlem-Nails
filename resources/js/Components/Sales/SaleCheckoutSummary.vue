@@ -21,7 +21,7 @@ defineProps<{
         <div class="summary-row"><span>Total de servicios</span><strong>{{ formatHnl(totalCents) }}</strong></div>
         <div v-if="depositCents" class="summary-row"><span>Adelanto aplicado</span><strong>− {{ formatHnl(depositCents) }}</strong></div>
         <div class="summary-row summary-row--balance"><span>{{ depositCents ? 'Saldo pendiente' : 'Total a cobrar' }}</span><strong>{{ formatHnl(balanceCents) }}</strong></div>
-        <div class="summary-row text-body-2"><span>Método del {{ depositCents ? 'saldo' : 'pago' }}</span><strong>{{ balanceCents === 0 ? 'Cubierto por adelanto' : paymentMethod === 'card' ? 'Tarjeta' : 'Efectivo' }}</strong></div>
+        <div class="summary-row text-body-2"><span>Método del {{ depositCents ? 'saldo' : 'pago' }}</span><strong>{{ balanceCents === 0 ? 'Cubierto por adelanto' : paymentMethod === 'card' ? 'Tarjeta' : paymentMethod === 'transfer' ? 'Transferencia' : 'Efectivo' }}</strong></div>
         <VDivider class="my-3" />
         <div v-if="depositFeeCents" class="summary-row text-body-2"><span>Comisión POS del adelanto</span><strong>{{ formatHnl(depositFeeCents) }}</strong></div>
         <div v-if="balanceFeeCents" class="summary-row text-body-2"><span>Comisión POS del saldo</span><strong>{{ formatHnl(balanceFeeCents) }}</strong></div>

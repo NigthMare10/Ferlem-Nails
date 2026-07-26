@@ -52,7 +52,11 @@ class SalesEarningsRequest extends FormRequest
             'date_from' => ['nullable', 'required_if:period,custom', 'date_format:Y-m-d'],
             'date_to' => ['nullable', 'required_if:period,custom', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'employee_id' => ['nullable', 'integer', 'exists:users,id'],
-            'payment_method' => ['nullable', Rule::in([Sale::PAYMENT_METHOD_CASH, Sale::PAYMENT_METHOD_CARD])],
+            'payment_method' => ['nullable', Rule::in([
+                Sale::PAYMENT_METHOD_CASH,
+                Sale::PAYMENT_METHOD_CARD,
+                Sale::PAYMENT_METHOD_TRANSFER,
+            ])],
         ];
     }
 
@@ -87,7 +91,7 @@ class SalesEarningsRequest extends FormRequest
             'date_to.after_or_equal' => 'La fecha final debe ser igual o posterior a la fecha inicial.',
             'employee_id.integer' => 'El empleado seleccionado no es válido.',
             'employee_id.exists' => 'El empleado seleccionado no existe.',
-            'payment_method.in' => 'El método de pago debe ser efectivo o tarjeta.',
+            'payment_method.in' => 'El método de pago debe ser efectivo, tarjeta o transferencia.',
         ];
     }
 }

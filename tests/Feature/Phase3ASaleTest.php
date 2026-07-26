@@ -448,9 +448,11 @@ class Phase3ASaleTest extends TestCase
         $this->assertFalse(Role::findByName('administrator')->hasPermissionTo(Permissions::SALES_CANCEL));
         $this->assertFalse(Role::findByName('employee')->hasPermissionTo(Permissions::SALES_CANCEL));
         $this->assertSame(0, Permission::query()->whereIn('name', [
-            'sales.view_all',
             'sales.apply_discount',
         ])->count());
+        $this->assertSame(1, Permission::query()->where('name', Permissions::SALES_VIEW_ALL)->count());
+        $this->assertTrue(Role::findByName('administrator')->hasPermissionTo(Permissions::SALES_VIEW_ALL));
+        $this->assertFalse(Role::findByName('employee')->hasPermissionTo(Permissions::SALES_VIEW_ALL));
         $this->assertSame([Permissions::REPORTS_SALES_VIEW], Permission::query()
             ->where('name', 'like', 'reports.%')
             ->pluck('name')

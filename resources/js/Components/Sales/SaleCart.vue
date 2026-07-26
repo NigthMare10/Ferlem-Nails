@@ -13,6 +13,8 @@ defineProps<{
     cardFeeCents: number;
     netAmountCents: number;
     processing?: boolean;
+    paymentProof?: File | null;
+    proofError?: string;
 }>();
 
 defineEmits<{
@@ -20,6 +22,7 @@ defineEmits<{
     decrease: [id: number];
     remove: [id: number];
     paymentMethod: [value: PaymentMethod];
+    paymentProof: [value: File | null];
     checkout: [];
 }>();
 
@@ -49,7 +52,7 @@ defineEmits<{
         <template v-if="items.length">
             <VDivider />
             <VCardText class="pa-5">
-                <SalePaymentMethod :model-value="paymentMethod" :amount-cents="totalCents" :processing="processing" @update:model-value="$emit('paymentMethod', $event)" />
+                <SalePaymentMethod :model-value="paymentMethod" :amount-cents="totalCents" :processing="processing" :payment-proof="paymentProof" :proof-error="proofError" @update:model-value="$emit('paymentMethod', $event)" @update:payment-proof="$emit('paymentProof', $event)" />
                 <SaleCheckoutSummary :total-cents="totalCents" :total-services="totalServices" :payment-method="paymentMethod" :balance-cents="totalCents" :balance-fee-cents="cardFeeCents" :total-fee-cents="cardFeeCents" :net-amount-cents="netAmountCents" />
                 <div class="d-flex justify-space-between align-end mb-5">
                     <span class="text-body-1 font-weight-bold">Total a cobrar</span>
