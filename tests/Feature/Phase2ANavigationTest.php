@@ -129,6 +129,12 @@ class Phase2ANavigationTest extends TestCase
             'password_confirmation' => 'password123',
             'role' => 'employee',
             'is_active' => false,
+            'has_employment_profile' => true,
+            'monthly_salary' => '15000.00',
+            'contract_start_date' => '2026-07-01',
+            'is_indefinite' => true,
+            'default_payment_method' => 'transfer',
+            'auto_generate_payroll_expense' => true,
         ])->assertSessionHas('success');
 
         $employee = User::where('email', 'inactive@example.com')->firstOrFail();

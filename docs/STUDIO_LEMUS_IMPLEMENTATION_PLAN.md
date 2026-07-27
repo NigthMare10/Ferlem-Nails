@@ -8,6 +8,54 @@ Este documento define el orden operativo y los limites de las fases 2A a 2I, y r
 
 El modulo de Agenda y Citas se gobierna mediante `docs/STUDIO_LEMUS_APPOINTMENTS_PLAN.md`. Ese plan separado no modifica los estados, dependencias o aprobaciones de las fases actuales de este documento.
 
+El futuro modulo de Gastos y Nomina se disena en `docs/STUDIO_LEMUS_EXPENSES_PLAN.md`. Ese plan separado no modifica los estados, dependencias o aprobaciones vigentes de este documento.
+
+## Modulo Gastos - Fases 6A y 6B (2026-07-27)
+
+**Estado:** En pruebas / No. **Despliegue:** No realizado; pendiente de validacion manual.
+
+- Se implemento `/expenses` como modulo separado con categorias configurables, registro/edicion/anulacion auditados, filtros, paginacion, detalle y comprobantes privados. No se implemento nomina.
+- Las migraciones aditivas crean `expense_categories`, `expenses` y `expense_events`; los numeros `GA-000001` son unicos e inmutables y ningun registro financiero usa borrado fisico.
+- Owner recibe todos los permisos de Gastos; administrator recibe operacion y reporte salvo categorias; employee no recibe acceso por defecto.
+- Ganancias conserva sus resultados de ventas e incorpora Gastos pagados y Resultado disponible, con categorias, dias y metodos de gasto separados. Empleado/metodo de cobro siguen siendo filtros de ventas y no ocultan gastos generales.
+- Validacion PHP 8.3: 295 pruebas/2,821 aserciones, Pint, typecheck, build y `git diff --check` correctos. No se uso `migrate:fresh`, no se desplego y no se uso Git para versionar.
+- La fuente completa de decisiones, formulas, rutas, riesgos y pruebas manuales es `docs/STUDIO_LEMUS_EXPENSES_PLAN.md`. Los estados previos 2A-5A no cambian.
+
+## Nomina - Avance 6C (2026-07-27)
+
+**Estado:** En pruebas / No.
+
+- Los gastos de nomina se identifican por su relación autoritativa con `payroll_obligations.expense_id`, no por categoría. El scope centralizado exige `payroll.view` además de los permisos de Gastos para listado, detalle, adjunto, edición, anulación y resumen.
+- La migración aditiva `2026_07_27_110300_create_payroll_events_table.php` registra perfiles creados/cerrados y obligaciones generadas/pagadas/canceladas como eventos append-only con actor, instante UTC, valores mínimos y nota.
+- La autorizacion directa usa `EnsureExpenseIsVisible` antes de los Form Requests. Corrige el falso fallo `Call to a member function all() on array`, causado por una redireccion de validacion 302 cuyo contexto de prueba Laravel 13 trataba como `MessageBag` en `TestResponseAssert.php:81` aunque era array.
+- Contrato final: web normal 403 con pagina espanola; Inertia 403 con `Errors/Forbidden` y `X-Inertia`; JSON/fetch 403 JSON. El polling de notificaciones conserva JSON y `/notifications` conserva navegacion Inertia.
+- Verificacion PHP 8.3: PayrollAuditPrivacyTest 6/62, suite 301/2,883, Pint, typecheck, build y diff correctos. No se implementaron plantillas, notificacion de generacion, resumen por empleado ni nomina legal.
+
+## Gastos y Nomina - Cierre 6D/6E (2026-07-27)
+
+**Estado:** 6C, 6D y 6E En pruebas / No. **Despliegue:** No realizado.
+
+- Plantillas persistidas con CRUD autorizado, activacion/desactivacion, auditoria append-only y seeder idempotente de Uber, Almuerzo y Compra de materiales. El formulario solo precarga valores editables y nunca confirma automaticamente.
+- Generar una obligacion publica notificacion interna post-commit con dedupe por ID y `payroll.view`; dry-run, obligacion existente y rollback no publican.
+- Ganancias entrega Nomina pagada por empleado solo a usuarios salariales, usando gasto `recorded` y obligacion `paid`; pending/vencida se mantienen fuera del Resultado disponible.
+- Migracion nueva: `2026_07_27_110400_create_expense_template_events_table.php`. Rutas CRUD bajo `/expenses/templates`; permiso existente `expenses.manage_templates` permanece exclusivo de owner por defecto.
+- Verificacion PHP 8.3: migracion, seed y 65 rutas correctos; ExpenseTemplate 4/41, Payroll 9/125, Earnings 29/414, Notification 17/148 y suite 308/2,987. Pint, typecheck, build y diff correctos.
+- No se agregaron impuestos, deducciones, IHSS, RAP, prestaciones, horas extra, vacaciones, bonificaciones o recurrencia.
+
+## Reestructuracion financiera automatica (2026-07-27)
+
+**Estado:** En pruebas / No. **Despliegue:** No realizado.
+
+- Usuarios integra Informacion laboral en Crear/Editar: salario, contrato, pagos 15/fin de mes, metodo y automatizacion. Employee es obligatorio; owner/administrator pueden permanecer sin perfil. Cada cambio salarial crea historia y toda alta es transaccional.
+- Migraciones aditivas: `2026_07_27_120000_add_contract_and_automation_to_compensation_profiles.php` y `2026_07_27_120100_add_processing_errors_to_payroll_obligations.php`. Backfill conservador, sin modificar perfiles, gastos, salarios o ventas historicas.
+- `studio:process-payroll` procesa diariamente cuotas vencidas, recupera atrasos, respeta fin contractual, evita duplicados y crea el gasto real Nomina con metodo habitual. Un fallo conserva incidencia y auditoria sin gasto parcial.
+- `/expenses` contiene Todos/Nomina, resumen y obligaciones; `/payroll` solo redirige. Se retiro la entrada principal, la pagina independiente y el pago manual visible.
+- Plantillas rapidas quedaron legacy: tablas y tres filas conservadas, pero sin permiso, seeder, rutas, controlador, pagina o selector.
+- Ganancias no recibe props ni bloques salariales; Nomina participa como cualquier categoria recorded en gastos y resultado disponible.
+- Comando demo protegido para local/testing creo 1 employee, 20 ventas reales distribuidas en dos meses y cuatro gastos salariales mediante el procesador. Distribucion: 7 efectivo, 7 tarjeta y 6 transferencia. Credencial temporal no persistida en codigo/documentos.
+- Verificacion: migracion y seed correctos; 59 rutas; suite 312/2,993; Pint, typecheck, build y diff correctos. Datos locales finales: 33 ventas, 5 gastos, 4 obligaciones demo paid, 8 eventos salariales y 16 notificaciones para los destinatarios autorizados.
+- No se uso `migrate:fresh`, no se desplego y no se ejecuto `git add`, commit o push.
+
 ## Integración actual de Agenda y Citas (2026-07-24)
 
 - Gobierno y estados: `docs/STUDIO_LEMUS_APPOINTMENTS_PLAN.md` sigue siendo la fuente oficial. 4A está `Aprobada / Sí`; 4B, 4C, 4D, 4E y 4F están `En pruebas / No`. Esta integración no cambia estados, dependencias ni aprobaciones POS: 3A conserva `Aprobada / Sí`; 3B y 3B.1 conservan `En pruebas / No`; 3C-3E conservan `Pendiente / No`.

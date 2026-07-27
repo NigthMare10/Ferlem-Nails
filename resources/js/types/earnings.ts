@@ -37,8 +37,14 @@ export type ActualResults = {
     average_sale: string;
     canceled_sales_count: number;
     canceled_amount: string;
+    paid_expenses?: string;
+    available_result?: string;
 };
 
+export type ExpenseActual = { paid_expenses: string; expenses_count: number };
+export type ExpenseCategorySummary = { category_name: string; expenses_count: number; total: string };
+export type ExpenseDailySummary = { date: string; date_label: string; expenses_count: number; total: string };
+export type ExpensePaymentDistribution = { method: 'cash' | 'card' | 'transfer'; method_label: string; expenses_count: number; total: string };
 export type AppointmentProjection = {
     appointments_count: number;
     services_count: number;

@@ -1,3 +1,6 @@
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy-hostinger-release.ps1 -BaseUrl "https://violet-crow-104407.hostingersite.com"
+
+
 # Despliegue en Hostinger
 
 Esta guia despliega Studio Lemus (Laravel 13, PHP 8.3 y MySQL) sin instalar Node.js en Hostinger. Los assets se compilan localmente y se publica `public/build` junto con el codigo.
@@ -211,8 +214,10 @@ chmod 755 artisan scripts/deploy-hostinger.sh scripts/smoke-test-production.sh
 No use `chmod -R 777`. `QUEUE_CONNECTION=sync` evita depender de un worker permanente. Programe el scheduler solo cuando la aplicacion tenga tareas programadas:
 
 ```cron
-* * * * * cd /home/__USUARIO_HOSTINGER__/apps/studio-lemus && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/__USUARIO_HOSTINGER__/apps/studio-lemus && __RUTA_PHP_83__ artisan schedule:run >> /dev/null 2>&1
 ```
+
+El scheduler ejecuta diariamente `studio:process-payroll`, de forma idempotente y sin confirmación manual. No invente la ruta del binario PHP: identifíquela por SSH con `command -v php`, confirme la versión con `php -v` y sustituya `__RUTA_PHP_83__` por el binario PHP 8.3 real ofrecido por Hostinger. No programe `studio:generate-financial-demo`; ese comando rechaza producción.
 
 ## 8. Verificacion de produccion
 

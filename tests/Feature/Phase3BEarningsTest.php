@@ -44,15 +44,13 @@ class Phase3BEarningsTest extends TestCase
         $this->actingAs($owner)->get('/earnings')->assertRedirect(route('login'));
     }
 
-    public function test_employee_and_administrator_without_permission_receive_spanish_forbidden_page(): void
+    public function test_employee_without_report_permissions_receives_spanish_forbidden_page(): void
     {
-        foreach (['employee', 'administrator'] as $role) {
-            $user = $this->user($role);
+        $user = $this->user('employee');
 
-            $this->actingAs($user)->get('/earnings')
-                ->assertForbidden()
-                ->assertInertia(fn (Assert $page) => $page->component('Errors/Forbidden'));
-        }
+        $this->actingAs($user)->get('/earnings')
+            ->assertForbidden()
+            ->assertInertia(fn (Assert $page) => $page->component('Errors/Forbidden'));
     }
 
     public function test_owner_and_user_with_explicit_permission_can_access(): void
@@ -342,8 +340,9 @@ class Phase3BEarningsTest extends TestCase
         $this->assertTrue(Role::findByName('owner')->hasPermissionTo(Permissions::REPORTS_SALES_VIEW));
         $this->assertFalse(Role::findByName('administrator')->hasPermissionTo(Permissions::REPORTS_SALES_VIEW));
         $this->assertFalse(Role::findByName('employee')->hasPermissionTo(Permissions::REPORTS_SALES_VIEW));
-        $this->assertSame([Permissions::REPORTS_SALES_VIEW], Permission::query()
+        $this->assertSame([Permissions::REPORTS_EXPENSES_VIEW, Permissions::REPORTS_SALES_VIEW], Permission::query()
             ->where('name', 'like', 'reports.%')
+            ->orderBy('name')
             ->pluck('name')
             ->all());
     }

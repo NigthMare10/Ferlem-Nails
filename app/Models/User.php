@@ -45,6 +45,36 @@ class User extends Authenticatable
         return $this->hasMany(Sale::class, 'canceled_by');
     }
 
+    public function recordedExpenses(): HasMany
+    {
+        return $this->hasMany(Expense::class, 'recorded_by');
+    }
+
+    public function relatedExpenses(): HasMany
+    {
+        return $this->hasMany(Expense::class, 'employee_id');
+    }
+
+    public function canceledExpenses(): HasMany
+    {
+        return $this->hasMany(Expense::class, 'canceled_by');
+    }
+
+    public function performedExpenseEvents(): HasMany
+    {
+        return $this->hasMany(ExpenseEvent::class, 'performed_by');
+    }
+
+    public function compensationProfiles(): HasMany
+    {
+        return $this->hasMany(EmployeeCompensationProfile::class);
+    }
+
+    public function payrollObligations(): HasMany
+    {
+        return $this->hasMany(PayrollObligation::class);
+    }
+
     public function performedSaleItems(): HasMany
     {
         return $this->hasMany(SaleItem::class, 'performed_by');

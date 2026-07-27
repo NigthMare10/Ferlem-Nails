@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 class PublishInternalNotificationAction
 {
     public function execute(
-        User $actor,
+        ?User $actor,
         string $type,
         string $title,
         string $message,
@@ -24,7 +24,7 @@ class PublishInternalNotificationAction
         ?string $recipientPermission = null,
     ): void {
         $notification = new InternalNotification($type, $title, $message, $url, $actor, $entity, $occurredAt);
-        $payload = json_encode($notification->toDatabase($actor), JSON_THROW_ON_ERROR);
+        $payload = json_encode($notification->toDatabase($actor ?? new User), JSON_THROW_ON_ERROR);
         $now = now('UTC');
 
         User::query()

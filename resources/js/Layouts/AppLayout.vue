@@ -18,6 +18,7 @@ const auth = computed(() => page.props.auth as any);
 const currentUrl = computed(() => page.url);
 const canNavigateToInvoices = () => canAny(['sales.view_own', 'sales.view_all']);
 const invoicesAreActive = computed(() => currentUrl.value.startsWith('/invoices'));
+const expensesAreActive = computed(() => currentUrl.value.startsWith('/expenses'));
 
 watch(mobile, value => { drawer.value = !value; });
 
@@ -86,6 +87,15 @@ const navigate = (href: string) => {
                     color="primary"
                     rounded="lg"
                     @click="navigate('/appointments/history')"
+                />
+                <VListItem
+                    v-if="auth?.navigation?.expenses"
+                    prepend-icon="mdi-cash-minus"
+                    title="Gastos"
+                    :active="expensesAreActive"
+                    color="primary"
+                    rounded="lg"
+                    @click="navigate('/expenses')"
                 />
                 <VListItem
                     v-if="auth?.navigation?.earnings"

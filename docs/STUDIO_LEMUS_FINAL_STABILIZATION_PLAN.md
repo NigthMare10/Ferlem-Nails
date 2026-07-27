@@ -13,6 +13,56 @@ Alcance de esta intervencion: estabilizacion A-D implementada; pendiente de vali
 - Verificacion: el comando `php artisan test` con PHP predeterminado 8.2.12 falla antes de iniciar porque Composer exige >=8.3. Con PHP 8.3 de Laragon: `optimize:clear`, migracion batch 2, seeders, rutas y `migrate:status` pasaron; la suite paso 257 pruebas/2,297 aserciones; Pint, typecheck, build y `git diff --check` pasaron. SQLite estuvo disponible bajo PHP 8.3, por lo que no se uso configuracion temporal. Produccion se desplego por SSH el 2026-07-25 y el smoke test HTTPS paso; Hostinger mantiene `exec()` deshabilitado, por lo que el enlace de storage se restauro con `ln -s` desde SSH.
 - Riesgo manual pendiente: no existe navegador automatizado; validar 1440x900, 1024x768, 768x1024, 390x844, 360x800 y 320x700, Safari iPhone, Chrome Android, WebView WhatsApp, teclado y landscape.
 
+## Modulo Gastos - Fases 6A y 6B (2026-07-27)
+
+**Estado:** En pruebas / No. **Despliegue:** No realizado.
+
+- Modulo independiente `/expenses` con listado paginado, filtros por query string, formulario responsive, detalle, categorias, edicion auditada, anulacion inmutable y comprobante privado.
+- Esquema aditivo: `expense_categories`, `expenses`, `expense_events`; numero `GA-000001`, idempotencia por UUID/hash, decimales exactos, eventos append-only y sin DELETE/soft deletes.
+- Comprobantes JPG/JPEG/PNG/WEBP/PDF, maximo 5 MB, disco privado `expense_attachments`, nombre aleatorio, MIME real, streaming autorizado, `nosniff` y cache privada.
+- Notificaciones internas de crear/modificar/anular se deduplican y se publican despues del commit para usuarios activos autorizados.
+- Ganancias agrega Gastos pagados y Resultado disponible (`neto operativo - gastos recorded`), categorias, dias con actividad y Metodos de gasto separados; canceled no reduce el resultado.
+- Employee no recibe acceso. Administrator recibe operacion/reporte, pero no gestion de categorias. Owner recibe todos los permisos persistidos.
+- La migracion y seed local terminaron correctamente. Suite PHP 8.3: 295/295 y 2,821 aserciones; Pint, typecheck y build correctos. El bundle mantiene su advertencia no bloqueante de tamano.
+- Pendiente manual: flujos owner/admin/employee, archivos, edicion/anulacion, filtros/paginacion, categorias, notificaciones, reconciliacion financiera y responsive. No hubo despliegue, `migrate:fresh`, staging, commit o push.
+
+## Nomina - Privacidad y auditoria 6C (2026-07-27)
+
+**Estado:** En pruebas / No. **Despliegue:** No realizado.
+
+- `Expense::visibleTo()` excluye gastos vinculados a obligaciones salariales para cualquier usuario sin `payroll.view`; aplica a consultas, detalle, adjuntos, edición, anulación y agregados.
+- `payroll_events` conserva auditoría inmutable de perfiles y obligaciones. Las vistas muestran texto legible en español, sin JSON, IDs técnicos ni timestamps UTC.
+- El error `Call to a member function all() on array` provenia de `vendor/laravel/framework/src/Illuminate/Testing/TestResponseAssert.php:81`: un `PUT` vacio alcanzaba validacion antes del controlador, respondia 302 y el helper intentaba ejecutar `all()` sobre el array de errores al explicar el `assertForbidden` fallido.
+- `EnsureExpenseIsVisible` mueve el scope autoritativo antes del Form Request. Web, Inertia y JSON conservan respuestas 403 propias; los endpoints JSON de notificaciones no se envuelven en Inertia.
+- Verificacion final: PayrollAuditPrivacyTest 6 pruebas/62 aserciones; suite 301/2,883; Pint, typecheck, build y diff correctos. Riesgos manuales: validar pagina 403 y ausencia de datos salariales en navegador real; el bundle conserva la advertencia de tamano.
+
+## Nomina y plantillas - Cierre 6D/6E (2026-07-27)
+
+**Estado:** 6C, 6D y 6E En pruebas / No. **Despliegue:** No realizado.
+
+- `/expenses/templates` administra plantillas sin DELETE mediante `expenses.manage_templates`; `expense_template_events` conserva cambios append-only. Seeder base idempotente sin montos.
+- Nuevo gasto recibe solo plantillas activas con categoria activa. La precarga es local, editable, confirmada si reemplaza datos y no crea gastos hasta Registrar gasto.
+- Obligaciones nuevas notifican despues del commit con `payroll-obligation-generated:{id}` a usuarios activos con `payroll.view`; sistema puede figurar como actor cuando ejecuta cron.
+- Ganancias agrupa pagos por empleado desde el enlace autoritativo obligacion-gasto; excluye canceled/pending y omite totalmente la prop sin permiso salarial.
+- Pruebas finales: dirigidas 4/41, 9/125, 29/414 y 17/148; suite 308/2,987; Pint, typecheck, build y diff correctos. Build conserva advertencia no bloqueante por chunk mayor de 500 kB.
+- Pendiente manual: roles, CRUD y precarga, campana/cron, conciliacion mensual/personalizada, vacios y responsive. No hubo `migrate:fresh`, despliegue, staging, commit o push.
+
+## Reestructuracion automatica de Gastos y Nomina (2026-07-27)
+
+**Estado:** En pruebas / No. **Despliegue:** No realizado.
+
+- Crear/Editar usuario configura contrato y salario sin columnas en `users`; employee lo exige y el cambio genera un perfil historico auditado dentro de la misma transaccion.
+- Dos migraciones reversibles agregan datos contractuales/automatizacion y diagnostico de errores. El backfill deja automatizacion desactivada para perfiles anteriores.
+- `studio:process-payroll` usa 15/ultimo dia real, Honduras, backfill e idempotencia por usuario/periodo/cuota. Obligacion, gasto, paid, enlace, eventos y notificaciones quedan coordinados; un error no crea gasto parcial.
+- Gastos es la unica UI de nomina. La ruta antigua redirige, no existe item Nómina ni pagina duplicada. El gasto automatico es visible, auditable e inmutable.
+- Ganancias conserva solo agregados generales; no muestra nomina pendiente, vencida ni pagada por empleado. El gasto Nomina reduce el resultado una sola vez mediante `expenses.status=recorded`.
+- Plantillas rapidas no tienen experiencia, permiso o seeder. Las tablas/fila legacy se conservan para no destruir datos.
+- Historiales convierten fechas a `America/Tegucigalpa` y textos legibles de contrato, salario y metodo.
+- Scheduler diario documentado para Hostinger con placeholder verificable de PHP 8.3. El comando demo esta bloqueado fuera de local/testing.
+- Demo local verificada: employee demo, 20 ventas (7 cash/7 card/6 transfer), 4 obligaciones paid, 4 gastos Nomina, 8 eventos y notificaciones post-commit. Total local posterior: 33 ventas y 5 gastos.
+- Suite final: 312 pruebas y 2,993 aserciones; Pint, typecheck, build y diff correctos. Persiste la advertencia no bloqueante por chunk mayor de 500 kB.
+- Riesgos manuales: revisar formularios y privacidad de salario, zona horaria del cron real, incidencias, tabla/cards, cifras de Ganancias, campana y responsive. No hubo `migrate:fresh`, despliegue, commit o push.
+
 ## Modulo Facturas - Prompt 1 de 2
 
 **Estado:** En pruebas / No. **Despliegue:** No realizado; pendiente de validacion manual del usuario.

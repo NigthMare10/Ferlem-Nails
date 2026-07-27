@@ -243,6 +243,9 @@ class InternalNotificationTest extends TestCase
         $this->actingAs($owner)->post('/configuration/users', [
             'name' => 'Nueva', 'email' => 'nueva@example.com', 'password' => 'password123',
             'password_confirmation' => 'password123', 'role' => 'employee', 'is_active' => true,
+            'has_employment_profile' => true, 'monthly_salary' => '15000.00',
+            'contract_start_date' => '2026-07-01', 'is_indefinite' => true,
+            'default_payment_method' => 'transfer', 'auto_generate_payroll_expense' => true,
         ])->assertSessionHas('success');
         $createdUser = User::query()->where('email', 'nueva@example.com')->firstOrFail();
         $this->patch("/configuration/users/{$createdUser->id}/status", ['is_active' => false])->assertSessionHas('success');

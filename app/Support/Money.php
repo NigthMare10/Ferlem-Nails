@@ -24,6 +24,11 @@ final class Money
         return intdiv($cents, 100).'.'.str_pad((string) ($cents % 100), 2, '0', STR_PAD_LEFT);
     }
 
+    public static function fromSignedCents(int $cents): string
+    {
+        return ($cents < 0 ? '-' : '').self::fromCents(abs($cents));
+    }
+
     public static function percentageOfCents(int $amountCents, string $percentage): int
     {
         $percentageHundredths = self::toCents($percentage);

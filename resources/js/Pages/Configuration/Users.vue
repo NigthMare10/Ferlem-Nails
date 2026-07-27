@@ -17,6 +17,7 @@ type UserItem = {
     is_active: boolean;
     created_at?: string;
     last_login_at?: string;
+    employment_profile?: { monthly_salary: string; contract_start_date: string; contract_end_date: string | null; is_indefinite: boolean; default_payment_method: string | null; auto_generate_payroll_expense: boolean } | null;
 };
 
 const props = defineProps<{ users: any; filters: any; roles: string[] }>();
@@ -47,9 +48,9 @@ const headers = [
 ];
 
 const roleColor = (role: string) => role === 'owner' ? 'primary' : role === 'administrator' ? 'info' : 'on-surface-variant';
-const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('es-HN', { dateStyle: 'medium' }).format(new Date(value)) : 'Sin acceso';
+const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('es-HN', { dateStyle: 'medium', timeZone: 'America/Tegucigalpa' }).format(new Date(value)) : 'Sin acceso';
 const canManage = (user: UserItem) => isOwner.value || user.role !== 'owner';
-const hasActions = (user: UserItem) => canManage(user) && (can('users.update') || can('users.reset_password') || (can('users.toggle_status') && user.id !== currentUserId.value));
+const hasActions = (user: UserItem) => canManage(user) && (can('users.update') || can('users.reset_password') || can('payroll.configure') || (can('users.toggle_status') && user.id !== currentUserId.value));
 
 const loadUsers = (extra: Record<string, unknown> = {}) => {
     loading.value = true;
@@ -134,7 +135,8 @@ const resetPassword = () => {
                             <VBtn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" size="small" aria-label="Acciones del usuario" />
                         </template>
                         <VList density="comfortable" min-width="220">
-                            <VListItem v-if="can('users.update')" prepend-icon="mdi-pencil-outline" title="Editar usuario" @click="openEdit(item)" />
+                            <VListItem v-if="can('users.update') && (item.role !== 'employee' || can('payroll.configure'))" prepend-icon="mdi-pencil-outline" title="Editar usuario" @click="openEdit(item)" />
+                            <VListItem v-if="can('payroll.configure')" prepend-icon="mdi-cash-edit" title="Compensación" :href="`/configuration/users/${item.id}/compensation`" />
                             <VListItem v-if="can('users.reset_password')" prepend-icon="mdi-lock-reset" title="Restablecer contraseña" @click="openPassword(item)" />
                             <VListItem
                                 v-if="can('users.toggle_status') && item.id !== currentUserId"
@@ -165,7 +167,8 @@ const resetPassword = () => {
                             <VMenu v-if="hasActions(item)" location="bottom end">
                                 <template #activator="{ props: menuProps }"><VBtn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" /></template>
                                 <VList min-width="210">
-                                    <VListItem v-if="can('users.update')" title="Editar" prepend-icon="mdi-pencil-outline" @click="openEdit(item)" />
+                                    <VListItem v-if="can('users.update') && (item.role !== 'employee' || can('payroll.configure'))" title="Editar" prepend-icon="mdi-pencil-outline" @click="openEdit(item)" />
+                                    <VListItem v-if="can('payroll.configure')" title="Compensación" prepend-icon="mdi-cash-edit" :href="`/configuration/users/${item.id}/compensation`" />
                                     <VListItem v-if="can('users.reset_password')" title="Restablecer contraseña" prepend-icon="mdi-lock-reset" @click="openPassword(item)" />
                                     <VListItem v-if="can('users.toggle_status') && item.id !== currentUserId" :title="item.is_active ? 'Desactivar' : 'Activar'" prepend-icon="mdi-power" @click="openStatus(item)" />
                                 </VList>
@@ -188,7 +191,7 @@ const resetPassword = () => {
             />
         </VCard>
 
-        <UserForm v-model="dialog" :user="selected" :roles="roles" :can-assign-owner="can('users.assign_role') && isOwner" />
+        <UserForm v-model="dialog" :user="selected" :roles="roles" :can-assign-owner="can('users.assign_role') && isOwner" :can-configure-payroll="can('payroll.configure')" />
         <ConfirmDialog
             v-model="statusDialog"
             title="Cambiar estado del usuario"

@@ -24,6 +24,32 @@ final class Permissions
 
     public const REPORTS_SALES_VIEW = 'reports.sales.view';
 
+    public const REPORTS_EXPENSES_VIEW = 'reports.expenses.view';
+
+    public const EXPENSES_ACCESS = 'expenses.access';
+
+    public const EXPENSES_VIEW = 'expenses.view';
+
+    public const EXPENSES_CREATE = 'expenses.create';
+
+    public const EXPENSES_UPDATE = 'expenses.update';
+
+    public const EXPENSES_CANCEL = 'expenses.cancel';
+
+    public const EXPENSES_VIEW_ATTACHMENT = 'expenses.view_attachment';
+
+    public const EXPENSES_MANAGE_CATEGORIES = 'expenses.manage_categories';
+
+    public const PAYROLL_VIEW = 'payroll.view';
+
+    public const PAYROLL_CONFIGURE = 'payroll.configure';
+
+    public const PAYROLL_GENERATE = 'payroll.generate';
+
+    public const PAYROLL_MARK_PAID = 'payroll.mark_paid';
+
+    public const PAYROLL_CANCEL_OBLIGATION = 'payroll.cancel_obligation';
+
     public const APPOINTMENTS_VIEW_PROJECTION = 'appointments.view_projection';
 
     public const APPOINTMENTS_ACCESS = 'appointments.access';
@@ -80,7 +106,12 @@ final class Permissions
             self::SALES_ACCESS, self::SALES_CREATE, self::SALES_VIEW_OWN, self::SALES_VIEW_ALL,
             self::SALES_REPRINT, self::SALES_CANCEL, self::SALES_VIEW_TRANSFER_PROOF,
             self::SALES_UPLOAD_TRANSFER_PROOF,
-            self::REPORTS_SALES_VIEW, self::APPOINTMENTS_VIEW_PROJECTION,
+            self::REPORTS_SALES_VIEW, self::REPORTS_EXPENSES_VIEW,
+            self::EXPENSES_ACCESS, self::EXPENSES_VIEW, self::EXPENSES_CREATE,
+            self::EXPENSES_UPDATE, self::EXPENSES_CANCEL, self::EXPENSES_VIEW_ATTACHMENT,
+            self::EXPENSES_MANAGE_CATEGORIES,
+            self::PAYROLL_VIEW, self::PAYROLL_CONFIGURE, self::PAYROLL_GENERATE,
+            self::PAYROLL_MARK_PAID, self::PAYROLL_CANCEL_OBLIGATION, self::APPOINTMENTS_VIEW_PROJECTION,
             self::APPOINTMENTS_ACCESS, self::APPOINTMENTS_VIEW_OWN, self::APPOINTMENTS_VIEW_ALL,
             self::APPOINTMENTS_CREATE, self::APPOINTMENTS_PERFORM, self::APPOINTMENTS_UPDATE,
             self::APPOINTMENTS_ASSIGN, self::APPOINTMENTS_CANCEL, self::APPOINTMENTS_MARK_NO_SHOW,

@@ -16,7 +16,8 @@ class SalesEarningsRequest extends FormRequest
         $user = $this->user();
 
         return (bool) $user?->is_active
-            && $user->hasPermissionTo(Permissions::REPORTS_SALES_VIEW);
+            && ($user->hasPermissionTo(Permissions::REPORTS_SALES_VIEW)
+                || $user->hasPermissionTo(Permissions::REPORTS_EXPENSES_VIEW));
     }
 
     protected function prepareForValidation(): void

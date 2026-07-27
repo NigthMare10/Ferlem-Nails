@@ -16,7 +16,7 @@ class InternalNotification extends Notification
         public readonly string $title,
         public readonly string $message,
         public readonly string $url,
-        public readonly User $actor,
+        public readonly ?User $actor,
         public readonly array $entity,
         public readonly CarbonInterface $occurredAt,
     ) {}
@@ -34,8 +34,8 @@ class InternalNotification extends Notification
             'message' => $this->message,
             'url' => $this->url,
             'actor' => [
-                'id' => $this->actor->getKey(),
-                'name' => $this->actor->name,
+                'id' => $this->actor?->getKey(),
+                'name' => $this->actor?->name ?? 'Sistema',
             ],
             'entity' => $this->entity,
             'occurred_at' => $this->occurredAt->utc()->toIso8601String(),

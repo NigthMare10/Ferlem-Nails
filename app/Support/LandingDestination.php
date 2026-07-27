@@ -25,6 +25,10 @@ final class LandingDestination
                 return route('earnings.index');
             }
 
+            if ($this->canNavigateToExpenses($user)) {
+                return route('expenses.index');
+            }
+
             if ($user->can(Permissions::SETTINGS_ACCESS) && $user->can(Permissions::USERS_VIEW)) {
                 return route('configuration.users.index');
             }
@@ -61,7 +65,14 @@ final class LandingDestination
 
     public function canNavigateToEarnings(User $user): bool
     {
-        return $user->hasPermissionTo(Permissions::REPORTS_SALES_VIEW);
+        return $user->hasPermissionTo(Permissions::REPORTS_SALES_VIEW)
+            || $user->hasPermissionTo(Permissions::REPORTS_EXPENSES_VIEW);
+    }
+
+    public function canNavigateToExpenses(User $user): bool
+    {
+        return $user->hasPermissionTo(Permissions::EXPENSES_ACCESS)
+            && $user->hasPermissionTo(Permissions::EXPENSES_VIEW);
     }
 
     public function canNavigateToAppointments(User $user): bool

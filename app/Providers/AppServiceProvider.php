@@ -44,6 +44,7 @@ class AppServiceProvider extends ServiceProvider
                     'sales' => $landing->canNavigateToSales($user),
                     'invoices' => $landing->canNavigateToInvoices($user),
                     'appointments' => $landing->canNavigateToAppointments($user),
+                    'expenses' => $landing->canNavigateToExpenses($user),
                     'earnings' => $landing->canNavigateToEarnings($user),
                 ],
             ];

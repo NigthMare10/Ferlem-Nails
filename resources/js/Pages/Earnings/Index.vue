@@ -12,6 +12,10 @@ import type {
     EarningsPeriod,
     EmployeeOption,
     EmployeeSummary,
+    ExpenseActual,
+    ExpenseCategorySummary,
+    ExpenseDailySummary,
+    ExpensePaymentDistribution,
     PaymentDistribution,
 } from '../../types/earnings';
 
@@ -19,12 +23,18 @@ const props = defineProps<{
     filters: EarningsFilters;
     period: EarningsPeriod;
     canViewProjection: boolean;
+    canViewSales: boolean;
+    canViewExpenses: boolean;
     actual?: ActualResults;
     projection?: AppointmentProjection;
     employees: EmployeeSummary[];
     daily?: DailySummary[];
     employeeOptions: EmployeeOption[];
     payment_distribution?: PaymentDistribution[];
+    expense_actual?: ExpenseActual;
+    expense_categories?: ExpenseCategorySummary[];
+    expense_daily?: ExpenseDailySummary[];
+    expense_payment_distribution?: ExpensePaymentDistribution[];
 }>();
 
 const form = useForm({
@@ -63,7 +73,6 @@ const employeeHeaders = computed(() => [
     { title: 'Bruto por servicios', key: 'total_sold', align: 'end' as const },
     { title: 'Comisión POS asignada', key: 'card_fee_amount', align: 'end' as const },
     { title: 'Ingreso neto', key: 'net_amount', align: 'end' as const },
-    { title: 'Métodos', key: 'methods', sortable: false },
     ...(hasProjection.value ? [
         { title: 'Servicios proyectados', key: 'projected_services_count', align: 'end' as const },
         { title: 'Ingreso proyectado', key: 'projected_income', align: 'end' as const },
@@ -76,6 +85,7 @@ const dailyHeaders = [
     { title: 'Ingresos brutos', key: 'total_sold', align: 'end' as const },
     { title: 'Comisión POS', key: 'card_fee_amount', align: 'end' as const },
     { title: 'Ingreso neto', key: 'net_amount', align: 'end' as const },
+    { title: 'Métodos de cobro', key: 'methods', sortable: false },
 ];
 const actualMetrics = computed(() => props.actual ? [
     { label: 'Ingresos brutos reales', value: money(props.actual.gross_revenue), hint: `Promedio por venta: ${money(props.actual.average_sale)}` },
@@ -84,6 +94,8 @@ const actualMetrics = computed(() => props.actual ? [
     { label: 'Ventas completadas', value: count(props.actual.completed_sales_count) },
     { label: 'Servicios realizados', value: count(props.actual.performed_services_count) },
     { label: 'Ventas anuladas', value: count(props.actual.canceled_sales_count), hint: `Monto anulado: ${money(props.actual.canceled_amount)}` },
+    ...(props.actual.paid_expenses !== undefined ? [{ label: 'Gastos pagados', value: money(props.actual.paid_expenses), hint: 'Solo gastos registrados en el periodo.' }] : []),
+    ...(props.actual.available_result !== undefined ? [{ label: 'Resultado disponible', value: money(props.actual.available_result), hint: 'Ingreso neto operativo menos gastos pagados.' }] : []),
 ] : []);
 const projectionMetrics = computed(() => props.projection ? [
     { label: 'Ingreso bruto proyectado', value: money(props.projection.projected_gross) },
@@ -120,7 +132,8 @@ function resetFilters(): void {
         />
 
         <VAlert type="info" variant="tonal" density="compact" class="mb-6" icon="mdi-information-outline">
-            El ingreso neto descuenta únicamente comisiones del POS. Todavía no incluye otros costos o gastos.
+            <template v-if="canViewExpenses">El resultado disponible utiliza únicamente las ventas y todos los gastos registrados, incluida la categoría Nómina. No incluye impuestos.</template>
+            <template v-else>El ingreso neto descuenta únicamente comisiones del POS. No incluye gastos, impuestos ni obligaciones pendientes.</template>
         </VAlert>
 
         <VCard class="surface-card mb-6">
@@ -131,7 +144,7 @@ function resetFilters(): void {
                         <VCol v-if="canViewProjection" cols="12" sm="6" lg="2">
                             <VSelect v-model="form.mode" label="Vista" :items="modeOptions" :error-messages="form.errors.mode" :disabled="form.processing" />
                         </VCol>
-                        <VCol cols="12" sm="6" lg="2">
+                        <VCol v-if="canViewSales || canViewProjection" cols="12" sm="6" lg="2">
                             <VSelect v-model="form.period" label="Periodo" :items="periodOptions" :error-messages="form.errors.period" :disabled="form.processing" />
                         </VCol>
                         <VCol v-if="form.period === 'today' || form.period === 'week'" cols="12" sm="6" lg="2">
@@ -144,7 +157,7 @@ function resetFilters(): void {
                             <VCol cols="12" sm="6" lg="2"><VTextField v-model="form.date_from" type="date" label="Desde" :error-messages="form.errors.date_from" :disabled="form.processing" /></VCol>
                             <VCol cols="12" sm="6" lg="2"><VTextField v-model="form.date_to" type="date" label="Hasta" :error-messages="form.errors.date_to" :disabled="form.processing" /></VCol>
                         </template>
-                        <VCol cols="12" sm="6" lg="2">
+                        <VCol v-if="canViewSales" cols="12" sm="6" lg="2">
                             <VSelect v-model="form.employee_id" label="Empleado" :items="employeeOptions" item-title="name" item-value="id" :error-messages="form.errors.employee_id" :disabled="form.processing" />
                         </VCol>
                         <VCol cols="12" sm="6" lg="2">
@@ -172,13 +185,26 @@ function resetFilters(): void {
         </section>
 
         <VCard v-if="actual && payment_distribution" class="surface-card report-section" :class="{ 'report-loading': form.processing }">
-            <VCardItem class="pa-5 pb-2"><VCardTitle>Distribución por método de pago</VCardTitle><VCardSubtitle>Distribución de pagos de ventas completadas</VCardSubtitle></VCardItem>
+            <VCardItem class="pa-5 pb-2"><VCardTitle>Métodos de cobro</VCardTitle><VCardSubtitle>Distribución de pagos recibidos en ventas completadas</VCardSubtitle></VCardItem>
             <VRow class="pa-3">
                 <VCol v-for="method in payment_distribution" :key="method.method" cols="12" md="4">
                     <VCard variant="outlined" class="h-100"><VCardText><div class="font-weight-bold mb-3">{{ method.method_label }}</div><div class="mobile-stat"><span>Pagos</span><strong>{{ count(method.payments_count) }}</strong></div><div class="mobile-stat"><span>Monto bruto</span><strong>{{ money(method.amount) }}</strong></div><template v-if="method.method === 'card'"><div class="mobile-stat"><span>Comisión POS</span><strong>{{ money(method.card_fee_amount) }}</strong></div><div class="mobile-stat"><span>Ingreso neto</span><strong>{{ money(method.net_amount) }}</strong></div></template></VCardText></VCard>
                 </VCol>
             </VRow>
         </VCard>
+
+        <section v-if="canViewExpenses && expense_actual" class="report-section" :class="{ 'report-loading': form.processing }">
+            <div class="section-heading"><div><div class="text-overline text-primary">Gastos operativos</div><h2 class="text-h5 font-weight-bold">Resumen de gastos</h2></div><span class="text-body-2 text-medium-emphasis">{{ period.label }}</span></div>
+            <VAlert v-if="form.employee_id" type="info" variant="tonal" density="compact" class="mb-4">El filtro de empleado afecta ventas y proyección. Los gastos generales permanecen completos y no se ocultan.</VAlert>
+            <VRow v-if="!actual"><VCol cols="12" sm="6" lg="4"><VCard class="metric-card h-100"><VCardText class="pa-5"><div class="text-body-2 text-medium-emphasis mb-3">Gastos pagados</div><div class="text-h5 font-weight-bold">{{ money(expense_actual.paid_expenses) }}</div><div class="text-caption mt-2">{{ count(expense_actual.expenses_count) }} gastos registrados</div></VCardText></VCard></VCol></VRow>
+        </section>
+
+        <VCard v-if="canViewExpenses && expense_payment_distribution" class="surface-card report-section" :class="{ 'report-loading': form.processing }"><VCardItem class="pa-5 pb-2"><VCardTitle>Métodos de gasto</VCardTitle><VCardSubtitle>Distribución de gastos registrados, separada de los métodos de cobro</VCardSubtitle></VCardItem><VRow class="pa-3"><VCol v-for="method in expense_payment_distribution" :key="method.method" cols="12" md="4"><VCard variant="outlined" class="h-100"><VCardText><div class="font-weight-bold mb-3">{{ method.method_label }}</div><div class="mobile-stat"><span>Gastos</span><strong>{{ count(method.expenses_count) }}</strong></div><div class="mobile-stat"><span>Total</span><strong>{{ money(method.total) }}</strong></div></VCardText></VCard></VCol></VRow></VCard>
+
+        <VCard v-if="canViewExpenses && expense_categories?.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }"><VCardItem class="pa-5 pb-2"><VCardTitle>Gastos por categoría</VCardTitle><VCardSubtitle>Solo categorías con gastos registrados en el periodo</VCardSubtitle></VCardItem><VDataTable :headers="[{ title: 'Categoría', key: 'category_name' }, { title: 'Cantidad de gastos', key: 'expenses_count', align: 'end' }, { title: 'Total', key: 'total', align: 'end' }]" :items="expense_categories" class="desktop-table" :items-per-page="-1" hide-default-footer><template #item.total="{ item }"><strong>{{ money(item.total) }}</strong></template></VDataTable><div class="mobile-cards pa-4 pt-2"><VCard v-for="category in expense_categories" :key="category.category_name" variant="outlined" class="mb-3"><VCardTitle class="text-body-1">{{ category.category_name }}</VCardTitle><VCardText><div class="mobile-stat"><span>Gastos</span><strong>{{ count(category.expenses_count) }}</strong></div><div class="mobile-stat"><span>Total</span><strong>{{ money(category.total) }}</strong></div></VCardText></VCard></div></VCard>
+
+        <VCard v-if="canViewExpenses && expense_daily?.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }"><VCardItem class="pa-5 pb-2"><VCardTitle>Gastos por día</VCardTitle><VCardSubtitle>Solo días con gastos registrados</VCardSubtitle></VCardItem><VDataTable :headers="[{ title: 'Fecha', key: 'date_label' }, { title: 'Cantidad', key: 'expenses_count', align: 'end' }, { title: 'Total', key: 'total', align: 'end' }]" :items="expense_daily" class="desktop-table" :items-per-page="-1" hide-default-footer><template #item.total="{ item }"><strong>{{ money(item.total) }}</strong></template></VDataTable><div class="mobile-cards pa-4 pt-2"><VCard v-for="day in expense_daily" :key="day.date" variant="outlined" class="mb-3"><VCardTitle class="text-body-1">{{ day.date_label }}</VCardTitle><VCardText><div class="mobile-stat"><span>Gastos</span><strong>{{ count(day.expenses_count) }}</strong></div><div class="mobile-stat"><span>Total</span><strong>{{ money(day.total) }}</strong></div></VCardText></VCard></div></VCard>
+        <VCard v-else-if="canViewExpenses && expense_actual" class="surface-card report-section"><EmptyState icon="mdi-cash-minus" title="No hay gastos en este periodo" description="Los gastos registrados aparecerán aquí sin fabricar días con cero." /></VCard>
 
         <section v-if="projection" class="report-section projection-section" :class="{ 'report-loading': form.processing }">
             <div class="section-heading">

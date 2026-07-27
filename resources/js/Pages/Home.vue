@@ -33,7 +33,7 @@ const userName = computed(() => (page.props.auth as any)?.user?.name ?? '');
 
         <VCard class="surface-card">
             <VCardText class="pa-6 pa-sm-8">
-                <div v-if="can('services.view') || can('users.view') || canAny(['sales.view_own', 'sales.view_all'])">
+                <div v-if="can('services.view') || can('users.view') || can('expenses.access') || canAny(['sales.view_own', 'sales.view_all'])">
                     <h2 class="text-h6 font-weight-bold mb-2">Accesos rápidos</h2>
                     <p class="text-body-2 text-medium-emphasis mb-5">Continúa con una de las opciones disponibles para tu cuenta.</p>
                     <div class="d-flex flex-wrap ga-3">
@@ -42,6 +42,9 @@ const userName = computed(() => (page.props.auth as any)?.user?.name ?? '');
                         </VBtn>
                         <VBtn v-if="canAny(['sales.view_own', 'sales.view_all'])" color="primary" variant="tonal" prepend-icon="mdi-file-document-outline" @click="router.visit('/invoices')">
                             Ver facturas
+                        </VBtn>
+                        <VBtn v-if="can('expenses.create')" color="primary" variant="tonal" prepend-icon="mdi-cash-minus" @click="router.visit('/expenses')">
+                            Registrar gasto
                         </VBtn>
                         <VBtn v-if="can('services.view')" color="primary" variant="tonal" prepend-icon="mdi-hand-heart-outline" @click="router.visit('/configuration/services')">
                             Ver servicios

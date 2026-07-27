@@ -9,7 +9,7 @@ defineProps<{ title: string; description?: string; eyebrow?: string }>();
             <h1 class="text-h4 font-weight-bold mb-2">{{ title }}</h1>
             <p v-if="description" class="text-body-1 text-medium-emphasis mb-0">{{ description }}</p>
         </div>
-        <div v-if="$slots.actions" class="d-flex ga-2 align-center">
+        <div v-if="$slots.actions" class="d-flex flex-wrap ga-2 align-center">
             <slot name="actions" />
         </div>
     </div>

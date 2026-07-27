@@ -29,6 +29,10 @@ class RoleSeeder extends Seeder
             Permissions::APPOINTMENTS_CANCEL, Permissions::APPOINTMENTS_MARK_NO_SHOW,
             Permissions::APPOINTMENTS_MANAGE_DEPOSIT,
             Permissions::APPOINTMENTS_CONVERT_TO_SALE,
+            Permissions::EXPENSES_ACCESS, Permissions::EXPENSES_VIEW,
+            Permissions::EXPENSES_CREATE, Permissions::EXPENSES_UPDATE,
+            Permissions::EXPENSES_CANCEL, Permissions::EXPENSES_VIEW_ATTACHMENT,
+            Permissions::REPORTS_EXPENSES_VIEW,
         ]);
         $employee->syncPermissions([
             Permissions::SALES_ACCESS,

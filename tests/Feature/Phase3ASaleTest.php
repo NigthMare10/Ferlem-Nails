@@ -453,11 +453,12 @@ class Phase3ASaleTest extends TestCase
         $this->assertSame(1, Permission::query()->where('name', Permissions::SALES_VIEW_ALL)->count());
         $this->assertTrue(Role::findByName('administrator')->hasPermissionTo(Permissions::SALES_VIEW_ALL));
         $this->assertFalse(Role::findByName('employee')->hasPermissionTo(Permissions::SALES_VIEW_ALL));
-        $this->assertSame([Permissions::REPORTS_SALES_VIEW], Permission::query()
+        $this->assertSame([Permissions::REPORTS_EXPENSES_VIEW, Permissions::REPORTS_SALES_VIEW], Permission::query()
             ->where('name', 'like', 'reports.%')
+            ->orderBy('name')
             ->pluck('name')
             ->all());
-        $this->assertSame(0, Permission::query()->where('name', 'like', 'expenses.%')->count());
+        $this->assertSame(7, Permission::query()->where('name', 'like', 'expenses.%')->count());
     }
 
     private function user(string $role, array $attributes = []): User
