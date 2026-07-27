@@ -139,7 +139,7 @@ const remove = () => {
                         <VCardSubtitle>{{ duration(item.duration_minutes) }} · {{ money(item.price) }}</VCardSubtitle>
                         <template #append>
                             <VMenu v-if="hasActions" location="bottom end">
-                                <template #activator="{ props: menuProps }"><VBtn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" /></template>
+                                <template #activator="{ props: menuProps }"><VBtn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" :aria-label="`Acciones de ${item.name}`" /></template>
                                 <VList min-width="200">
                                     <VListItem v-if="can('services.update')" title="Editar" prepend-icon="mdi-pencil-outline" @click="openEdit(item)" />
                                     <VListItem v-if="can('services.toggle_status')" :title="item.is_active ? 'Desactivar' : 'Activar'" prepend-icon="mdi-power" @click="openStatus(item)" />

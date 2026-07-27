@@ -70,8 +70,11 @@ function removeProof(): void {
 </template>
 
 <style scoped>
-.payment-method__options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.payment-method { container-type: inline-size; }
+.payment-method__options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.payment-method__options :deep(.v-btn:last-child) { grid-column: 1 / -1; }
+.payment-method__options :deep(.v-btn__content) { min-width: 0; }
 .payment-proof__input { display: none; }
 .payment-proof__preview { display: block; width: min(100%, 280px); max-height: 180px; border-radius: 12px; object-fit: contain; background: rgba(var(--v-theme-on-surface), .05); }
-@media (max-width: 480px) { .payment-method__options { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .payment-method__options { grid-template-columns: 1fr; } .payment-method__options :deep(.v-btn:last-child) { grid-column: auto; } }
 </style>

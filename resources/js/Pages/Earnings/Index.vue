@@ -259,8 +259,8 @@ function resetFilters(): void {
 .filter-actions { align-items: center; min-height: 56px; }
 .report-section { margin-top: 32px; }
 .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-.projection-section { padding: 24px; border: 1px solid rgba(var(--v-theme-primary), .22); border-radius: 18px; background: rgba(var(--v-theme-primary), .035); }
-.projection-card { border-top: 3px solid rgba(var(--v-theme-primary), .5); }
+.projection-section { padding: 24px; border: 1px solid var(--sl-glass-border); border-radius: var(--sl-radius-surface); background: var(--sl-glass); box-shadow: var(--sl-shadow-raised); }
+.projection-card { background: color-mix(in oklch, var(--sl-surface), var(--sl-secondary) 10%); box-shadow: var(--sl-shadow-inset); }
 .report-loading { pointer-events: none; opacity: .58; transition: opacity 160ms ease; }
 .mobile-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 7px 0; color: rgba(var(--v-theme-on-surface), .68); }
 .mobile-stat strong { color: rgb(var(--v-theme-on-surface)); text-align: right; }

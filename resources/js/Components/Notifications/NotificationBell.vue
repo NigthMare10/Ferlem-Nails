@@ -9,6 +9,7 @@ import { useNotifications } from '../../composables/useNotifications';
 const page = usePage();
 const { mobile } = useDisplay();
 const menuOpen = ref(false);
+const notificationPulse = ref(false);
 const { initializeNotifications, loading, markRead, recent, refreshNotifications, unreadCount } = useNotifications();
 let pollTimer: ReturnType<typeof setTimeout> | undefined;
 let controller: AbortController | undefined;
@@ -79,6 +80,10 @@ onMounted(() => {
 });
 watch(notifications, initializeNotifications, { immediate: true });
 watch(authorized, startPolling);
+watch(unreadCount, () => {
+    notificationPulse.value = true;
+    window.setTimeout(() => { notificationPulse.value = false; }, 220);
+});
 onBeforeUnmount(() => {
     stopPolling();
     controller?.abort();
@@ -90,7 +95,7 @@ onBeforeUnmount(() => {
     <VMenu v-if="authorized && !mobile" v-model="menuOpen" location="bottom end" :close-on-content-click="false" offset="6">
         <template #activator="{ props: activatorProps }">
             <VBadge :model-value="unreadCount > 0" :content="unreadLabel" color="primary" offset-x="5" offset-y="5">
-                <VBtn v-bind="activatorProps" icon="mdi-bell-outline" variant="text" aria-label="Abrir notificaciones" />
+                <VBtn v-bind="activatorProps" icon="mdi-bell-outline" variant="text" aria-label="Abrir notificaciones" :class="{ 'notification-bell--feedback': notificationPulse }" />
             </VBadge>
         </template>
 
@@ -118,11 +123,14 @@ onBeforeUnmount(() => {
     </VMenu>
 
     <VBadge v-else-if="authorized" :model-value="unreadCount > 0" :content="unreadLabel" color="primary" offset-x="5" offset-y="5">
-        <VBtn icon="mdi-bell-outline" variant="text" aria-label="Ver notificaciones" @click="openNotifications" />
+        <VBtn icon="mdi-bell-outline" variant="text" aria-label="Ver notificaciones" :class="{ 'notification-bell--feedback': notificationPulse }" @click="openNotifications" />
     </VBadge>
 </template>
 
 <style scoped>
-.notification-menu { overflow: hidden; border: 1px solid rgba(var(--v-theme-on-surface), .09); box-shadow: 0 18px 55px rgba(55, 38, 44, .16) !important; }
+.notification-menu { overflow: hidden; background: var(--sl-glass-strong); border: 1px solid var(--sl-glass-border); box-shadow: var(--sl-shadow-overlay) !important; backdrop-filter: blur(20px); }
 .notification-recents { max-height: min(440px, calc(100vh - 190px)); overflow-y: auto; }
+.notification-bell--feedback { animation: notification-feedback 220ms var(--sl-ease); }
+@keyframes notification-feedback { 50% { transform: translateY(-2px) scale(1.06); } }
+@media (prefers-reduced-motion: reduce) { .notification-bell--feedback { animation: none; } }
 </style>

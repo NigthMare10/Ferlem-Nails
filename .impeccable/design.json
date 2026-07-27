@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-27T00:00:00.000Z",
+  "title": "Design System: Studio Lemus",
+  "extensions": {
+    "colorMeta": {
+      "background": { "role": "neutral", "displayName": "Marfil cálido", "canonical": "oklch(97% 0.014 74)", "tonalRamp": ["oklch(18% 0.014 74)", "oklch(30% 0.014 74)", "oklch(42% 0.014 74)", "oklch(54% 0.014 74)", "oklch(66% 0.014 74)", "oklch(78% 0.014 74)", "oklch(89% 0.014 74)", "oklch(97% 0.014 74)"] },
+      "primary": { "role": "primary", "displayName": "Ciruela de trabajo", "canonical": "oklch(39% 0.105 345)", "tonalRamp": ["oklch(18% 0.105 345)", "oklch(28% 0.105 345)", "oklch(39% 0.105 345)", "oklch(50% 0.105 345)", "oklch(61% 0.105 345)", "oklch(72% 0.105 345)", "oklch(83% 0.105 345)", "oklch(94% 0.105 345)"] },
+      "secondary": { "role": "secondary", "displayName": "Rosa empolvado", "canonical": "oklch(73% 0.075 352)", "tonalRamp": ["oklch(20% 0.075 352)", "oklch(30% 0.075 352)", "oklch(40% 0.075 352)", "oklch(50% 0.075 352)", "oklch(60% 0.075 352)", "oklch(73% 0.075 352)", "oklch(84% 0.075 352)", "oklch(95% 0.075 352)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Editorial operativo", "purpose": "Títulos de bienvenida y momentos de marca; nunca datos densos." },
+      "body": { "displayName": "Lectura operativa", "purpose": "Formularios, tablas, importes y navegación diaria." }
+    },
+    "shadows": [
+      { "name": "ambient-rest", "value": "0 10px 30px oklch(30% 0.03 345 / 0.07)", "purpose": "Superficies interactivas de baja elevación." },
+      { "name": "overlay-lift", "value": "0 20px 50px oklch(30% 0.03 345 / 0.14)", "purpose": "Diálogos, drawers y bottom sheets." }
+    ],
+    "motion": [
+      { "name": "standard", "value": "180-220ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Cambios rutinarios de estado y hover." },
+      { "name": "overlay", "value": "220-280ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Entrada y salida de drawers, hojas y modales." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "320px-767px" },
+      { "name": "tablet", "value": "768px-1023px" },
+      { "name": "desktop", "value": "1024px+" }
+    ]
+  },
+  "components": [],
+  "narrative": {
+    "northStar": "El Atelier Operativo",
+    "overview": "Una superficie cálida y precisa que prioriza cobrar, agendar y entender el día. La identidad surge de materialidad, tipo y ritmo, no de decoración repetida.",
+    "keyCharacteristics": ["Cálido y financiero", "Operativo antes que ornamental", "Premium con restricción"],
+    "rules": [
+      { "name": "The One Accent Rule", "body": "La ciruela primaria aparece con intención, no en cada elemento.", "section": "colors" },
+      { "name": "The Glass Has a Job Rule", "body": "El glass solo aparece cuando expresa capa, foco o contexto móvil.", "section": "elevation" }
+    ],
+    "dos": ["Do usar el logo negro transparente sobre superficies claras.", "Do mantener los importes en una tipografía operativa con números tabulares."],
+    "donts": ["Don't anidar cards.", "Don't usar movimiento decorativo continuo."]
+  }
+}

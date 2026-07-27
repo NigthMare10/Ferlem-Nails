@@ -269,7 +269,7 @@ watch(
         <VCard v-if="modelValue" class="appointment-dialog-card">
             <VToolbar color="surface" flat class="dialog-header">
                 <VToolbarTitle class="font-weight-bold">{{ title }}</VToolbarTitle>
-                <VBtn icon="mdi-close" aria-label="Cerrar" :disabled="dialogBusy" @click="closeDialog" />
+                <VBtn icon="mdi-close" aria-label="Cerrar detalle de cita" :disabled="dialogBusy" @click="closeDialog" />
             </VToolbar>
             <VDivider />
 

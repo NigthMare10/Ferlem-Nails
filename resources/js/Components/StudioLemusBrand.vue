@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import logoDark from '../../images/studio-lemus-logo-dark.png';
+import logoLight from '../../images/studio-lemus-logo-white.png';
+
 withDefaults(defineProps<{
     variant?: 'full' | 'compact';
     tone?: 'light' | 'dark';
@@ -10,10 +13,10 @@ withDefaults(defineProps<{
 
 <template>
     <div class="brand" :class="[`brand--${variant}`, `brand--${tone}`]" aria-label="Studio Lemus">
-        <div class="brand__monogram" aria-hidden="true">SL</div>
+        <img class="brand__mark" :src="tone === 'light' ? logoLight : logoDark" alt="" />
         <div v-if="variant === 'full'" class="brand__copy">
             <strong>Studio Lemus</strong>
-            <span>Administración</span>
+            <span>Atelier operativo</span>
         </div>
     </div>
 </template>
@@ -22,21 +25,15 @@ withDefaults(defineProps<{
 .brand {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     color: rgb(var(--v-theme-on-surface));
 }
 
-.brand__monogram {
-    display: grid;
-    width: 42px;
-    height: 42px;
-    place-items: center;
-    border-radius: 14px;
-    color: white;
-    background: rgb(var(--v-theme-primary));
-    font-size: 0.85rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
+.brand__mark {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    transform: scale(1.55);
 }
 
 .brand__copy {
@@ -46,33 +43,27 @@ withDefaults(defineProps<{
 
 .brand__copy strong {
     font-size: 1rem;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
 }
 
 .brand__copy span {
     margin-top: 3px;
     color: rgb(var(--v-theme-on-surface-variant));
-    font-size: 0.72rem;
+    font-size: var(--sl-label-size);
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
-.brand--compact .brand__monogram {
-    width: 38px;
-    height: 38px;
-    border-radius: 12px;
+.brand--compact .brand__mark {
+    width: 48px;
+    height: 48px;
 }
 
 .brand--light {
     color: white;
 }
 
-.brand--light .brand__monogram {
-    color: rgb(var(--v-theme-primary-darken-1));
-    background: white;
-}
-
 .brand--light .brand__copy span {
-    color: rgba(255, 255, 255, 0.72);
+    color: color-mix(in oklch, var(--sl-surface), transparent 28%);
 }
 </style>

@@ -58,6 +58,19 @@ try {
     if (-not (Test-Path -LiteralPath (Join-Path $projectRoot 'public\build\manifest.json') -PathType Leaf)) {
         throw 'Falta public/build/manifest.json después del build.'
     }
+    $sourceLogos = @(
+        (Join-Path $projectRoot 'resources\images\studio-lemus-logo-white.png'),
+        (Join-Path $projectRoot 'resources\images\studio-lemus-logo-dark.png')
+    )
+    $missingLogos = $sourceLogos | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
+    if ($missingLogos) {
+        throw "Faltan logos fuente requeridos: $($missingLogos -join ', ')"
+    }
+    $assetsWithSpaces = Get-ChildItem -LiteralPath (Join-Path $projectRoot 'public\build') -Recurse -File |
+        Where-Object { $_.Name -match '\s' }
+    if ($assetsWithSpaces) {
+        throw "El build generó assets con espacios: $($assetsWithSpaces.FullName -join ', ')"
+    }
 
     Invoke-Step 'Preparando release local' { & $releaseBuilder -ProjectRoot $projectRoot }
     if (-not (Test-Path -LiteralPath $zipPath -PathType Leaf)) {
@@ -175,28 +188,42 @@ STEP='smoke test público final'
 manifest_assets() {
     "$PHP_BIN" -r '$manifest=json_decode(file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR); foreach ($manifest as $entry) { if (isset($entry["file"])) echo $entry["file"], PHP_EOL; foreach (($entry["css"] ?? []) as $css) echo $css, PHP_EOL; }' "$PUBLIC_ROOT/build/manifest.json" | sort -u
 }
+manifest_asset_url() {
+    asset="$1"
+    encoded_path="$("$PHP_BIN" -r '$segments=explode("/", $argv[1]); echo implode("/", array_map("rawurlencode", $segments));' "$asset")"
+    printf '%s/build/%s' "$BASE_URL" "$encoded_path"
+}
 assert_no_trace() { ! grep -Eiq 'stack trace|vendor/laravel/framework|Whoops|Ignition|Fatal error|APP_DEBUG' "$1"; }
 request_status() {
     name="$1"
     url="$2"
     expected="$3"
-    status="$(curl --silent --show-error --output "$STAGE/$name.html" --write-out '%{http_code}' --connect-timeout 15 --max-time 30 "$url" || true)"
+    SMOKE_REQUEST=$((SMOKE_REQUEST + 1))
+    response="$STAGE/smoke-$SMOKE_REQUEST.body"
+    status="$(curl --silent --show-error --output "$response" --write-out '%{http_code}' --connect-timeout 15 --max-time 30 "$url" || true)"
     echo "[smoke] $name: $status"
-    [ "$status" = "$expected" ] || { echo "[smoke] Respuesta inesperada de $url:" >&2; sed -n '1,80p' "$STAGE/$name.html" >&2 || true; exit 1; }
+    [ "$status" = "$expected" ] || { echo "[smoke] Respuesta inesperada de $url:" >&2; sed -n '1,80p' "$response" >&2 || true; exit 1; }
+    [ -s "$response" ] || { echo "[smoke] Respuesta vacía de $url." >&2; exit 1; }
+    LAST_SMOKE_RESPONSE="$response"
 }
+SMOKE_REQUEST=0
 for attempt in 1 2 3; do
     root_status="$(curl --silent --show-error --output "$STAGE/root.html" --write-out '%{http_code}' --connect-timeout 15 --max-time 30 "$BASE_URL/" || true)"
     echo "[smoke] /: $root_status"
     [ "$root_status" = 200 ] || [ "$root_status" = 302 ] || { echo "GET / devolvió $root_status." >&2; exit 1; }
     request_status login "$BASE_URL/login" 200
-    grep -Eiq 'Studio Lemus' "$STAGE/login.html"
-    grep -Eiq '<form|iniciar sesión|iniciar sesion|login' "$STAGE/login.html"
-    assert_no_trace "$STAGE/login.html"
+    grep -Eiq 'Studio Lemus' "$LAST_SMOKE_RESPONSE"
+    grep -Eiq '<form|iniciar sesión|iniciar sesion|login' "$LAST_SMOKE_RESPONSE"
+    assert_no_trace "$LAST_SMOKE_RESPONSE"
     request_status up "$BASE_URL/up" 200
     request_status expenses "$BASE_URL/expenses" 302
     request_status earnings "$BASE_URL/earnings" 302
     manifest_assets > "$STAGE/assets.txt"
-    while IFS= read -r asset; do request_status asset "$BASE_URL/build/$asset" 200; done < "$STAGE/assets.txt"
+    while IFS= read -r asset; do
+        [ -n "$asset" ] || continue
+        asset_url="$(manifest_asset_url "$asset")"
+        request_status "asset $asset" "$asset_url" 200
+    done < "$STAGE/assets.txt"
     sleep 2
 done
 test -f "$PUBLIC_ROOT/build/manifest.json"

@@ -165,7 +165,7 @@ const resetPassword = () => {
                         <VCardSubtitle>{{ item.email }}</VCardSubtitle>
                         <template #append>
                             <VMenu v-if="hasActions(item)" location="bottom end">
-                                <template #activator="{ props: menuProps }"><VBtn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" /></template>
+                                <template #activator="{ props: menuProps }"><VBtn v-bind="menuProps" icon="mdi-dots-vertical" variant="text" :aria-label="`Acciones de ${item.name}`" /></template>
                                 <VList min-width="210">
                                     <VListItem v-if="can('users.update') && (item.role !== 'employee' || can('payroll.configure'))" title="Editar" prepend-icon="mdi-pencil-outline" @click="openEdit(item)" />
                                     <VListItem v-if="can('payroll.configure')" title="Compensación" prepend-icon="mdi-cash-edit" :href="`/configuration/users/${item.id}/compensation`" />
