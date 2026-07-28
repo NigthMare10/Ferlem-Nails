@@ -13,6 +13,12 @@ Este documento gobierna exclusivamente Agenda y Citas. Complementa `docs/STUDIO_
 - Agenda: `business_hours` es la fuente autoritativa para disponibilidad, creación y reprogramación. `APPOINTMENTS_SLOT_MINUTES` conserva exclusivamente el intervalo de slots. Un día cerrado no devuelve horarios y una cita nueva solo puede terminar antes o exactamente al cierre.
 - Historial: cambiar el horario no altera citas existentes. El detalle advierte cuando una cita actual queda fuera del horario configurado.
 
+## Vencimiento y cobro de citas (2026-07-28)
+
+- La hora final autoritativa es el máximo `scheduled_end` de los `appointment_items`. La cita queda Programada antes del inicio, En atención hasta el final y Pendiente de cobro durante `APPOINTMENT_CHECKOUT_GRACE_MINUTES` (30 por defecto).
+- `studio:process-expired-appointments` corre cada minuto: notifica una vez al entrar en gracia y, después del límite estricto, bloquea la cita, verifica que siga `scheduled` y sin venta, la marca `no_show` con actor Sistema y conserva evento/motivo legible.
+- Agenda y checkout vuelven a validar el límite en backend. Durante la gracia permite cobro y No llegó, pero no reprogramar ni cancelar; tras vencer, la Agenda procesa y excluye la cita mientras Historial conserva la auditoría.
+
 ## Tablero de progreso
 
 | Fase | Nombre | Estado | Dependencias | Aprobacion |

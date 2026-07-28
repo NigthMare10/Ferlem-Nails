@@ -36,6 +36,7 @@ class RoleSeeder extends Seeder
             Permissions::REPORTS_EXPENSES_VIEW,
         ]);
         $employee->syncPermissions([
+            Permissions::NOTIFICATIONS_ACCESS,
             Permissions::SALES_ACCESS,
             Permissions::SALES_CREATE,
             Permissions::SALES_VIEW_OWN,

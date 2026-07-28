@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('studio:process-payroll')->dailyAt('00:15')->timezone('America/Tegucigalpa')->withoutOverlapping();
+Schedule::command('studio:process-expired-appointments')->everyMinute()->timezone('America/Tegucigalpa')->withoutOverlapping();

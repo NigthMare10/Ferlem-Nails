@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Actions\Sales\CancelSaleAction;
 use App\Actions\Sales\CreateSaleAction;
+use App\Actions\Appointments\ProcessExpiredAppointmentsAction;
+use App\Support\AppointmentCheckoutWindow;
+use App\Actions\Appointments\CreateAppointmentAction;
 use App\Http\Requests\CancelSaleRequest;
 use App\Http\Requests\CreateSaleRequest;
 use App\Http\Resources\SaleReceiptResource;
@@ -30,7 +33,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SalesController extends Controller
 {
-    public function create(Request $request): Response
+    public function create(Request $request, ProcessExpiredAppointmentsAction $expiredAppointments): Response
     {
         $services = Service::query()
             ->where('is_active', true)
@@ -43,14 +46,24 @@ class SalesController extends Controller
                 ->with(['items.assignedTo:id,name', 'deposit', 'sale'])
                 ->findOrFail((int) $request->query('appointment'));
             $this->authorizeAppointmentCheckout($request->user(), $appointment);
+            $expiredAppointments->execute($appointment->getKey());
+            $appointment->refresh()->load(['items.assignedTo:id,name', 'deposit', 'sale']);
             if ($appointment->status !== Appointment::STATUS_SCHEDULED) {
                 throw ValidationException::withMessages([
-                    'appointment' => 'Solo una cita programada puede atenderse y cobrarse.',
+                    'appointment' => $appointment->status === Appointment::STATUS_NO_SHOW
+                        && $appointment->no_show_reason === 'Marcada automáticamente al vencer el tiempo disponible para cobrar.'
+                        ? 'El tiempo disponible para cobrar esta cita ya venció y fue marcada como No llegó.'
+                        : 'Solo una cita programada puede atenderse y cobrarse.',
                 ]);
             }
             if ($appointment->sale) {
                 throw ValidationException::withMessages([
                     'appointment' => "Esta cita ya fue convertida en la venta {$appointment->sale->sale_number}.",
+                ]);
+            }
+            if (! AppointmentCheckoutWindow::canCheckout($appointment, now(CreateAppointmentAction::TIMEZONE)->toImmutable(), $appointment->items)) {
+                throw ValidationException::withMessages([
+                    'appointment' => 'El tiempo disponible para cobrar esta cita ya venció y fue marcada como No llegó.',
                 ]);
             }
 

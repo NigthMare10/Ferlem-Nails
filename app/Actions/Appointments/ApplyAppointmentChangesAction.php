@@ -46,6 +46,10 @@ class ApplyAppointmentChangesAction
                 $locked->notes = $data['notes'] ?? null;
                 $locked->save();
             } else {
+                if (! $locked->scheduled_start->setTimezone(CreateAppointmentAction::TIMEZONE)
+                    ->greaterThan(CarbonImmutable::now(CreateAppointmentAction::TIMEZONE))) {
+                    throw ValidationException::withMessages(['appointment' => 'No puedes reprogramar una cita que ya comenzó.']);
+                }
                 $assignments = collect($data['assignments'] ?? [])->keyBy('appointment_item_id');
                 $knownIds = $locked->items->pluck('id')->all();
                 if ($assignments->keys()->diff($knownIds)->isNotEmpty()) {
@@ -83,7 +87,8 @@ class ApplyAppointmentChangesAction
                     throw ValidationException::withMessages(['start_time' => 'La cita termina fuera del horario operativo.']);
                 }
                 foreach ($segments as $segment) {
-                    $conflict = AppointmentItem::query()->where('assigned_to', $segment['assigned_to'])->where('scheduled_start', '<', $segment['segmentEnd']->utc())->where('scheduled_end', '>', $segment['segmentStart']->utc())->whereHas('appointment', fn ($query) => $query->where('status', Appointment::STATUS_SCHEDULED)->where('appointments.id', '!=', $locked->getKey()))->exists();
+                    $expiredBefore = CarbonImmutable::now(CreateAppointmentAction::TIMEZONE)->subMinutes((int) config('appointments.checkout_grace_minutes'))->utc();
+                    $conflict = AppointmentItem::query()->where('assigned_to', $segment['assigned_to'])->where('scheduled_start', '<', $segment['segmentEnd']->utc())->where('scheduled_end', '>', $segment['segmentStart']->utc())->whereHas('appointment', fn ($query) => $query->where('status', Appointment::STATUS_SCHEDULED)->whereHas('items', fn ($items) => $items->where('scheduled_end', '>', $expiredBefore))->where('appointments.id', '!=', $locked->getKey()))->exists();
                     if ($conflict) {
                         throw ValidationException::withMessages(['start_time' => 'Una persona seleccionada ya tiene un servicio en ese horario.']);
                     }

@@ -102,7 +102,7 @@ watch([() => props.modelValue, () => props.appointment, () => props.initialMode]
 function resolveInitialMode(initialMode: InitialDialogMode, appointment: AppointmentDetails): InitialDialogMode {
     if (initialMode === 'reschedule' && props.canUpdate && appointment.status === 'scheduled' && appointment.can_reschedule) return initialMode;
     const canResolvePending = !appointment.has_pending_deposit || (props.canResolveDeposit && appointment.can_resolve_deposit);
-    if (initialMode === 'cancel' && props.canCancel && appointment.status === 'scheduled' && appointment.can_change_status && canResolvePending) return initialMode;
+    if (initialMode === 'cancel' && props.canCancel && appointment.status === 'scheduled' && appointment.can_cancel && canResolvePending) return initialMode;
     if (initialMode === 'no_show' && props.canMarkNoShow && appointment.status === 'scheduled' && appointment.can_change_status && appointment.can_mark_no_show_now && canResolvePending) return initialMode;
     return 'detail';
 }

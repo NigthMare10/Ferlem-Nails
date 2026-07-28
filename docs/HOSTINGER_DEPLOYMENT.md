@@ -217,7 +217,7 @@ No use `chmod -R 777`. `QUEUE_CONNECTION=sync` evita depender de un worker perma
 * * * * * cd /home/__USUARIO_HOSTINGER__/apps/studio-lemus && __RUTA_PHP_83__ artisan schedule:run >> /dev/null 2>&1
 ```
 
-El scheduler ejecuta diariamente `studio:process-payroll`, de forma idempotente y sin confirmación manual. No invente la ruta del binario PHP: identifíquela por SSH con `command -v php`, confirme la versión con `php -v` y sustituya `__RUTA_PHP_83__` por el binario PHP 8.3 real ofrecido por Hostinger. No programe `studio:generate-financial-demo`; ese comando rechaza producción.
+El scheduler ejecuta diariamente `studio:process-payroll` y cada minuto `studio:process-expired-appointments`, ambos idempotentes y sin confirmación manual. El segundo notifica el periodo de cobro y marca citas vencidas como No llegó. No invente la ruta del binario PHP: identifíquela por SSH con `command -v php`, confirme la versión con `php -v` y sustituya `__RUTA_PHP_83__` por el binario PHP 8.3 real ofrecido por Hostinger. No programe `studio:generate-financial-demo`; ese comando rechaza producción.
 
 ## 8. Verificacion de produccion
 

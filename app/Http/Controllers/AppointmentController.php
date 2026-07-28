@@ -52,6 +52,8 @@ class AppointmentController extends Controller
         $month = ($data['month'] ?? null) ?? substr($date, 0, 7);
         $view = ($data['view'] ?? null) ?? 'month';
         $employeeId = isset($data['employee_id']) ? (int) $data['employee_id'] : null;
+        $expiredBefore = CarbonImmutable::now(CreateAppointmentAction::TIMEZONE)
+            ->subMinutes((int) config('appointments.checkout_grace_minutes'))->utc();
         $appointments = collect();
         if ($view === 'day') {
             $localStart = CarbonImmutable::createFromFormat('!Y-m-d', $date, CreateAppointmentAction::TIMEZONE);
@@ -59,6 +61,7 @@ class AppointmentController extends Controller
             $appointments = Appointment::query()
                 ->with(['assignedTo:id,name', 'items.assignedTo:id,name', 'deposit', 'sale:id,appointment_id'])
                 ->where('status', Appointment::STATUS_SCHEDULED)
+                ->whereHas('items', fn ($items) => $items->where('scheduled_end', '>', $expiredBefore))
                 ->where('scheduled_start', '>=', $localStart->utc())
                 ->where('scheduled_start', '<', $localEnd->utc())
                 ->when(

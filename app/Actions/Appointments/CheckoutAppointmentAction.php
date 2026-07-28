@@ -13,6 +13,7 @@ use App\Models\SalePayment;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Money;
+use App\Support\AppointmentCheckoutWindow;
 use App\Support\Permissions;
 use App\Support\SaleFinancials;
 use App\Support\TransferProofStorage;
@@ -60,7 +61,13 @@ class CheckoutAppointmentAction
                     throw ValidationException::withMessages(['appointment' => "Esta cita ya fue convertida en la venta {$sale->sale_number}."]);
                 }
                 if ($locked->status !== Appointment::STATUS_SCHEDULED) {
-                    throw ValidationException::withMessages(['appointment' => 'Solo una cita programada puede atenderse y cobrarse.']);
+                    throw ValidationException::withMessages(['appointment' => $locked->status === Appointment::STATUS_NO_SHOW
+                        && $locked->no_show_reason === 'Marcada automáticamente al vencer el tiempo disponible para cobrar.'
+                        ? 'El tiempo disponible para cobrar esta cita ya venció y fue marcada como No llegó.'
+                        : 'Solo una cita programada puede atenderse y cobrarse.']);
+                }
+                if (! AppointmentCheckoutWindow::canCheckout($locked, now(CreateAppointmentAction::TIMEZONE)->toImmutable(), $originalItems)) {
+                    throw ValidationException::withMessages(['appointment' => 'El tiempo disponible para cobrar esta cita ya venció y fue marcada como No llegó.']);
                 }
 
                 $prepared = $this->prepareItems($user, $originalItems, $data);

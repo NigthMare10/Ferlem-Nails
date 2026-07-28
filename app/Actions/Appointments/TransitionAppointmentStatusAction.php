@@ -52,9 +52,10 @@ class TransitionAppointmentStatusAction
             }
 
             $occurredAt = CarbonImmutable::now('UTC');
+            $localNow = $occurredAt->setTimezone(CreateAppointmentAction::TIMEZONE);
             if ($status === Appointment::STATUS_NO_SHOW
                 && $locked->scheduled_start->setTimezone(CreateAppointmentAction::TIMEZONE)
-                    ->greaterThan($occurredAt->setTimezone(CreateAppointmentAction::TIMEZONE))) {
+                    ->greaterThan($localNow)) {
                 throw ValidationException::withMessages([
                     'appointment' => 'Podrás marcar No llegó cuando haya comenzado la hora de la cita.',
                 ]);

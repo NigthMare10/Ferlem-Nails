@@ -45,6 +45,8 @@ const props = defineProps<{
 const { can } = usePermissions();
 const formOpen = ref(false);
 const loading = ref(false);
+const checkoutLoading = ref(false);
+const checkoutError = ref<string | null>(null);
 const detailsOpen = ref(false);
 const detailsLoading = ref(false);
 const detailsError = ref<string | null>(null);
@@ -135,8 +137,10 @@ function durationLabel(minutes: number): string {
     return remainder ? `${hours} h ${remainder} min` : `${hours} h`;
 }
 
-function statusColor(status: Appointment['status']): string {
-    return ({ scheduled: 'primary', completed: 'success', canceled: 'error', no_show: 'warning' })[status];
+function statusColor(appointment: Appointment): string {
+    if (appointment.operational_status === 'pending_checkout') return 'warning';
+    if (appointment.operational_status === 'in_service') return 'secondary';
+    return ({ scheduled: 'primary', completed: 'success', canceled: 'error', no_show: 'warning' })[appointment.status];
 }
 
 async function loadDetails(): Promise<void> {
@@ -171,14 +175,34 @@ function canCheckout(appointment: Appointment): boolean {
         && appointment.can_checkout;
 }
 
-function checkout(appointment: Appointment): void {
-    router.visit(`/sales/new?appointment=${appointment.id}`);
+function refreshAgenda(): Promise<void> {
+    return new Promise(resolve => router.reload({ only: ['appointments', 'calendar_days'], onFinish: () => resolve() }));
+}
+
+async function checkout(appointment: Appointment): Promise<void> {
+    if (checkoutLoading.value) return;
+    checkoutLoading.value = true;
+    checkoutError.value = null;
+    try {
+        await new Promise<void>((resolve, reject) => {
+            router.visit(`/sales/new?appointment=${appointment.id}`, {
+                onSuccess: () => resolve(),
+                onError: errors => reject(new Error(errors.appointment ?? 'No se pudo abrir el cobro de esta cita.')),
+                onCancel: () => reject(new Error('La apertura del cobro fue cancelada.')),
+            });
+        });
+    } catch (error) {
+        checkoutError.value = error instanceof Error ? error.message : 'No se pudo abrir el cobro de esta cita.';
+        await refreshAgenda();
+    } finally {
+        checkoutLoading.value = false;
+    }
 }
 
 function canCancelAppointment(appointment: Appointment): boolean {
     return appointment.status === 'scheduled'
         && can('appointments.cancel')
-        && appointment.can_change_status;
+        && appointment.can_cancel;
 }
 
 function canMarkNoShow(appointment: Appointment): boolean {
@@ -333,6 +357,7 @@ watch(() => props.openAppointmentId, appointmentId => {
                     </VCard>
 
                     <section v-else class="appointment-list" :class="{ 'agenda-loading': loading }" aria-label="Citas del día">
+                        <VAlert v-if="checkoutError" type="error" variant="tonal" density="compact" class="mb-4" closable @click:close="checkoutError = null">{{ checkoutError }}</VAlert>
                         <article v-for="appointment in appointments" :key="appointment.id" class="appointment-row">
                             <div class="time-column">
                                 <div v-for="item in appointment.visible_items" :key="item.id" class="segment-time"><strong>{{ item.start_time }}</strong><span>{{ item.end_time }}</span></div>
@@ -346,7 +371,7 @@ watch(() => props.openAppointmentId, appointmentId => {
                                                 <VIcon icon="mdi-phone-outline" size="16" class="mr-1" />{{ appointment.client_phone }}
                                             </div>
                                         </div>
-                                        <VChip :color="statusColor(appointment.status)" variant="tonal" size="small">{{ appointment.status_label }}</VChip>
+                                        <VChip :color="statusColor(appointment)" variant="tonal" size="small">{{ appointment.status_label }}</VChip>
                                     </div>
                                     <div class="service-chips mt-3">
                                         <VChip v-for="item in appointment.visible_items.slice(0, 2)" :key="item.id" size="small" variant="outlined" color="primary">
@@ -359,6 +384,10 @@ watch(() => props.openAppointmentId, appointmentId => {
                                         <div><VIcon icon="mdi-clock-outline" /><span>{{ durationLabel(appointment.visible_duration_minutes) }}</span></div>
                                         <div><VIcon icon="mdi-cash" /><strong>{{ money(appointment.visible_total) }}</strong></div>
                                     </div>
+                                    <VAlert v-if="appointment.operational_status === 'pending_checkout'" type="warning" variant="tonal" density="compact" class="mt-3">
+                                        <template v-if="appointment.checkout_remaining_minutes && appointment.checkout_remaining_minutes > 0">Quedan {{ appointment.checkout_remaining_minutes }} minutos para cobrar.</template>
+                                        <template v-else>Cobrar antes de las {{ new Intl.DateTimeFormat('es-HN', { hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(appointment.checkout_deadline!)) }}.</template>
+                                    </VAlert>
                                     <p v-if="appointment.status_reason" class="status-reason mt-3 mb-0">
                                         <VIcon icon="mdi-text-box-outline" size="17" class="mr-1" /><strong>Motivo:</strong> {{ appointment.status_reason }}
                                     </p>
@@ -366,14 +395,14 @@ watch(() => props.openAppointmentId, appointmentId => {
 
                                     <div class="appointment-actions desktop-appointment-actions">
                                         <VBtn size="small" variant="text" color="primary" prepend-icon="mdi-eye-outline" @click="openAppointment(appointment)">Ver detalle</VBtn>
-                                        <VBtn v-if="canCheckout(appointment)" size="small" variant="tonal" color="primary" prepend-icon="mdi-cash-register" @click="checkout(appointment)">Atender y cobrar</VBtn>
+                                        <VBtn v-if="canCheckout(appointment)" size="small" variant="tonal" color="primary" prepend-icon="mdi-cash-register" :loading="checkoutLoading" :disabled="checkoutLoading" @click="checkout(appointment)">Atender y cobrar</VBtn>
                                         <VBtn v-if="canReprogram(appointment)" size="small" variant="text" prepend-icon="mdi-calendar-sync-outline" @click="openAppointment(appointment, 'reschedule')">Reprogramar</VBtn>
                                         <VBtn v-if="canCancelAppointment(appointment)" size="small" variant="text" color="error" prepend-icon="mdi-calendar-remove-outline" @click="openAppointment(appointment, 'cancel')">Cancelar</VBtn>
                                         <VBtn v-if="canMarkNoShow(appointment)" size="small" variant="text" color="warning" prepend-icon="mdi-account-off-outline" @click="openAppointment(appointment, 'no_show')">No llegó</VBtn>
                                     </div>
 
                                     <div class="appointment-actions mobile-appointment-actions">
-                                        <VBtn v-if="canCheckout(appointment)" size="small" variant="tonal" color="primary" prepend-icon="mdi-cash-register" @click="checkout(appointment)">Atender y cobrar</VBtn>
+                                        <VBtn v-if="canCheckout(appointment)" size="small" variant="tonal" color="primary" prepend-icon="mdi-cash-register" :loading="checkoutLoading" :disabled="checkoutLoading" @click="checkout(appointment)">Atender y cobrar</VBtn>
                                         <VBtn v-else size="small" variant="tonal" color="primary" prepend-icon="mdi-eye-outline" @click="openAppointment(appointment)">Ver detalle</VBtn>
                                         <VMenu v-if="hasMoreActions(appointment)" location="bottom end">
                                             <template #activator="{ props: menuProps }">

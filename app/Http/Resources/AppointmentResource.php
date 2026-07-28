@@ -4,6 +4,8 @@ namespace App\Http\Resources;
 
 use App\Actions\Appointments\CreateAppointmentAction;
 use App\Support\Permissions;
+use App\Support\AppointmentCheckoutWindow;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -30,6 +32,12 @@ class AppointmentResource extends JsonResource
             ? $this->expected_duration_minutes
             : $visibleItems->sum(fn ($item) => $item->duration_minutes * $item->quantity);
         $visibleTotalCents = $visibleItems->sum(fn ($item) => $this->cents($item->line_total));
+        $now = CarbonImmutable::now(CreateAppointmentAction::TIMEZONE);
+        $endsAt = AppointmentCheckoutWindow::endsAt($this->resource, $this->items);
+        $deadline = AppointmentCheckoutWindow::deadline($this->resource, $this->items);
+        $beforeStart = $now->lessThan($this->scheduled_start->setTimezone(CreateAppointmentAction::TIMEZONE));
+        $withinCheckoutWindow = $this->status === 'scheduled' && AppointmentCheckoutWindow::canCheckout($this->resource, $now, $this->items);
+        $operationalStatus = $beforeStart ? 'scheduled' : ($now->lessThanOrEqualTo($endsAt) ? 'in_service' : 'pending_checkout');
 
         return [
             'id' => $this->id,
@@ -37,7 +45,11 @@ class AppointmentResource extends JsonResource
             'client_phone' => $this->client_phone,
             'status' => $this->status,
             'status_label' => match ($this->status) {
-                'scheduled' => 'Programada',
+                'scheduled' => match ($operationalStatus) {
+                    'in_service' => 'En atención',
+                    'pending_checkout' => 'Pendiente de cobro',
+                    default => 'Programada',
+                },
                 'completed' => 'Completada',
                 'canceled' => 'Cancelada',
                 'no_show' => 'No llegó',
@@ -52,16 +64,27 @@ class AppointmentResource extends JsonResource
             'visible_duration_minutes' => $visibleDuration,
             'visible_total' => number_format($visibleTotalCents / 100, 2, '.', ''),
             'can_reschedule' => $this->status === 'scheduled'
+                && $beforeStart
                 && ($canAssign || ! $this->items->contains(fn ($item) => $item->assigned_to !== $user->getKey())),
+            'can_cancel' => $this->status === 'scheduled'
+                && $beforeStart
+                && ($viewAll || ! $this->items->contains(fn ($item) => $item->assigned_to !== $user->getKey()))
+                && ($deposit?->status !== 'pending' || $canResolveDeposit),
             'can_change_status' => $this->status === 'scheduled'
+                && $withinCheckoutWindow
                 && ($viewAll || ! $this->items->contains(fn ($item) => $item->assigned_to !== $user->getKey()))
                 && ($deposit?->status !== 'pending' || $canResolveDeposit),
             'can_mark_no_show_now' => $this->status === 'scheduled'
-                && ! $this->scheduled_start->greaterThan(now('UTC')),
+                && ! $beforeStart
+                && $withinCheckoutWindow,
             'can_record_deposit' => $this->status === 'scheduled' && ! $deposit && $canManageDeposit,
             'has_pending_deposit' => $deposit?->status === 'pending',
             'can_resolve_deposit' => $deposit?->status === 'pending' && $canResolveDeposit,
-            'can_checkout' => $this->status === 'scheduled' && ! $this->sale && $canCheckout,
+            'can_checkout' => $withinCheckoutWindow && ! $this->sale && $canCheckout,
+            'operational_status' => $this->status === 'scheduled' ? $operationalStatus : $this->status,
+            'checkout_deadline' => $this->status === 'scheduled' ? $deadline->toIso8601String() : null,
+            'checkout_remaining_minutes' => $this->status === 'scheduled' && $operationalStatus === 'pending_checkout'
+                ? max(0, (int) ceil($now->diffInSeconds($deadline, false) / 60)) : null,
             'status_reason' => match ($this->status) {
                 'canceled' => $this->cancellation_reason,
                 'no_show' => $this->no_show_reason,

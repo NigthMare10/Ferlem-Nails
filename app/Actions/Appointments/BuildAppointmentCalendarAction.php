@@ -16,6 +16,8 @@ class BuildAppointmentCalendarAction
         $end = $start->addMonth();
         $viewAll = $user->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL);
         $assigneeId = $viewAll ? $employeeId : $user->getKey();
+        $expiredBefore = CarbonImmutable::now(CreateAppointmentAction::TIMEZONE)
+            ->subMinutes((int) config('appointments.checkout_grace_minutes'))->utc();
 
         $items = AppointmentItem::query()
             ->select(['id', 'appointment_id', 'assigned_to', 'service_name', 'scheduled_start', 'scheduled_end'])
@@ -25,7 +27,9 @@ class BuildAppointmentCalendarAction
             ])
             ->where('scheduled_start', '>=', $start->utc())
             ->where('scheduled_start', '<', $end->utc())
-            ->whereHas('appointment', fn ($query) => $query->where('status', Appointment::STATUS_SCHEDULED))
+            ->whereHas('appointment', fn ($query) => $query
+                ->where('status', Appointment::STATUS_SCHEDULED)
+                ->whereHas('items', fn ($appointmentItems) => $appointmentItems->where('scheduled_end', '>', $expiredBefore)))
             ->when($assigneeId, fn ($query) => $query->where('assigned_to', $assigneeId))
             ->orderBy('scheduled_start')
             ->get();

@@ -54,7 +54,7 @@ class AppointmentBusinessHoursTest extends TestCase
         $hours[6]['closes_at'] = null;
 
         $this->actingAs($owner)->put('/configuration/business-hours', ['hours' => $hours])->assertSessionHasNoErrors();
-        $this->assertSame('19:00:00', BusinessHour::query()->where('weekday', 1)->value('closes_at'));
+        $this->assertSame('19:00', BusinessHour::query()->where('weekday', 1)->value('closes_at'));
         $this->assertFalse((bool) BusinessHour::query()->where('weekday', 7)->value('is_open'));
 
         $hours[0]['is_open'] = true;

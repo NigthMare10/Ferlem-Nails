@@ -18,6 +18,11 @@ export interface AppointmentAssignee {
     name: string;
 }
 
+export interface AppointmentActor {
+    id?: number;
+    name: string;
+}
+
 export interface AppointmentItem {
     id: number;
     service_id: number | null;
@@ -50,12 +55,16 @@ export interface Appointment {
     visible_duration_minutes: number;
     visible_total: string;
     can_reschedule: boolean;
+    can_cancel: boolean;
     can_change_status: boolean;
     can_mark_no_show_now: boolean;
     can_record_deposit: boolean;
     has_pending_deposit: boolean;
     can_resolve_deposit: boolean;
     can_checkout: boolean;
+    operational_status: 'scheduled' | 'in_service' | 'pending_checkout' | 'completed' | 'canceled' | 'no_show';
+    checkout_deadline: string | null;
+    checkout_remaining_minutes: number | null;
     status_reason: string | null;
     visible_items: AppointmentItem[];
 }
@@ -69,7 +78,7 @@ export interface AppointmentEvent {
         previous: string;
         new: string;
     }>;
-    performed_by?: AppointmentAssignee;
+    performed_by?: AppointmentActor;
     occurred_at: string;
     occurred_at_display: string;
     notes: string | null;
@@ -106,7 +115,7 @@ export interface AppointmentDetails extends Appointment {
     created_at_display: string;
     status_changed_at: string | null;
     status_changed_at_display: string | null;
-    status_changed_by: AppointmentAssignee | null;
+    status_changed_by: AppointmentActor | null;
     can_manage_deposit: boolean;
     can_resolve_deposit: boolean;
     deposit: AppointmentDeposit | null;
