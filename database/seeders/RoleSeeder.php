@@ -23,6 +23,7 @@ class RoleSeeder extends Seeder
             Permissions::USERS_UPDATE, Permissions::USERS_ASSIGN_ROLE, Permissions::USERS_TOGGLE_STATUS,
             Permissions::USERS_RESET_PASSWORD, Permissions::SERVICES_VIEW, Permissions::SERVICES_CREATE,
             Permissions::SERVICES_UPDATE, Permissions::SERVICES_DELETE, Permissions::SERVICES_TOGGLE_STATUS,
+            Permissions::SETTINGS_BUSINESS_HOURS_MANAGE,
             Permissions::APPOINTMENTS_ACCESS, Permissions::APPOINTMENTS_VIEW_OWN,
             Permissions::APPOINTMENTS_VIEW_ALL, Permissions::APPOINTMENTS_CREATE,
             Permissions::APPOINTMENTS_UPDATE, Permissions::APPOINTMENTS_ASSIGN,

@@ -9,6 +9,7 @@ use App\Models\AppointmentItem;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Permissions;
+use App\Support\BusinessHours;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -79,8 +80,7 @@ class CreateAppointmentAction
             if (! $scheduledStart->isSameDay($segmentStart)) {
                 throw ValidationException::withMessages(['start_time' => 'La cita debe comenzar y terminar el mismo día.']);
             }
-            $close = CarbonImmutable::createFromFormat('!Y-m-d H:i', $scheduledStart->format('Y-m-d').' '.config('appointments.close_time'), self::TIMEZONE);
-            if ($segmentStart->greaterThan($close)) {
+            if (! BusinessHours::contains($scheduledStart, $segmentStart)) {
                 throw ValidationException::withMessages(['start_time' => 'La cita termina fuera del horario operativo.']);
             }
 
@@ -190,9 +190,8 @@ class CreateAppointmentAction
         if ($scheduledStart->lessThan(CarbonImmutable::now(self::TIMEZONE))) {
             throw ValidationException::withMessages(['date' => 'No puedes crear una cita en el pasado.']);
         }
-        $open = CarbonImmutable::createFromFormat('!Y-m-d H:i', $scheduledStart->format('Y-m-d').' '.config('appointments.open_time'), self::TIMEZONE);
-        $close = CarbonImmutable::createFromFormat('!Y-m-d H:i', $scheduledStart->format('Y-m-d').' '.config('appointments.close_time'), self::TIMEZONE);
-        if ($scheduledStart->lessThan($open) || $scheduledStart->greaterThanOrEqualTo($close)) {
+        $bounds = BusinessHours::bounds($scheduledStart);
+        if ($bounds === null || $scheduledStart->lessThan($bounds[0]) || $scheduledStart->greaterThanOrEqualTo($bounds[1])) {
             throw ValidationException::withMessages(['start_time' => 'La hora de inicio está fuera del horario operativo.']);
         }
 

@@ -6,10 +6,11 @@ import { usePermissions } from '../composables/usePermissions';
 
 const { can } = usePermissions();
 const page = usePage();
-const currentSection = computed(() => page.url.includes('/services') ? 'services' : 'users');
+const currentSection = computed(() => page.url.includes('/business-hours') ? 'business-hours' : page.url.includes('/services') ? 'services' : 'users');
 const items = computed(() => [
     can('users.view') ? { value: 'users', title: 'Usuarios', icon: 'mdi-account-group-outline', href: '/configuration/users' } : null,
     can('services.view') ? { value: 'services', title: 'Servicios', icon: 'mdi-hand-heart-outline', href: '/configuration/services' } : null,
+    can('settings.business_hours.manage') ? { value: 'business-hours', title: 'Horario de atención', icon: 'mdi-clock-outline', href: '/configuration/business-hours' } : null,
 ].filter(Boolean) as Array<{ value: string; title: string; icon: string; href: string }>);
 
 const navigate = (value: string) => {

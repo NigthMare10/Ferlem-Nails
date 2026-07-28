@@ -10,6 +10,12 @@ El modulo de Agenda y Citas se gobierna mediante `docs/STUDIO_LEMUS_APPOINTMENTS
 
 El futuro modulo de Gastos y Nomina se disena en `docs/STUDIO_LEMUS_EXPENSES_PLAN.md`. Ese plan separado no modifica los estados, dependencias o aprobaciones vigentes de este documento.
 
+## Horario de atención de Agenda (2026-07-28)
+
+- Se agregó la configuración persistida `business_hours` para los siete días ISO, sin afectar ventas, facturas, gastos ni nómina.
+- Owner y administrator reciben `settings.business_hours.manage`; employee queda excluido. La disponibilidad de Agenda ahora lee el horario diario persistido y mantiene configurable solo `APPOINTMENTS_SLOT_MINUTES`.
+- Las citas existentes permanecen intactas si se reduce o cierra un día; su detalle muestra una advertencia cuando quedan fuera del horario actual. La validación manual pendiente cubre guardar horas distintas por día, días cerrados, permisos y nueva cita/reprogramación en desktop y móvil.
+
 ## Modulo Gastos - Fases 6A y 6B (2026-07-27)
 
 **Estado:** En pruebas / No. **Despliegue:** No realizado; pendiente de validacion manual.

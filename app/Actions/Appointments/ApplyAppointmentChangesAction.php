@@ -8,6 +8,7 @@ use App\Models\AppointmentEvent;
 use App\Models\AppointmentItem;
 use App\Models\User;
 use App\Support\Permissions;
+use App\Support\BusinessHours;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -78,8 +79,7 @@ class ApplyAppointmentChangesAction
                 if (! $appointmentStart->isSameDay($segmentStart)) {
                     throw ValidationException::withMessages(['start_time' => 'La cita debe comenzar y terminar el mismo día.']);
                 }
-                $close = CarbonImmutable::createFromFormat('!Y-m-d H:i', $appointmentStart->format('Y-m-d').' '.config('appointments.close_time'), CreateAppointmentAction::TIMEZONE);
-                if ($segmentStart->greaterThan($close)) {
+                if (! BusinessHours::contains($appointmentStart, $segmentStart)) {
                     throw ValidationException::withMessages(['start_time' => 'La cita termina fuera del horario operativo.']);
                 }
                 foreach ($segments as $segment) {
@@ -148,9 +148,8 @@ class ApplyAppointmentChangesAction
         if ($start->lessThan(CarbonImmutable::now(CreateAppointmentAction::TIMEZONE))) {
             throw ValidationException::withMessages(['date' => 'No puedes reprogramar una cita en el pasado.']);
         }
-        $open = CarbonImmutable::createFromFormat('!Y-m-d H:i', $start->format('Y-m-d').' '.config('appointments.open_time'), CreateAppointmentAction::TIMEZONE);
-        $close = CarbonImmutable::createFromFormat('!Y-m-d H:i', $start->format('Y-m-d').' '.config('appointments.close_time'), CreateAppointmentAction::TIMEZONE);
-        if ($start->lessThan($open) || $start->greaterThanOrEqualTo($close)) {
+        $bounds = BusinessHours::bounds($start);
+        if ($bounds === null || $start->lessThan($bounds[0]) || $start->greaterThanOrEqualTo($bounds[1])) {
             throw ValidationException::withMessages(['start_time' => 'La hora de inicio está fuera del horario operativo.']);
         }
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BusinessHourController;
 use App\Http\Controllers\CashController;
 use App\Http\Controllers\ConfigurationController;
 use App\Http\Controllers\EarningsController;
@@ -170,6 +171,8 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::prefix('configuration')->name('configuration.')->middleware('permission:'.Permissions::SETTINGS_ACCESS)->group(function () {
         Route::get('/', ConfigurationController::class)->name('index');
+        Route::get('/business-hours', [BusinessHourController::class, 'index'])->middleware('permission:'.Permissions::SETTINGS_BUSINESS_HOURS_MANAGE)->name('business-hours.index');
+        Route::put('/business-hours', [BusinessHourController::class, 'update'])->middleware('permission:'.Permissions::SETTINGS_BUSINESS_HOURS_MANAGE)->name('business-hours.update');
         Route::get('/users', [UserController::class, 'index'])->middleware('permission:'.Permissions::USERS_VIEW)->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->middleware('permission:'.Permissions::USERS_CREATE)->name('users.store');
         Route::put('/users/{user}', [UserController::class, 'update'])->middleware('permission:'.Permissions::USERS_UPDATE)->name('users.update');

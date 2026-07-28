@@ -6,6 +6,13 @@ Alcance del producto: Un solo Studio Lemus, una ubicacion, HNL, interfaz en espa
 
 Este documento gobierna exclusivamente Agenda y Citas. Complementa `docs/STUDIO_LEMUS_IMPLEMENTATION_PLAN.md`, pero no modifica los estados, dependencias o aprobaciones de las fases POS 3A-3E. Cada fase requiere aprobacion expresa y se implementa en intervenciones separadas.
 
+## Horario de atención configurable (2026-07-28)
+
+- Estado: En pruebas / No. La migración reversible `2026_07_28_100000_create_business_hours_table.php` crea los siete días estables ISO 1-7, conserva el rango legado configurado como horario inicial y no modifica citas existentes.
+- Configuración: owner y administrator administran `/configuration/business-hours` mediante `settings.business_hours.manage`; employee no recibe el permiso ni acceso frontend/backend. La pantalla guarda los siete días en una sola acción, permite cerrar cada día y exige apertura anterior al cierre.
+- Agenda: `business_hours` es la fuente autoritativa para disponibilidad, creación y reprogramación. `APPOINTMENTS_SLOT_MINUTES` conserva exclusivamente el intervalo de slots. Un día cerrado no devuelve horarios y una cita nueva solo puede terminar antes o exactamente al cierre.
+- Historial: cambiar el horario no altera citas existentes. El detalle advierte cuando una cita actual queda fuera del horario configurado.
+
 ## Tablero de progreso
 
 | Fase | Nombre | Estado | Dependencias | Aprobacion |

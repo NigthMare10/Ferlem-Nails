@@ -303,6 +303,9 @@ watch(
                         <VCard variant="outlined" rounded="lg" class="detail-tile"><VIcon icon="mdi-timer-sand" color="primary" /><div><span>Duración{{ appointment.is_shared && !canViewAll ? ' propia' : ' total' }}</span><strong>{{ appointment.visible_duration_minutes }} min</strong></div></VCard>
                     </div>
                     <VChip v-if="appointment.is_shared" color="secondary" variant="tonal" class="mt-4">Cita compartida</VChip>
+                    <VAlert v-if="appointment.outside_business_hours" type="warning" variant="tonal" density="compact" class="mt-4">
+                        Esta cita está fuera del horario de atención configurado actualmente.
+                    </VAlert>
 
                     <section class="mt-7">
                         <div class="section-title">Servicios reservados</div>

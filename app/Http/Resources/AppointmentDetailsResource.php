@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Actions\Appointments\CreateAppointmentAction;
 use App\Support\Money;
 use App\Support\Permissions;
+use App\Support\BusinessHours;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -42,6 +43,10 @@ class AppointmentDetailsResource extends JsonResource
         return [
             ...$base,
             'date' => CarbonImmutable::parse($base['visible_start'])->setTimezone(CreateAppointmentAction::TIMEZONE)->format('Y-m-d'),
+            'outside_business_hours' => ! BusinessHours::contains(
+                $this->scheduled_start->setTimezone(CreateAppointmentAction::TIMEZONE),
+                $this->scheduled_end->setTimezone(CreateAppointmentAction::TIMEZONE),
+            ),
             'created_by' => $this->when($viewAll, [
                 'id' => $this->createdBy->id,
                 'name' => $this->createdBy->name,

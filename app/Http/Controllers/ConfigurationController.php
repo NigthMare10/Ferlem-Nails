@@ -17,6 +17,9 @@ class ConfigurationController extends Controller
         if ($user->can(Permissions::SERVICES_VIEW)) {
             return redirect()->route('configuration.services.index');
         }
+        if ($user->can(Permissions::SETTINGS_BUSINESS_HOURS_MANAGE)) {
+            return redirect()->route('configuration.business-hours.index');
+        }
         abort(403);
     }
 }

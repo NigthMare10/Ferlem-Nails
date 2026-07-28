@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\AppointmentItem;
 use App\Models\User;
 use App\Support\Permissions;
+use App\Support\BusinessHours;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
@@ -16,8 +17,11 @@ class BuildAppointmentAvailabilityAction
         $this->authorizeAssignments($user, $items);
 
         $day = CarbonImmutable::createFromFormat('!Y-m-d', $date, CreateAppointmentAction::TIMEZONE);
-        $open = $this->at($day, config('appointments.open_time'));
-        $close = $this->at($day, config('appointments.close_time'));
+        $bounds = BusinessHours::bounds($day);
+        if ($bounds === null) {
+            return ['available_times' => [], 'has_availability' => false, 'operating_open_time' => null, 'operating_close_time' => null];
+        }
+        [$open, $close] = $bounds;
         $slotMinutes = (int) config('appointments.slot_minutes');
         $availableTimes = [];
 
@@ -82,10 +86,5 @@ class BuildAppointmentAvailabilityAction
         }
 
         return false;
-    }
-
-    private function at(CarbonImmutable $day, string $time): CarbonImmutable
-    {
-        return CarbonImmutable::createFromFormat('!Y-m-d H:i', $day->format('Y-m-d').' '.$time, CreateAppointmentAction::TIMEZONE);
     }
 }

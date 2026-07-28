@@ -78,6 +78,8 @@ final class Permissions
 
     public const SETTINGS_ACCESS = 'settings.access';
 
+    public const SETTINGS_BUSINESS_HOURS_MANAGE = 'settings.business_hours.manage';
+
     public const USERS_VIEW = 'users.view';
 
     public const USERS_CREATE = 'users.create';
@@ -117,7 +119,7 @@ final class Permissions
             self::APPOINTMENTS_ASSIGN, self::APPOINTMENTS_CANCEL, self::APPOINTMENTS_MARK_NO_SHOW,
             self::APPOINTMENTS_MANAGE_DEPOSIT, self::APPOINTMENTS_RESOLVE_DEPOSIT,
             self::APPOINTMENTS_CONVERT_TO_SALE,
-            self::SETTINGS_ACCESS, self::USERS_VIEW, self::USERS_CREATE, self::USERS_UPDATE,
+            self::SETTINGS_ACCESS, self::SETTINGS_BUSINESS_HOURS_MANAGE, self::USERS_VIEW, self::USERS_CREATE, self::USERS_UPDATE,
             self::USERS_ASSIGN_ROLE, self::USERS_TOGGLE_STATUS, self::USERS_RESET_PASSWORD,
             self::SERVICES_VIEW, self::SERVICES_CREATE, self::SERVICES_UPDATE, self::SERVICES_DELETE,
             self::SERVICES_TOGGLE_STATUS];

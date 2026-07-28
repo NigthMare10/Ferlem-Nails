@@ -100,6 +100,7 @@ export interface AppointmentDeposit {
 
 export interface AppointmentDetails extends Appointment {
     date: string;
+    outside_business_hours: boolean;
     created_by?: AppointmentAssignee;
     created_at: string;
     created_at_display: string;
