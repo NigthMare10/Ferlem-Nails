@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             BusinessHourSeeder::class,
             ExpenseCategorySeeder::class,
+            DailyCloseSettingSeeder::class,
         ]);
     }
 }

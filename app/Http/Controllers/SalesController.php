@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Appointments\CreateAppointmentAction;
+use App\Actions\Appointments\ProcessExpiredAppointmentsAction;
 use App\Actions\Sales\CancelSaleAction;
 use App\Actions\Sales\CreateSaleAction;
-use App\Actions\Appointments\ProcessExpiredAppointmentsAction;
-use App\Support\AppointmentCheckoutWindow;
-use App\Actions\Appointments\CreateAppointmentAction;
 use App\Http\Requests\CancelSaleRequest;
 use App\Http\Requests\CreateSaleRequest;
 use App\Http\Resources\SaleReceiptResource;
@@ -17,6 +16,7 @@ use App\Models\Sale;
 use App\Models\SalePayment;
 use App\Models\Service;
 use App\Models\User;
+use App\Support\AppointmentCheckoutWindow;
 use App\Support\Money;
 use App\Support\Permissions;
 use App\Support\SaleAccess;

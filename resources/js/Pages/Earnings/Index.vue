@@ -14,8 +14,6 @@ import type {
     EmployeeOption,
     EmployeeSummary,
     ExpenseActual,
-    ExpenseCategorySummary,
-    ExpenseDailySummary,
     ExpensePaymentDistribution,
     PaymentDistribution,
 } from '../../types/earnings';
@@ -26,6 +24,8 @@ const props = defineProps<{
     canViewProjection: boolean;
     canViewSales: boolean;
     canViewExpenses: boolean;
+    canManageDailyClose: boolean;
+    canDownloadDailyClose?: boolean;
     actual?: ActualResults;
     projection?: AppointmentProjection;
     employees: EmployeeSummary[];
@@ -33,13 +33,13 @@ const props = defineProps<{
     employeeOptions: EmployeeOption[];
     payment_distribution?: PaymentDistribution[];
     expense_actual?: ExpenseActual;
-    expense_categories?: ExpenseCategorySummary[];
-    expense_daily?: ExpenseDailySummary[];
     expense_payment_distribution?: ExpensePaymentDistribution[];
 }>();
+
 const { smAndDown } = useDisplay();
 const filtersOpen = ref(false);
-
+const requestError = ref('');
+const sendingClose = ref(false);
 const form = useForm({
     period: props.filters.period,
     mode: props.filters.mode,
@@ -47,8 +47,8 @@ const form = useForm({
     month: props.filters.month ?? '',
     date_from: props.filters.date_from ?? '',
     date_to: props.filters.date_to ?? '',
-    employee_id: props.filters.employee_id ?? null as number | null,
-    payment_method: props.filters.payment_method ?? null as 'cash' | 'card' | 'transfer' | null,
+    employee_id: props.filters.employee_id ?? (null as number | null),
+    payment_method: props.filters.payment_method ?? (null as 'cash' | 'card' | 'transfer' | null),
 });
 
 const periodOptions = [
@@ -70,65 +70,125 @@ const paymentMethodOptions = [
     { title: 'Transferencia', value: 'transfer' },
 ];
 const hasProjection = computed(() => Boolean(props.projection));
+const closeDate = computed(() => props.filters.date ?? props.period.end_date);
+const downloadUrl = computed(() => `/daily-close/download?date=${encodeURIComponent(closeDate.value)}`);
+const totalEmployeeGross = computed(() => props.employees.reduce((total, employee) => total + Number(employee.total_sold), 0));
+const hasSales = computed(() => (props.actual?.completed_sales_count ?? 0) > 0);
+const activeFilterSummary = computed(() => {
+    const items = [props.period.label];
+    if (props.canViewProjection) items.push(modeOptions.find((item) => item.value === props.filters.mode)?.title ?? 'Resultados');
+    if (props.filters.employee_id) items.push(props.employeeOptions.find((item) => item.id === props.filters.employee_id)?.name ?? 'Empleado');
+    if (props.filters.payment_method) items.push(paymentMethodOptions.find((item) => item.value === props.filters.payment_method)?.title ?? 'Método');
+    return items;
+});
+const kpis = computed(() =>
+    props.actual
+        ? [
+              {
+                  label: 'Ingresos brutos',
+                  value: money(props.actual.gross_revenue),
+                  icon: 'mdi-cash-multiple',
+                  context: `${count(props.actual.completed_sales_count)} ventas completadas`,
+                  tone: 'positive',
+              },
+              {
+                  label: 'Comisión POS',
+                  value: money(props.actual.pos_fee),
+                  icon: 'mdi-credit-card-minus-outline',
+                  context: 'Descuento de pagos con tarjeta',
+                  tone: Number(props.actual.pos_fee) > 0 ? 'neutral' : 'quiet',
+              },
+              {
+                  label: 'Ingreso neto',
+                  value: money(props.actual.net_income),
+                  icon: 'mdi-trending-up',
+                  context: `Promedio ${money(props.actual.average_sale)}`,
+                  tone: 'positive',
+              },
+              ...(props.actual.paid_expenses !== undefined
+                  ? [
+                        {
+                            label: 'Gastos pagados',
+                            value: money(props.actual.paid_expenses),
+                            icon: 'mdi-receipt-text-minus-outline',
+                            context: `${count(props.expense_actual?.expenses_count ?? 0)} registros`,
+                            tone: Number(props.actual.paid_expenses) > 0 ? 'neutral' : 'quiet',
+                        },
+                    ]
+                  : []),
+              ...(props.actual.available_result !== undefined
+                  ? [
+                        {
+                            label: 'Resultado disponible',
+                            value: money(props.actual.available_result),
+                            icon: Number(props.actual.available_result) < 0 ? 'mdi-trending-down' : 'mdi-wallet-check-outline',
+                            context: 'Ingreso neto menos gastos registrados',
+                            tone: Number(props.actual.available_result) < 0 ? 'negative' : 'result',
+                        },
+                    ]
+                  : []),
+          ]
+        : [],
+);
 const employeeHeaders = computed(() => [
     { title: 'Empleado', key: 'name' },
-    { title: 'Servicios realizados', key: 'services_count', align: 'end' as const },
-    { title: 'Bruto por servicios', key: 'total_sold', align: 'end' as const },
-    { title: 'Comisión POS asignada', key: 'card_fee_amount', align: 'end' as const },
+    { title: 'Servicios', key: 'services_count', align: 'end' as const },
+    { title: 'Ventas', key: 'sales_count', align: 'end' as const },
+    { title: 'Ingreso bruto', key: 'total_sold', align: 'end' as const },
+    { title: 'Comisión POS', key: 'card_fee_amount', align: 'end' as const },
+    { title: 'Comisión empleado', key: 'employee_commission', align: 'end' as const, sortable: false },
     { title: 'Ingreso neto', key: 'net_amount', align: 'end' as const },
-    ...(hasProjection.value ? [
-        { title: 'Servicios proyectados', key: 'projected_services_count', align: 'end' as const },
-        { title: 'Ingreso proyectado', key: 'projected_income', align: 'end' as const },
-    ] : []),
+    ...(hasProjection.value ? [{ title: 'Proyección', key: 'projected_income', align: 'end' as const }] : []),
+    { title: 'Participación', key: 'participation', align: 'end' as const, sortable: false },
 ]);
 const dailyHeaders = [
     { title: 'Fecha', key: 'date_label' },
     { title: 'Ventas', key: 'sales_count', align: 'end' as const },
-    { title: 'Servicios realizados', key: 'services_count', align: 'end' as const },
+    { title: 'Servicios', key: 'services_count', align: 'end' as const },
     { title: 'Ingresos brutos', key: 'total_sold', align: 'end' as const },
     { title: 'Comisión POS', key: 'card_fee_amount', align: 'end' as const },
     { title: 'Ingreso neto', key: 'net_amount', align: 'end' as const },
-    { title: 'Métodos de cobro', key: 'methods', sortable: false },
+    { title: 'Cobros', key: 'methods', sortable: false },
 ];
-const actualMetrics = computed(() => props.actual ? [
-    { label: 'Ingresos brutos reales', value: money(props.actual.gross_revenue), hint: `Promedio por venta: ${money(props.actual.average_sale)}` },
-    { label: 'Comisión POS real', value: money(props.actual.pos_fee) },
-    { label: 'Ingreso neto real', value: money(props.actual.net_income) },
-    { label: 'Ventas completadas', value: count(props.actual.completed_sales_count) },
-    { label: 'Servicios realizados', value: count(props.actual.performed_services_count) },
-    { label: 'Ventas anuladas', value: count(props.actual.canceled_sales_count), hint: `Monto anulado: ${money(props.actual.canceled_amount)}` },
-    ...(props.actual.paid_expenses !== undefined ? [{ label: 'Gastos pagados', value: money(props.actual.paid_expenses), hint: 'Solo gastos registrados en el periodo.' }] : []),
-    ...(props.actual.available_result !== undefined ? [{ label: 'Resultado disponible', value: money(props.actual.available_result), hint: 'Ingreso neto operativo menos gastos pagados.' }] : []),
-] : []);
-const projectionMetrics = computed(() => props.projection ? [
-    { label: 'Ingreso bruto proyectado', value: money(props.projection.projected_gross) },
-    { label: 'Saldo pendiente proyectado', value: money(props.projection.pending_balance) },
-    { label: 'Adelantos recibidos', value: money(props.projection.deposits_received), hint: 'No se suman al ingreso proyectado.' },
-    { label: 'Citas programadas', value: count(props.projection.appointments_count) },
-    { label: 'Servicios proyectados', value: count(props.projection.services_count) },
-] : []);
-const primaryMetrics = computed(() => props.actual ? [
-    { label: 'Ingresos brutos', value: money(props.actual.gross_revenue), tone: 'standard' },
-    { label: 'Comisión POS', value: money(props.actual.pos_fee), tone: 'muted' },
-    { label: 'Ingreso neto', value: money(props.actual.net_income), tone: 'standard' },
-    ...(props.actual.paid_expenses !== undefined ? [{ label: 'Gastos pagados', value: money(props.actual.paid_expenses), tone: 'muted' }] : []),
-    ...(props.actual.available_result !== undefined ? [{ label: 'Resultado disponible', value: money(props.actual.available_result), tone: Number(props.actual.available_result) < 0 ? 'negative' : 'result' }] : []),
-] : []);
 
 function money(value: string): string {
     return new Intl.NumberFormat('es-HN', { style: 'currency', currency: 'HNL' }).format(Number(value));
 }
-
 function count(value: number): string {
     return new Intl.NumberFormat('es-HN').format(value);
 }
-
-function applyFilters(): void {
-    if (!form.processing) form.get('/earnings', { preserveState: true, preserveScroll: true, replace: true });
+function participation(employee: EmployeeSummary): string {
+    return totalEmployeeGross.value === 0
+        ? '0%'
+        : `${new Intl.NumberFormat('es-HN', { maximumFractionDigits: 1 }).format((Number(employee.total_sold) * 100) / totalEmployeeGross.value)}%`;
 }
-
+function applyFilters(): void {
+    if (form.processing) return;
+    requestError.value = '';
+    form.get('/earnings', {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onError: () => {
+            requestError.value = 'No pudimos actualizar el informe. Revisa los filtros e inténtalo nuevamente.';
+        },
+    });
+}
 function resetFilters(): void {
     if (!form.processing) router.get('/earnings', {}, { replace: true });
+}
+function sendClose(): void {
+    sendingClose.value = true;
+    router.post(
+        '/daily-close/send',
+        { date: closeDate.value },
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                sendingClose.value = false;
+            },
+        },
+    );
 }
 </script>
 
@@ -136,147 +196,744 @@ function resetFilters(): void {
     <Head title="Ganancias Generales" />
     <AppLayout title="Ganancias Generales">
         <PageHeader
-            eyebrow="Resultados y agenda"
+            eyebrow="Pulso financiero"
             title="Ganancias Generales"
-            description="Compara servicios realizados con las citas programadas sin mezclar sus importes."
-        />
+            description="Lee ingresos, gastos y proyección con los mismos cálculos operativos del estudio."
+        >
+            <template #actions>
+                <VBtn v-if="canDownloadDailyClose ?? canManageDailyClose" :href="downloadUrl" variant="tonal" prepend-icon="mdi-file-pdf-box"
+                    >Descargar cierre</VBtn
+                >
+                <VBtn v-if="canManageDailyClose" color="primary" prepend-icon="mdi-email-fast-outline" :loading="sendingClose" @click="sendClose"
+                    >Enviar por correo</VBtn
+                >
+            </template>
+        </PageHeader>
 
-        <VAlert type="info" variant="tonal" density="compact" class="mb-6" icon="mdi-information-outline">
-            <template v-if="canViewExpenses">El resultado disponible utiliza únicamente las ventas y todos los gastos registrados, incluida la categoría Nómina. No incluye impuestos.</template>
-            <template v-else>El ingreso neto descuenta únicamente comisiones del POS. No incluye gastos, impuestos ni obligaciones pendientes.</template>
+        <VAlert v-if="requestError" type="error" variant="tonal" closable class="mb-5" @click:close="requestError = ''">{{ requestError }}</VAlert>
+        <VAlert v-if="!canViewSales" type="info" variant="tonal" density="compact" class="mb-5" icon="mdi-lock-outline"
+            >Tu acceso muestra gastos autorizados. Las ventas, empleados y métodos de cobro permanecen privados.</VAlert
+        >
+        <VAlert v-else-if="canViewExpenses" type="info" variant="tonal" density="compact" class="mb-5" icon="mdi-information-outline">
+            El resultado disponible resta todos los gastos registrados, incluida la categoría Nómina. No incluye impuestos.
         </VAlert>
 
-        <VCard class="surface-card earnings-filters mb-6">
-            <VProgressLinear v-if="form.processing" indeterminate color="primary" />
-            <VCardTitle class="d-flex align-center justify-space-between px-4 pt-4 text-body-1 font-weight-bold"><span>Filtros</span><VBtn v-if="smAndDown" variant="text" size="small" :append-icon="filtersOpen ? 'mdi-chevron-up' : 'mdi-chevron-down'" @click="filtersOpen = !filtersOpen">{{ filtersOpen ? 'Ocultar' : 'Mostrar' }}</VBtn></VCardTitle>
-            <VCardText v-show="!smAndDown || filtersOpen" class="pa-4 pt-2 pa-sm-5">
-                <VForm class="earnings-filter-form" @submit.prevent="applyFilters">
-                    <VRow class="filter-bar pa-2" align="start">
-                        <VCol v-if="canViewProjection" cols="12" sm="6" lg="2">
-                            <VSelect v-model="form.mode" label="Vista" :items="modeOptions" :error-messages="form.errors.mode" :disabled="form.processing" />
-                        </VCol>
-                        <VCol v-if="canViewSales || canViewProjection" cols="12" sm="6" lg="2">
-                            <VSelect v-model="form.period" label="Periodo" :items="periodOptions" :error-messages="form.errors.period" :disabled="form.processing" />
-                        </VCol>
-                        <VCol v-if="form.period === 'today' || form.period === 'week'" cols="12" sm="6" lg="2">
-                            <VTextField v-model="form.date" type="date" label="Fecha de referencia" :error-messages="form.errors.date" :disabled="form.processing" />
-                        </VCol>
-                        <VCol v-else-if="form.period === 'month'" cols="12" sm="6" lg="2">
-                            <VTextField v-model="form.month" type="month" label="Mes" :error-messages="form.errors.month" :disabled="form.processing" />
-                        </VCol>
-                        <template v-else>
-                            <VCol cols="12" sm="6" lg="2"><VTextField v-model="form.date_from" type="date" label="Desde" :error-messages="form.errors.date_from" :disabled="form.processing" /></VCol>
-                            <VCol cols="12" sm="6" lg="2"><VTextField v-model="form.date_to" type="date" label="Hasta" :error-messages="form.errors.date_to" :disabled="form.processing" /></VCol>
-                        </template>
-                        <VCol v-if="canViewSales" cols="12" sm="6" lg="2">
-                            <VSelect v-model="form.employee_id" label="Empleado" :items="employeeOptions" item-title="name" item-value="id" :error-messages="form.errors.employee_id" :disabled="form.processing" />
-                        </VCol>
-                        <VCol cols="12" sm="6" lg="2">
-                            <VSelect v-model="form.payment_method" label="Método de pago" :items="paymentMethodOptions" :error-messages="form.errors.payment_method" :disabled="form.processing" hint="Afecta solo las ventas reales; una venta mixta coincide con cualquiera de sus métodos." persistent-hint />
-                        </VCol>
-                        <VCol cols="12" lg="2" class="d-flex flex-wrap ga-2 filter-actions">
-                            <VBtn type="submit" color="primary" prepend-icon="mdi-filter-check-outline" :loading="form.processing">Aplicar</VBtn>
-                            <VBtn variant="text" prepend-icon="mdi-filter-off-outline" :disabled="form.processing" @click="resetFilters">Restablecer</VBtn>
-                        </VCol>
-                    </VRow>
-                </VForm>
-            </VCardText>
-        </VCard>
-
-        <section v-if="actual" class="report-section real-summary" :class="{ 'report-loading': form.processing }">
-            <div class="section-heading">
-                <div><div class="text-overline text-primary">Ventas completadas</div><h2 class="text-h5 font-weight-bold">Resumen principal</h2></div>
-                <span class="text-body-2 text-medium-emphasis">{{ period.label }}</span>
+        <section class="filter-shell" aria-labelledby="earnings-filter-title">
+            <div class="filter-shell__top">
+                <div>
+                    <h2 id="earnings-filter-title">Filtros del informe</h2>
+                    <div class="filter-summary">
+                        <span v-for="item in activeFilterSummary" :key="item">{{ item }}</span>
+                    </div>
+                </div>
+                <VBtn v-if="smAndDown" variant="text" :append-icon="filtersOpen ? 'mdi-chevron-up' : 'mdi-tune-variant'" @click="filtersOpen = !filtersOpen">{{
+                    filtersOpen ? 'Ocultar filtros' : 'Editar filtros'
+                }}</VBtn>
             </div>
-            <div class="primary-metrics"><div v-for="metric in primaryMetrics" :key="metric.label" class="primary-metric" :class="`primary-metric--${metric.tone}`"><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong></div></div>
-            <div class="real-support"><span>{{ count(actual.completed_sales_count) }} ventas completadas</span><span>{{ count(actual.performed_services_count) }} servicios realizados</span><span>Promedio por venta {{ money(actual.average_sale) }}</span><span v-if="actual.canceled_sales_count">{{ count(actual.canceled_sales_count) }} ventas anuladas · {{ money(actual.canceled_amount) }}</span></div>
+            <VProgressLinear v-if="form.processing" indeterminate color="primary" class="filter-progress" />
+            <VForm v-show="!smAndDown || filtersOpen" class="filter-form" @submit.prevent="applyFilters">
+                <VSelect
+                    v-if="canViewProjection"
+                    v-model="form.mode"
+                    label="Vista"
+                    :items="modeOptions"
+                    :error-messages="form.errors.mode"
+                    :disabled="form.processing"
+                />
+                <VSelect v-model="form.period" label="Periodo" :items="periodOptions" :error-messages="form.errors.period" :disabled="form.processing" />
+                <VTextField
+                    v-if="form.period === 'today' || form.period === 'week'"
+                    v-model="form.date"
+                    type="date"
+                    label="Fecha de referencia"
+                    :error-messages="form.errors.date"
+                    :disabled="form.processing"
+                />
+                <VTextField
+                    v-else-if="form.period === 'month'"
+                    v-model="form.month"
+                    type="month"
+                    label="Mes"
+                    :error-messages="form.errors.month"
+                    :disabled="form.processing"
+                />
+                <template v-else
+                    ><VTextField
+                        v-model="form.date_from"
+                        type="date"
+                        label="Desde"
+                        :error-messages="form.errors.date_from"
+                        :disabled="form.processing" /><VTextField
+                        v-model="form.date_to"
+                        type="date"
+                        label="Hasta"
+                        :error-messages="form.errors.date_to"
+                        :disabled="form.processing"
+                /></template>
+                <VSelect
+                    v-if="canViewSales"
+                    v-model="form.employee_id"
+                    label="Empleado"
+                    :items="employeeOptions"
+                    item-title="name"
+                    item-value="id"
+                    :error-messages="form.errors.employee_id"
+                    :disabled="form.processing"
+                />
+                <VSelect
+                    v-if="canViewSales"
+                    v-model="form.payment_method"
+                    label="Método de pago"
+                    :items="paymentMethodOptions"
+                    :error-messages="form.errors.payment_method"
+                    :disabled="form.processing"
+                />
+                <div class="filter-actions">
+                    <VBtn type="submit" color="primary" prepend-icon="mdi-filter-check-outline" :loading="form.processing">Aplicar</VBtn
+                    ><VBtn variant="text" prepend-icon="mdi-filter-off-outline" :disabled="form.processing" @click="resetFilters">Restablecer</VBtn>
+                </div>
+            </VForm>
         </section>
 
-        <section v-if="actual && payment_distribution" class="report-section" :class="{ 'report-loading': form.processing }"><div class="section-heading"><div><h2 class="text-h6 font-weight-bold">Métodos de cobro</h2><span class="text-body-2 text-medium-emphasis">Pagos recibidos en ventas completadas</span></div></div><VRow>
-                <VCol v-for="method in payment_distribution" :key="method.method" cols="12" md="4">
-                    <div class="method-summary"><div class="font-weight-bold">{{ method.method_label }}</div><strong>{{ money(method.amount) }}</strong><div class="text-caption text-medium-emphasis">{{ count(method.payments_count) }} pagos</div><template v-if="method.method === 'card'"><div class="text-caption mt-2">POS {{ money(method.card_fee_amount) }} · neto {{ money(method.net_amount) }}</div></template></div>
-                </VCol>
-            </VRow></section>
+        <div class="report-content" :class="{ 'report-content--loading': form.processing }" :aria-busy="form.processing">
+            <section v-if="actual" class="financial-summary" aria-labelledby="financial-summary-title">
+                <div class="section-heading">
+                    <div>
+                        <span>Ventas completadas</span>
+                        <h2 id="financial-summary-title">Resumen del periodo</h2>
+                    </div>
+                    <p>{{ period.label }}</p>
+                </div>
+                <div class="kpi-grid">
+                    <article v-for="kpi in kpis" :key="kpi.label" class="kpi" :class="`kpi--${kpi.tone}`">
+                        <VIcon :icon="kpi.icon" size="23" />
+                        <div>
+                            <span>{{ kpi.label }}</span
+                            ><strong>{{ kpi.value }}</strong
+                            ><small>{{ kpi.context }}</small>
+                        </div>
+                    </article>
+                </div>
+                <div v-if="actual.canceled_sales_count" class="cancellation-note">
+                    <VIcon icon="mdi-cancel" size="18" /><span
+                        >{{ count(actual.canceled_sales_count) }} ventas anuladas por {{ money(actual.canceled_amount) }}. No forman parte de los KPI.</span
+                    >
+                </div>
+            </section>
 
-        <section v-if="canViewExpenses && expense_actual" class="report-section" :class="{ 'report-loading': form.processing }">
-            <div class="section-heading"><div><div class="text-overline text-primary">Gastos operativos</div><h2 class="text-h5 font-weight-bold">Resumen de gastos</h2></div><span class="text-body-2 text-medium-emphasis">{{ period.label }}</span></div>
-            <VAlert v-if="form.employee_id" type="info" variant="tonal" density="compact" class="mb-4">El filtro de empleado afecta ventas y proyección. Los gastos generales permanecen completos y no se ocultan.</VAlert>
-            <VRow v-if="!actual"><VCol cols="12" sm="6" lg="4"><VCard class="metric-card h-100"><VCardText class="pa-5"><div class="text-body-2 text-medium-emphasis mb-3">Gastos pagados</div><div class="text-h5 font-weight-bold">{{ money(expense_actual.paid_expenses) }}</div><div class="text-caption mt-2">{{ count(expense_actual.expenses_count) }} gastos registrados</div></VCardText></VCard></VCol></VRow>
-        </section>
+            <section v-if="actual && payment_distribution" class="flow-section" aria-labelledby="payment-title">
+                <div class="section-heading">
+                    <div>
+                        <span>Liquidez</span>
+                        <h2 id="payment-title">Métodos de cobro</h2>
+                    </div>
+                    <p>Pagos recibidos en ventas completadas</p>
+                </div>
+                <div class="method-flow">
+                    <article v-for="method in payment_distribution" :key="method.method" class="method-flow__item">
+                        <div class="method-flow__name">
+                            <VIcon
+                                :icon="method.method === 'cash' ? 'mdi-cash' : method.method === 'card' ? 'mdi-credit-card-outline' : 'mdi-bank-transfer'"
+                                size="20"
+                            /><strong>{{ method.method_label }}</strong>
+                        </div>
+                        <strong class="method-flow__amount">{{ money(method.amount) }}</strong>
+                        <span
+                            >{{ count(method.payments_count) }} pagos<template v-if="method.method === 'card'">
+                                · POS {{ money(method.card_fee_amount) }} · neto {{ money(method.net_amount) }}</template
+                            ></span
+                        >
+                    </article>
+                </div>
+            </section>
 
-        <section v-if="canViewExpenses && expense_payment_distribution" class="report-section" :class="{ 'report-loading': form.processing }"><div class="section-heading"><div><h2 class="text-h6 font-weight-bold">Resumen de gastos</h2><span class="text-body-2 text-medium-emphasis">Gastos registrados por método de pago</span></div></div><VRow><VCol v-for="method in expense_payment_distribution" :key="method.method" cols="12" md="4"><div class="method-summary"><div class="font-weight-bold">{{ method.method_label }}</div><strong>{{ money(method.total) }}</strong><div class="text-caption text-medium-emphasis">{{ count(method.expenses_count) }} gastos</div></div></VCol></VRow></section>
+            <section v-if="canViewExpenses && expense_actual" class="flow-section" aria-labelledby="expense-title">
+                <div class="section-heading">
+                    <div>
+                        <span>Métodos de gasto</span>
+                        <h2 id="expense-title">Gastos del periodo</h2>
+                    </div>
+                    <p>{{ count(expense_actual.expenses_count) }} movimientos · {{ money(expense_actual.paid_expenses) }}</p>
+                </div>
+                <VAlert v-if="form.employee_id" type="info" variant="tonal" density="compact" class="mb-4"
+                    >El filtro de empleado afecta ventas y proyección; los gastos generales permanecen completos.</VAlert
+                >
+                <div v-if="expense_payment_distribution" class="expense-methods">
+                    <div v-for="method in expense_payment_distribution" :key="method.method">
+                        <span>{{ method.method_label }}</span
+                        ><strong>{{ money(method.total) }}</strong
+                        ><small>{{ count(method.expenses_count) }} gastos</small>
+                    </div>
+                </div>
+            </section>
 
-        <VCard v-if="canViewExpenses && expense_categories?.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }"><VCardItem class="pa-5 pb-2"><VCardTitle>Gastos por categoría</VCardTitle><VCardSubtitle>Solo categorías con gastos registrados en el periodo</VCardSubtitle></VCardItem><VDataTable :headers="[{ title: 'Categoría', key: 'category_name' }, { title: 'Cantidad de gastos', key: 'expenses_count', align: 'end' }, { title: 'Total', key: 'total', align: 'end' }]" :items="expense_categories" class="desktop-table" :items-per-page="-1" hide-default-footer><template #item.total="{ item }"><strong>{{ money(item.total) }}</strong></template></VDataTable><div class="mobile-cards pa-4 pt-2"><VCard v-for="category in expense_categories" :key="category.category_name" variant="outlined" class="mb-3"><VCardTitle class="text-body-1">{{ category.category_name }}</VCardTitle><VCardText><div class="mobile-stat"><span>Gastos</span><strong>{{ count(category.expenses_count) }}</strong></div><div class="mobile-stat"><span>Total</span><strong>{{ money(category.total) }}</strong></div></VCardText></VCard></div></VCard>
+            <section v-if="projection" class="projection-band" aria-labelledby="projection-title">
+                <div class="projection-band__intro">
+                    <span>Agenda programada</span>
+                    <h2 id="projection-title">Proyección</h2>
+                    <p>Expectativa basada solo en citas programadas; los adelantos no se suman dos veces.</p>
+                </div>
+                <div class="projection-band__metrics">
+                    <div>
+                        <span>Bruto proyectado</span><strong>{{ money(projection.projected_gross) }}</strong>
+                    </div>
+                    <div>
+                        <span>Saldo pendiente</span><strong>{{ money(projection.pending_balance) }}</strong>
+                    </div>
+                    <div>
+                        <span>Adelantos recibidos</span><strong>{{ money(projection.deposits_received) }}</strong>
+                    </div>
+                    <div>
+                        <span>Agenda</span><strong>{{ count(projection.appointments_count) }} citas · {{ count(projection.services_count) }} servicios</strong>
+                    </div>
+                </div>
+            </section>
 
-        <VCard v-if="canViewExpenses && expense_daily?.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }"><VCardItem class="pa-5 pb-2"><VCardTitle>Gastos por día</VCardTitle><VCardSubtitle>Solo días con gastos registrados</VCardSubtitle></VCardItem><VDataTable :headers="[{ title: 'Fecha', key: 'date_label' }, { title: 'Cantidad', key: 'expenses_count', align: 'end' }, { title: 'Total', key: 'total', align: 'end' }]" :items="expense_daily" class="desktop-table" :items-per-page="-1" hide-default-footer><template #item.total="{ item }"><strong>{{ money(item.total) }}</strong></template></VDataTable><div class="mobile-cards pa-4 pt-2"><VCard v-for="day in expense_daily" :key="day.date" variant="outlined" class="mb-3"><VCardTitle class="text-body-1">{{ day.date_label }}</VCardTitle><VCardText><div class="mobile-stat"><span>Gastos</span><strong>{{ count(day.expenses_count) }}</strong></div><div class="mobile-stat"><span>Total</span><strong>{{ money(day.total) }}</strong></div></VCardText></VCard></div></VCard>
-        <VCard v-else-if="canViewExpenses && expense_actual" class="surface-card report-section"><EmptyState icon="mdi-cash-minus" title="No hay gastos en este periodo" description="Los gastos registrados aparecerán aquí sin fabricar días con cero." /></VCard>
+            <section class="report-panel" aria-labelledby="employee-title">
+                <div class="section-heading report-panel__heading">
+                    <div>
+                        <span>Contribución real</span>
+                        <h2 id="employee-title">Rendimiento por empleado</h2>
+                    </div>
+                    <p>El servicio se atribuye a quien lo realiza, no a quien cobra</p>
+                </div>
+                <template v-if="employees.length">
+                    <VDataTable :headers="employeeHeaders" :items="employees" class="desktop-table" :items-per-page="-1" hide-default-footer>
+                        <template #item.total_sold="{ item }"
+                            ><strong>{{ money(item.total_sold) }}</strong></template
+                        ><template #item.card_fee_amount="{ item }">{{ money(item.card_fee_amount) }}</template
+                        ><template #item.employee_commission><span class="text-medium-emphasis">No configurada</span></template
+                        ><template #item.net_amount="{ item }"
+                            ><strong>{{ money(item.net_amount) }}</strong></template
+                        ><template #item.projected_income="{ item }">{{ money(item.projected_income ?? '0.00') }}</template
+                        ><template #item.participation="{ item }"
+                            ><strong>{{ participation(item) }}</strong></template
+                        >
+                    </VDataTable>
+                    <div class="mobile-cards employee-cards">
+                        <article v-for="employee in employees" :key="employee.id" class="employee-card">
+                            <div class="employee-card__head">
+                                <div>
+                                    <strong>{{ employee.name }}</strong
+                                    ><span>{{ count(employee.services_count) }} servicios · {{ count(employee.sales_count) }} ventas</span>
+                                </div>
+                                <b>{{ participation(employee) }}</b>
+                            </div>
+                            <dl>
+                                <div>
+                                    <dt>Ingreso bruto</dt>
+                                    <dd>{{ money(employee.total_sold) }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Comisión POS</dt>
+                                    <dd>{{ money(employee.card_fee_amount) }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Comisión empleado</dt>
+                                    <dd>No configurada</dd>
+                                </div>
+                                <div>
+                                    <dt>Ingreso neto</dt>
+                                    <dd>{{ money(employee.net_amount) }}</dd>
+                                </div>
+                                <div v-if="hasProjection">
+                                    <dt>Proyección</dt>
+                                    <dd>{{ money(employee.projected_income ?? '0.00') }}</dd>
+                                </div>
+                            </dl>
+                        </article>
+                    </div>
+                </template>
+                <EmptyState
+                    v-else
+                    icon="mdi-account-off-outline"
+                    title="Sin rendimiento para mostrar"
+                    description="No hay servicios atribuidos a empleados con los filtros seleccionados."
+                />
+            </section>
 
-        <section v-if="projection" class="report-section projection-section" :class="{ 'report-loading': form.processing }">
-            <div class="section-heading">
-                <div><div class="text-overline text-primary">Agenda programada</div><h2 class="text-h5 font-weight-bold">Proyección</h2></div>
-                <span class="text-body-2 text-medium-emphasis">Solo citas programadas</span>
-            </div>
-            <VRow>
-                <VCol v-for="metric in projectionMetrics" :key="metric.label" cols="12" sm="6" lg="4">
-                    <VCard class="metric-card projection-card h-100"><VCardText class="pa-5"><div class="text-body-2 text-medium-emphasis mb-3">{{ metric.label }}</div><div class="text-h5 font-weight-bold">{{ metric.value }}</div><div v-if="metric.hint" class="text-caption mt-2">{{ metric.hint }}</div></VCardText></VCard>
-                </VCol>
-            </VRow>
-        </section>
+            <section class="report-panel" aria-labelledby="daily-title">
+                <div class="section-heading report-panel__heading">
+                    <div>
+                        <span>Detalle temporal</span>
+                        <h2 id="daily-title">Resultados diarios</h2>
+                    </div>
+                    <p>Solo ventas completadas</p>
+                </div>
+                <template v-if="daily?.length">
+                    <VDataTable :headers="dailyHeaders" :items="daily" class="desktop-table" :items-per-page="-1" hide-default-footer
+                        ><template #item.total_sold="{ item }"
+                            ><strong>{{ money(item.total_sold) }}</strong></template
+                        ><template #item.card_fee_amount="{ item }">{{ money(item.card_fee_amount) }}</template
+                        ><template #item.net_amount="{ item }"
+                            ><strong>{{ money(item.net_amount) }}</strong></template
+                        ><template #item.methods="{ item }"
+                            ><div class="daily-methods">
+                                <span v-for="method in item.methods.filter((entry) => Number(entry.amount) > 0)" :key="method.method"
+                                    >{{ method.method_label }} {{ money(method.amount) }}</span
+                                >
+                            </div></template
+                        ></VDataTable
+                    >
+                    <div class="mobile-cards daily-cards">
+                        <article v-for="day in daily" :key="day.date" class="daily-card">
+                            <div>
+                                <strong>{{ day.date_label }}</strong
+                                ><span>{{ count(day.sales_count) }} ventas · {{ count(day.services_count) }} servicios</span>
+                            </div>
+                            <dl>
+                                <div>
+                                    <dt>Bruto</dt>
+                                    <dd>{{ money(day.total_sold) }}</dd>
+                                </div>
+                                <div>
+                                    <dt>POS</dt>
+                                    <dd>{{ money(day.card_fee_amount) }}</dd>
+                                </div>
+                                <div>
+                                    <dt>Neto</dt>
+                                    <dd>{{ money(day.net_amount) }}</dd>
+                                </div>
+                            </dl>
+                            <p>
+                                <span v-for="method in day.methods.filter((entry) => Number(entry.amount) > 0)" :key="method.method"
+                                    >{{ method.method_label }} {{ money(method.amount) }}</span
+                                >
+                            </p>
+                        </article>
+                    </div>
+                </template>
+                <EmptyState
+                    v-else
+                    icon="mdi-chart-box-outline"
+                    title="No hay ventas en este periodo"
+                    description="Las ventas completadas aparecerán aquí automáticamente; anulaciones y citas no se mezclan."
+                />
+            </section>
 
-        <VCard v-if="employees.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }">
-            <VCardItem class="pa-5 pb-2"><VCardTitle>Rendimiento por empleado</VCardTitle><VCardSubtitle>Servicios atribuidos a quien los realiza, no a quien cobra</VCardSubtitle></VCardItem>
-            <VDataTable :headers="employeeHeaders" :items="employees" class="desktop-table" :items-per-page="-1" hide-default-footer>
-                <template #item.total_sold="{ item }"><strong>{{ money(item.total_sold) }}</strong></template>
-                <template #item.card_fee_amount="{ item }">{{ money(item.card_fee_amount) }}</template>
-                <template #item.net_amount="{ item }"><strong>{{ money(item.net_amount) }}</strong></template>
-                <template #item.projected_income="{ item }"><strong>{{ money(item.projected_income ?? '0.00') }}</strong></template>
-            </VDataTable>
-            <div class="mobile-cards pa-4 pt-2">
-                <VCard v-for="employee in employees" :key="employee.id" variant="outlined" class="mb-3">
-                    <VCardTitle class="pa-4 pb-2 text-body-1 font-weight-bold">{{ employee.name }}</VCardTitle>
-                    <VCardText>
-                        <div class="mobile-stat"><span>Servicios realizados</span><strong>{{ count(employee.services_count) }}</strong></div>
-                        <div class="mobile-stat"><span>Bruto por servicios</span><strong>{{ money(employee.total_sold) }}</strong></div>
-                        <div class="mobile-stat"><span>Comisión POS asignada</span><strong>{{ money(employee.card_fee_amount) }}</strong></div>
-                        <div class="mobile-stat"><span>Ingreso neto</span><strong>{{ money(employee.net_amount) }}</strong></div>
-                        <div v-if="hasProjection" class="mobile-stat"><span>Servicios proyectados</span><strong>{{ count(employee.projected_services_count ?? 0) }}</strong></div>
-                        <div v-if="hasProjection" class="mobile-stat"><span>Ingreso proyectado</span><strong>{{ money(employee.projected_income ?? '0.00') }}</strong></div>
-                    </VCardText>
-                </VCard>
-            </div>
-        </VCard>
-
-        <VCard v-if="daily?.length" class="surface-card report-section" :class="{ 'report-loading': form.processing }">
-            <VCardItem class="pa-5 pb-2"><VCardTitle>Resultados reales por día</VCardTitle><VCardSubtitle>Calculados desde ventas completadas</VCardSubtitle></VCardItem>
-            <VDataTable :headers="dailyHeaders" :items="daily" class="desktop-table" :items-per-page="-1" hide-default-footer>
-                <template #item.total_sold="{ item }"><strong>{{ money(item.total_sold) }}</strong></template>
-                <template #item.card_fee_amount="{ item }">{{ money(item.card_fee_amount) }}</template>
-                <template #item.net_amount="{ item }"><strong>{{ money(item.net_amount) }}</strong></template>
-                <template #item.methods="{ item }"><div class="daily-methods"><span v-for="method in item.methods.filter(entry => Number(entry.amount) > 0)" :key="method.method">{{ method.method_label }}: <strong>{{ money(method.amount) }}</strong></span></div></template>
-            </VDataTable>
-            <div class="mobile-cards pa-4 pt-2"><VCard v-for="day in daily" :key="day.date" variant="outlined" class="mb-3"><VCardTitle class="pa-4 pb-2 text-body-1">{{ day.date_label }}</VCardTitle><VCardText><div class="mobile-stat"><span>Ventas</span><strong>{{ count(day.sales_count) }}</strong></div><div class="mobile-stat"><span>Servicios</span><strong>{{ count(day.services_count) }}</strong></div><div class="mobile-stat"><span>Bruto</span><strong>{{ money(day.total_sold) }}</strong></div><div class="mobile-stat"><span>Comisión POS</span><strong>{{ money(day.card_fee_amount) }}</strong></div><div class="mobile-stat"><span>Ingreso neto</span><strong>{{ money(day.net_amount) }}</strong></div><div v-for="method in day.methods.filter(entry => Number(entry.amount) > 0)" :key="method.method" class="mobile-stat"><span>{{ method.method_label }}</span><strong>{{ money(method.amount) }}</strong></div></VCardText></VCard></div>
-        </VCard>
-        <VCard v-else-if="actual" class="surface-card report-section"><EmptyState icon="mdi-chart-box-outline" title="No hay ventas en este periodo" description="Las ventas completadas aparecerán aquí automáticamente." /></VCard>
+            <VAlert v-if="actual && !hasSales" type="info" variant="tonal" icon="mdi-information-outline"
+                >El informe está completo, pero no existen ventas con los filtros actuales. Los importes en cero son resultados reales, no datos
+                faltantes.</VAlert
+            >
+        </div>
     </AppLayout>
 </template>
 
 <style scoped>
-.filter-actions { align-items: center; min-height: 56px; }
-.earnings-filters { box-shadow: var(--sl-shadow-raised); }
-.report-section { margin-top: 32px; }
-.section-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
-.section-heading h2 { margin: 0 0 3px; }
-.primary-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--sl-border); border-radius: var(--sl-radius-surface); background: var(--sl-border); }.primary-metric { display: grid; min-height: 118px; align-content: space-between; gap: 14px; padding: 18px; background: var(--sl-surface); }.primary-metric span { color: rgba(var(--v-theme-on-surface), .62); font-size: .78rem; }.primary-metric strong { font-size: 1.25rem; letter-spacing: -.02em; }.primary-metric--result { color: rgb(var(--v-theme-on-primary)); background: rgb(var(--v-theme-primary)); }.primary-metric--result span { color: rgba(var(--v-theme-on-primary), .76); }.primary-metric--negative { color: rgb(var(--v-theme-on-error)); background: rgb(var(--v-theme-error)); }.primary-metric--negative span { color: rgba(var(--v-theme-on-error), .78); }.real-support { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; color: rgba(var(--v-theme-on-surface), .64); font-size: .8rem; }.method-summary { display: grid; min-height: 124px; align-content: start; gap: 8px; padding: 18px; border: 1px solid var(--sl-border); border-radius: var(--sl-radius-compact); background: color-mix(in oklch, var(--sl-surface) 94%, var(--sl-secondary) 6%); }.method-summary strong { font-size: 1.12rem; }
-.projection-section { padding: 24px; border: 1px solid var(--sl-glass-border); border-radius: var(--sl-radius-surface); background: var(--sl-glass); box-shadow: var(--sl-shadow-raised); }
-.projection-card { background: color-mix(in oklch, var(--sl-surface), var(--sl-secondary) 10%); box-shadow: var(--sl-shadow-inset); }
-.report-loading { pointer-events: none; opacity: .58; transition: opacity 160ms ease; }
-.mobile-stat { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 7px 0; color: rgba(var(--v-theme-on-surface), .68); }
-.mobile-stat strong { color: rgb(var(--v-theme-on-surface)); text-align: right; }
-.daily-methods { display: grid; gap: 3px; white-space: nowrap; }
+.filter-shell {
+    position: relative;
+    margin-bottom: 34px;
+    padding: 18px;
+    border-radius: var(--sl-radius-surface);
+    background: color-mix(in oklch, var(--sl-surface-soft) 78%, var(--sl-surface));
+    box-shadow: var(--sl-shadow-inset);
+}
+.filter-shell__top {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 16px;
+}
+.filter-shell h2 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+}
+.filter-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.filter-summary span {
+    padding: 4px 9px;
+    color: var(--sl-primary-strong);
+    border-radius: var(--sl-radius-pill);
+    background: color-mix(in oklch, var(--sl-secondary) 22%, var(--sl-surface));
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.filter-progress {
+    position: absolute;
+    right: 16px;
+    bottom: 0;
+    left: 16px;
+    width: auto;
+}
+.filter-form {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(130px, 1fr));
+    align-items: start;
+    gap: 12px;
+    margin-top: 18px;
+}
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 56px;
+}
+.report-content {
+    display: grid;
+    gap: 42px;
+    transition: opacity var(--sl-duration-fast) var(--sl-ease);
+}
+.report-content--loading {
+    pointer-events: none;
+    opacity: 0.52;
+}
+.section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 16px;
+}
+.section-heading span,
+.projection-band__intro > span {
+    color: var(--sl-primary);
+    font-size: var(--sl-label-size);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.section-heading h2,
+.projection-band h2 {
+    margin: 3px 0 0;
+    font-size: var(--sl-section-title-size);
+}
+.section-heading p {
+    max-width: 52ch;
+    margin: 0;
+    color: var(--sl-text-muted);
+    text-align: right;
+}
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+}
+.kpi {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 12px;
+    min-height: 142px;
+    padding: 20px;
+    border-radius: var(--sl-radius-surface);
+    background: var(--sl-surface);
+    box-shadow: 0 9px 24px oklch(32% 0.025 346 / 0.07);
+}
+.kpi > .v-icon {
+    color: var(--sl-primary);
+}
+.kpi div {
+    display: grid;
+    align-content: space-between;
+    gap: 6px;
+}
+.kpi span,
+.kpi small {
+    color: var(--sl-text-muted);
+}
+.kpi strong {
+    font-size: var(--sl-metric-size);
+    letter-spacing: -0.025em;
+    white-space: nowrap;
+}
+.kpi--positive {
+    grid-column: span 2;
+}
+.kpi--neutral,
+.kpi--quiet {
+    grid-column: span 2;
+    background: var(--sl-surface-soft);
+}
+.kpi--result,
+.kpi--negative {
+    grid-column: span 2;
+    background: color-mix(in oklch, var(--sl-secondary) 28%, var(--sl-surface));
+    box-shadow: 0 12px 28px var(--sl-plum-relief);
+}
+.kpi--result strong {
+    color: var(--sl-primary-strong);
+}
+.kpi--negative {
+    background: color-mix(in oklch, var(--sl-error) 10%, var(--sl-surface));
+}
+.kpi--negative strong,
+.kpi--negative > .v-icon {
+    color: var(--sl-error);
+}
+.cancellation-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    color: var(--sl-text-muted);
+    font-size: var(--sl-label-size);
+}
+.method-flow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    overflow: hidden;
+    border-radius: var(--sl-radius-surface);
+    background: var(--sl-surface-soft);
+}
+.method-flow__item {
+    display: grid;
+    align-content: start;
+    gap: 8px;
+    min-height: 132px;
+    padding: 20px;
+}
+.method-flow__item + .method-flow__item {
+    border-left: 1px solid var(--sl-border);
+}
+.method-flow__name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.method-flow__amount {
+    font-size: var(--sl-metric-size);
+}
+.method-flow__item > span {
+    color: var(--sl-text-muted);
+    font-size: var(--sl-label-size);
+}
+.expense-methods {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    overflow: hidden;
+    border-radius: var(--sl-radius-surface);
+    background: var(--sl-border);
+}
+.expense-methods > div {
+    display: grid;
+    gap: 5px;
+    padding: 18px;
+    background: var(--sl-surface);
+}
+.expense-methods span,
+.expense-methods small {
+    color: var(--sl-text-muted);
+}
+.projection-band {
+    display: grid;
+    grid-template-columns: minmax(230px, 0.7fr) minmax(0, 1.3fr);
+    gap: 32px;
+    padding: 26px;
+    border-radius: var(--sl-radius-surface);
+    background: color-mix(in oklch, var(--sl-secondary) 18%, var(--sl-surface));
+    box-shadow: var(--sl-shadow-inset);
+}
+.projection-band__intro p {
+    margin: 10px 0 0;
+    color: var(--sl-text-muted);
+}
+.projection-band__metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    overflow: hidden;
+    border-radius: var(--sl-radius-compact);
+    background: var(--sl-border);
+}
+.projection-band__metrics div {
+    display: grid;
+    gap: 5px;
+    padding: 15px;
+    background: color-mix(in oklch, var(--sl-surface) 86%, transparent);
+}
+.projection-band__metrics span {
+    color: var(--sl-text-muted);
+    font-size: var(--sl-label-size);
+}
+.report-panel {
+    overflow: hidden;
+    border-radius: var(--sl-radius-surface);
+    background: var(--sl-surface);
+    box-shadow: 0 10px 28px oklch(32% 0.025 346 / 0.065);
+}
+.report-panel__heading {
+    padding: 20px 22px 4px;
+}
+.daily-methods {
+    display: grid;
+    gap: 2px;
+    color: var(--sl-text-muted);
+    font-size: var(--sl-label-size);
+    white-space: nowrap;
+}
+.mobile-cards {
+    display: none;
+}
+.employee-cards,
+.daily-cards {
+    padding: 0 14px 14px;
+}
+.employee-card,
+.daily-card {
+    padding: 16px;
+    border-radius: var(--sl-radius-compact);
+    background: var(--sl-surface-soft);
+}
+.employee-card + .employee-card,
+.daily-card + .daily-card {
+    margin-top: 10px;
+}
+.employee-card__head,
+.daily-card > div:first-child {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.employee-card__head > div,
+.daily-card > div:first-child {
+    display: grid;
+    gap: 3px;
+}
+.employee-card__head span,
+.daily-card span {
+    color: var(--sl-text-muted);
+    font-size: var(--sl-label-size);
+}
+.employee-card__head b {
+    color: var(--sl-primary);
+}
+.employee-card dl,
+.daily-card dl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px 18px;
+    margin: 0;
+}
+.employee-card dl div,
+.daily-card dl div {
+    display: grid;
+    gap: 2px;
+}
+.employee-card dt,
+.daily-card dt {
+    color: var(--sl-text-muted);
+    font-size: 0.75rem;
+}
+.employee-card dd,
+.daily-card dd {
+    margin: 0;
+    font-weight: 700;
+}
+.daily-card p {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    margin: 12px 0 0;
+}
+@media (max-width: 1180px) {
+    .filter-form {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .kpi,
+    .kpi--positive,
+    .kpi--neutral,
+    .kpi--quiet,
+    .kpi--result,
+    .kpi--negative {
+        grid-column: span 1;
+    }
+    .kpi--result,
+    .kpi--negative {
+        grid-column: span 2;
+    }
+}
+@media (max-width: 800px) {
+    .filter-form {
+        grid-template-columns: 1fr 1fr;
+    }
+    .kpi-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .kpi,
+    .kpi--positive,
+    .kpi--neutral,
+    .kpi--quiet {
+        grid-column: span 1;
+    }
+    .kpi--result,
+    .kpi--negative {
+        grid-column: 1 / -1;
+    }
+    .projection-band {
+        grid-template-columns: 1fr;
+    }
+}
 @media (max-width: 700px) {
-    .filter-actions .v-btn { flex: 1 1 140px; }
-    .section-heading { align-items: start; flex-direction: column; }
-    .primary-metrics { grid-template-columns: 1fr; gap: 1px; }.primary-metric { min-height: 88px; grid-template-columns: 1fr auto; align-items: end; }.real-support { display: grid; gap: 6px; }
-    .projection-section { padding: 16px 12px; margin-inline: -4px; }
+    .section-heading {
+        align-items: start;
+        flex-direction: column;
+        gap: 5px;
+    }
+    .section-heading p {
+        text-align: left;
+    }
+    .desktop-table {
+        display: none;
+    }
+    .mobile-cards {
+        display: block;
+    }
+    .method-flow,
+    .expense-methods {
+        grid-template-columns: 1fr;
+    }
+    .method-flow__item {
+        min-height: 105px;
+    }
+    .method-flow__item + .method-flow__item {
+        border-top: 1px solid var(--sl-border);
+        border-left: 0;
+    }
+}
+@media (max-width: 600px) {
+    .filter-shell {
+        margin-inline: -4px;
+        padding: 14px;
+    }
+    .filter-form,
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .kpi,
+    .kpi--result,
+    .kpi--negative {
+        grid-column: 1;
+        min-height: 112px;
+    }
+    .filter-actions {
+        flex-wrap: wrap;
+    }
+    .filter-actions .v-btn {
+        flex: 1 1 130px;
+    }
+    .projection-band {
+        padding: 20px 16px;
+    }
+    .projection-band__metrics {
+        grid-template-columns: 1fr;
+    }
+    .report-panel {
+        margin-inline: -4px;
+    }
+    .report-panel__heading {
+        padding-inline: 16px;
+    }
+    .employee-card dl,
+    .daily-card dl {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 </style>

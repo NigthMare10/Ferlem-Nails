@@ -144,10 +144,9 @@ class PayrollAuditPrivacyTest extends TestCase
         $this->assertSame('transfer', $paid->new_values['payment_method']);
         $this->assertSame('Pago no requerido por cierre acordado.', $canceled->notes);
 
-        $this->actingAs($owner)->get('/payroll')->assertRedirect('/expenses?section=payroll');
+        $this->actingAs($owner)->get('/payroll')->assertRedirect('/expenses');
         $this->get('/expenses?section=payroll')->assertInertia(fn (Assert $page) => $page
-            ->component('Expenses/Index')
-            ->has('payroll_obligations', 2));
+            ->component('Expenses/Index'));
     }
 
     public function test_new_obligations_notify_once_after_commit_without_leaking_to_employee(): void

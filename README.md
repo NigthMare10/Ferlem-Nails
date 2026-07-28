@@ -1,58 +1,81 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Studio Lemus
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicación Laravel 13 + Vue/Inertia para agenda, ventas, comprobantes, gastos, ganancias, configuración y cierres diarios de Studio Lemus.
 
-## About Laravel
+## Requisitos
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.3 con `pdo_mysql` y `pdo_sqlite` para las pruebas.
+- Composer 2.
+- Node.js compatible con Vite 8.
+- MySQL para desarrollo/producción.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Instalación local
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+npm install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate:fresh --seed
+npm run build
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+El seeder local/testing crea la configuración inicial del cierre a las `21:00`, zona `America/Tegucigalpa` y envío automático desactivado. Las credenciales SMTP y destinatarios se configuran desde la interfaz.
 
-## Contributing
+## Cierre diario
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+La arquitectura usa:
 
-## Code of Conduct
+- `daily_close_settings`: hora, SMTP cifrado, remitente, destinatarios y activación.
+- `daily_close_setting_events`: auditoría append-only de cambios.
+- `daily_close_reports`: historial por destinatario, estado, intentos, PDF y error sanitizado.
+- `DailyCloseReportData`: consume las acciones financieras existentes sin duplicar fórmulas.
+- `DailyClosePdfGenerator`: genera con Dompdf y guarda en el disco privado `daily_closures`.
+- `DailyCloseReportMail`: correo breve con resumen y PDF adjunto desde almacenamiento privado.
+- `studio:dispatch-daily-close-email`: revisión síncrona de configuraciones vencidas, sin worker permanente.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Los PDFs viven bajo `storage/app/private/daily-closures`. No se enlazan con `storage:link` y solo se descargan mediante una ruta autenticada con `daily_close.view`.
 
-## Security Vulnerabilities
+### SMTP y cron
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Host, puerto, usuario, contraseña, TLS/SSL, remitente y destinatarios se administran en `Configuración > Cierre diario`. La contraseña usa el cast cifrado de Laravel y nunca se devuelve al frontend. Si el campo queda vacío al editar, se conserva el valor existente.
 
-## License
+En hosting compartido, programa un solo cron cada minuto:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```cron
+* * * * * cd /ruta/studio-lemus && php artisan schedule:run >> /dev/null 2>&1
+```
+
+El cierre se procesa dentro del scheduler y no requiere worker. Revisa `daily_close_settings.send_time` en `America/Tegucigalpa`; la clave única de fecha + correo evita duplicados y `--force` crea un reenvío manual explícito.
+
+### Operación manual
+
+```bash
+php artisan studio:send-daily-close-email --date=2026-07-28
+php artisan studio:send-daily-close-email --date=2026-07-28 --force
+php artisan studio:dispatch-daily-close-email
+```
+
+También puede generarse, descargarse y enviarse desde Ganancias o desde `Configuración > Cierre diario`.
+
+## Permisos
+
+- `daily_close.view`: ver configuración, historial y descargar PDFs.
+- `daily_close.manage`: modificar hora, SMTP, remitente, activación y destinatarios.
+- `daily_close.send`: solicitar pruebas y envíos manuales.
+
+Owner recibe los tres permisos. Otros roles solo acceden si se les asignan explícitamente. Los endpoints validan usuario activo, permiso, modelo solicitado y correos únicos; los envíos de prueba/manual tienen rate limit.
+
+## Validación
+
+```bash
+php artisan test
+vendor/bin/pint --test
+npm run lint
+npm run typecheck
+npm run format:check
+npm run build
+composer validate --strict
+```
+
+Las pruebas usan SQLite en memoria, almacenamiento privado fake y un emisor SMTP simulado; nunca conectan con un servidor externo. MySQL sigue siendo necesario para validar planes de consulta y bloqueos de producción.

@@ -6,11 +6,10 @@ use App\Models\Expense;
 use App\Models\User;
 use App\Support\Money;
 use App\Support\ReportPeriod;
-use Carbon\CarbonImmutable;
 
 final class BuildExpensesSummaryAction
 {
-    public function execute(array $filters, ?User $user = null): array
+    public function execute(array $filters, ?User $user = null, bool $includeCategoryBreakdown = true): array
     {
         $period = $filters['period'] ?? 'today';
         [$localStart, $localEnd, $referenceDate] = ReportPeriod::bounds($filters);
@@ -23,35 +22,20 @@ final class BuildExpensesSummaryAction
             ->selectRaw('COUNT(*) as expenses_count')
             ->selectRaw('COALESCE(SUM(amount), 0) as amount')
             ->first();
-        $categories = (clone $query)->toBase()
-            ->select('category_name_snapshot')
-            ->selectRaw('COUNT(*) as expenses_count')
-            ->selectRaw('COALESCE(SUM(amount), 0) as amount')
-            ->groupBy('category_name_snapshot')
-            ->orderByRaw('SUM(amount) DESC')
-            ->get()
-            ->map(fn ($row) => [
-                'category_name' => $row->category_name_snapshot,
-                'expenses_count' => (int) $row->expenses_count,
-                'total' => Money::fromCents(Money::toCents((string) $row->amount)),
-            ])->values()->all();
-        $daily = (clone $query)->toBase()
-            ->select('expense_date')
-            ->selectRaw('COUNT(*) as expenses_count')
-            ->selectRaw('COALESCE(SUM(amount), 0) as amount')
-            ->groupBy('expense_date')
-            ->orderByDesc('expense_date')
-            ->get()
-            ->map(function ($row) {
-                $date = CarbonImmutable::parse((string) $row->expense_date, ReportPeriod::TIMEZONE)->startOfDay()->locale('es');
-
-                return [
-                    'date' => $date->format('Y-m-d'),
-                    'date_label' => $date->translatedFormat('j \d\e F \d\e Y'),
+        $categories = $includeCategoryBreakdown
+            ? (clone $query)->toBase()
+                ->select('category_name_snapshot')
+                ->selectRaw('COUNT(*) as expenses_count')
+                ->selectRaw('COALESCE(SUM(amount), 0) as amount')
+                ->groupBy('category_name_snapshot')
+                ->orderByRaw('SUM(amount) DESC')
+                ->get()
+                ->map(fn ($row) => [
+                    'category_name' => $row->category_name_snapshot,
                     'expenses_count' => (int) $row->expenses_count,
                     'total' => Money::fromCents(Money::toCents((string) $row->amount)),
-                ];
-            })->values()->all();
+                ])->values()->all()
+            : null;
         $methodRows = (clone $query)->toBase()
             ->select('payment_method')
             ->selectRaw('COUNT(*) as expenses_count')
@@ -96,8 +80,7 @@ final class BuildExpensesSummaryAction
                 'paid_expenses' => Money::fromCents(Money::toCents((string) $total->amount)),
                 'expenses_count' => (int) $total->expenses_count,
             ],
-            'expense_categories' => $categories,
-            'expense_daily' => $daily,
+            ...($includeCategoryBreakdown ? ['expense_categories' => $categories] : []),
             'expense_payment_distribution' => $methods,
         ];
     }

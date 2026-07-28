@@ -14,12 +14,17 @@ class NotificationFrontendStructureTest extends TestCase
         $this->assertNotFalse($layout);
         $this->assertNotFalse($bell);
         $this->assertStringContainsString('<NotificationBell', $layout);
-        $this->assertStringContainsString('auth?.notifications', $bell);
+        $this->assertStringContainsString('auth.value?.notifications', $bell);
         $this->assertStringContainsString('refreshNotifications', $bell);
         $this->assertStringNotContainsString("only: ['auth']", $bell);
         $this->assertStringContainsString('60_000', $bell);
         $this->assertStringContainsString("document.addEventListener('visibilitychange'", $bell);
         $this->assertStringContainsString('stopPolling()', $bell);
+        $this->assertStringContainsString('Marcar todo como leído', $bell);
+        $this->assertStringContainsString('Ver todas', $bell);
+        $this->assertStringContainsString('notification-recents', $bell);
+        $this->assertStringContainsString('VProgressLinear', $bell);
+        $this->assertStringContainsString('VAlert', $bell);
         $this->assertStringNotContainsString('WebSocket', $bell);
     }
 
@@ -41,10 +46,13 @@ class NotificationFrontendStructureTest extends TestCase
         $this->assertNotFalse($composable);
         $this->assertStringContainsString('/notifications/${encodeURIComponent(notification.id)}/read', $composable);
         $this->assertStringContainsString("'/notifications/read-all', 'PATCH'", $composable);
+        $this->assertStringContainsString('safeNotificationUrl', $composable);
+        $this->assertStringContainsString('stateUserId', $composable);
         $this->assertStringContainsString('fetch(url', $composable);
         $this->assertStringNotContainsString('router.patch', $bell);
         $this->assertStringNotContainsString('router.patch', $page);
-        $this->assertStringContainsString("router.get('/notifications'", $page);
+        $this->assertStringContainsString('router.get(', $page);
+        $this->assertStringContainsString("'/notifications'", $page);
     }
 
     public function test_notifications_page_has_filters_actions_empty_state_and_responsive_pagination(): void
@@ -60,5 +68,6 @@ class NotificationFrontendStructureTest extends TestCase
         $this->assertStringContainsString('<VPagination', $page);
         $this->assertStringContainsString('overflow: hidden', $page);
         $this->assertStringContainsString('@media (max-width: 600px)', $page);
+        $this->assertStringNotContainsString('load(activeFilter.value, props.notifications.meta.current_page)', $page);
     }
 }

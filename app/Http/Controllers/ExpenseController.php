@@ -31,6 +31,7 @@ class ExpenseController extends Controller
     {
         $filters = $request->validated();
         unset($filters['page']);
+
         return Inertia::render('Expenses/Index', [
             'expenses' => fn () => ExpenseListResource::collection($action->execute($request->user(), $filters)),
             'filters' => $filters,
@@ -117,5 +118,4 @@ class ExpenseController extends Controller
             'Cache-Control' => 'private, no-store, max-age=0',
         ]);
     }
-
 }

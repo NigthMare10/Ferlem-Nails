@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BusinessHourController;
 use App\Http\Controllers\CashController;
 use App\Http\Controllers\ConfigurationController;
+use App\Http\Controllers\DailyCloseController;
 use App\Http\Controllers\EarningsController;
 use App\Http\Controllers\ExpenseCategoryController;
 use App\Http\Controllers\ExpenseController;
@@ -101,6 +102,18 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/earnings', EarningsController::class)
         ->middleware('permission:'.Permissions::REPORTS_SALES_VIEW.'|'.Permissions::REPORTS_EXPENSES_VIEW)
         ->name('earnings.index');
+    Route::get('/daily-close/download', [DailyCloseController::class, 'generateDownload'])
+        ->middleware('permission:'.Permissions::DAILY_CLOSE_VIEW)
+        ->name('daily-close.generate-download');
+    Route::post('/daily-close/send', [DailyCloseController::class, 'send'])
+        ->middleware(['permission:'.Permissions::DAILY_CLOSE_SEND, 'throttle:3,10'])
+        ->name('daily-close.send');
+    Route::get('/daily-close/reports/{dailyCloseReport}/download', [DailyCloseController::class, 'download'])
+        ->middleware('permission:'.Permissions::DAILY_CLOSE_VIEW)
+        ->name('daily-close.reports.download');
+    Route::post('/daily-close/reports/{dailyCloseReport}/retry', [DailyCloseController::class, 'retry'])
+        ->middleware(['permission:'.Permissions::DAILY_CLOSE_SEND, 'throttle:3,10'])
+        ->name('daily-close.reports.retry');
     Route::get('/payroll', fn () => redirect()->route('expenses.index'))
         ->middleware(['permission:'.Permissions::PAYROLL_VIEW, 'permission:'.Permissions::EXPENSES_ACCESS])
         ->name('payroll.index');
@@ -173,6 +186,9 @@ Route::middleware(['auth', 'active'])->group(function () {
         Route::get('/', ConfigurationController::class)->name('index');
         Route::get('/business-hours', [BusinessHourController::class, 'index'])->middleware('permission:'.Permissions::SETTINGS_BUSINESS_HOURS_MANAGE)->name('business-hours.index');
         Route::put('/business-hours', [BusinessHourController::class, 'update'])->middleware('permission:'.Permissions::SETTINGS_BUSINESS_HOURS_MANAGE)->name('business-hours.update');
+        Route::get('/daily-close', [DailyCloseController::class, 'index'])->middleware('permission:'.Permissions::DAILY_CLOSE_VIEW)->name('daily-close.index');
+        Route::put('/daily-close', [DailyCloseController::class, 'update'])->middleware('permission:'.Permissions::DAILY_CLOSE_MANAGE)->name('daily-close.update');
+        Route::post('/daily-close/test', [DailyCloseController::class, 'test'])->middleware(['permission:'.Permissions::DAILY_CLOSE_SEND, 'throttle:3,10'])->name('daily-close.test');
         Route::get('/users', [UserController::class, 'index'])->middleware('permission:'.Permissions::USERS_VIEW)->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->middleware('permission:'.Permissions::USERS_CREATE)->name('users.store');
         Route::put('/users/{user}', [UserController::class, 'update'])->middleware('permission:'.Permissions::USERS_UPDATE)->name('users.update');

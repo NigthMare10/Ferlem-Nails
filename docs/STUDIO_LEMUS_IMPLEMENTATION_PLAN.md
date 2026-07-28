@@ -10,6 +10,22 @@ El modulo de Agenda y Citas se gobierna mediante `docs/STUDIO_LEMUS_APPOINTMENTS
 
 El futuro modulo de Gastos y Nomina se disena en `docs/STUDIO_LEMUS_EXPENSES_PLAN.md`. Ese plan separado no modifica los estados, dependencias o aprobaciones vigentes de este documento.
 
+## Ganancias, Configuración y cierre diario por correo (2026-07-28)
+
+**Estado:** Implementado / En validación manual. **Despliegue:** No realizado.
+
+- Ganancias conserva `BuildSalesSummaryAction`, `BuildExpensesSummaryAction`, `BuildAppointmentProjectionAction`, filtros, periodo Honduras, anulaciones y privacidad. La interfaz ahora usa KPI con contexto, distribuciones compactas, rendimiento, participación, proyección, gastos y estados responsive. No se agregaron comisiones laborales porque no existe una fórmula aprobada en el dominio.
+- La consulta lenta de Ganancias dejó de materializar IDs sin límite: resultados diarios y métodos de pago usan `lazyById` en lotes de 500; las líneas solo se cargan para informes por empleado. La regresión automatizada cubre 1,005 ventas y evita el límite de variables SQLite.
+- Notificaciones expone `Marcar todo como leído` sobre el endpoint autenticado existente. Una sola actualización afecta solo al usuario actual; contador y filas cambian sin recarga, con carga, error recuperable, navegación segura y reinicio de estado al cambiar de sesión.
+- Configuración usa navegación interna para Usuarios y permisos, Servicios, Horario y Cierre diario. La sección persiste activación, `21:00`, `America/Tegucigalpa`, servidor SMTP, remitente, destinatarios, último estado/error, descarga e historial. La contraseña SMTP queda cifrada y nunca vuelve al frontend.
+- `daily_close_settings`, `daily_close_setting_events` y `daily_close_reports` separan configuración, auditoría e intentos. La clave idempotente de cierres programados combina trigger, fecha y destinatario; manual/prueba son solicitudes explícitas nuevas.
+- El PDF usa Dompdf, logo exclusivo optimizado, encabezado repetido, pie paginado, consultas selectivas y un máximo documentado de 250 filas por tabla de detalle; los agregados siempre incluyen todo el día. Se guarda exclusivamente en `storage/app/private/daily-closures` y se sirve con autorización, `nosniff` y `private, no-store`.
+- Cada destinatario tiene un historial independiente, pero todos reutilizan un único PDF por lote. El Mailable incluye un resumen financiero breve, adjunta el archivo privado por ruta y no expone destinatarios entre sí.
+- `studio:dispatch-daily-close-email` corre cada minuto y procesa el correo síncronamente, sin worker. `studio:send-daily-close-email --date=YYYY-MM-DD` permite operación manual y `--force` solo para un reenvío explícito.
+- Permisos nuevos: `daily_close.view`, `daily_close.manage`, `daily_close.send`, exclusivos de owner por defecto. Prueba y envío manual usan rate limit; cambios de configuración e identidad del solicitante quedan auditados.
+- En hosting compartido solo se ejecuta cada minuto `schedule:run`; el cierre no requiere worker permanente.
+- Pruebas cubren SMTP cifrado/oculto, destinatarios, PDF privado y adjunto, scheduler, idempotencia, comando manual, fallos sanitizados y ausencia de referencias funcionales a la integración retirada.
+
 ## Horario de atención de Agenda (2026-07-28)
 
 - Se agregó la configuración persistida `business_hours` para los siete días ISO, sin afectar ventas, facturas, gastos ni nómina.

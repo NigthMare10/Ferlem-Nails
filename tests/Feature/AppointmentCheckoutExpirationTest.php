@@ -81,7 +81,7 @@ class AppointmentCheckoutExpirationTest extends TestCase
         $third = $this->user('employee');
         $shared = $this->appointment($owner, [$first, $second]);
         $completed = $this->appointment($owner, [$third]);
-        $completed->update(['status' => Appointment::STATUS_COMPLETED]);
+        $completed->forceFill(['status' => Appointment::STATUS_COMPLETED])->save();
         $action = app(ProcessExpiredAppointmentsAction::class);
 
         Carbon::setTestNow('2026-07-21 10:01:00 America/Tegucigalpa');

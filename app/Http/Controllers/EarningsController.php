@@ -30,13 +30,15 @@ class EarningsController extends Controller
             'canViewProjection' => $canViewProjection,
             'canViewSales' => $canViewSales,
             'canViewExpenses' => $canViewExpenses,
+            'canManageDailyClose' => $request->user()->can(Permissions::DAILY_CLOSE_SEND),
+            'canDownloadDailyClose' => $request->user()->can(Permissions::DAILY_CLOSE_VIEW),
         ];
 
         if ($canViewSales && $mode !== 'projection') {
             $payload = [...$payload, ...$salesReport->execute($filters)];
         }
         if ($canViewExpenses && $mode !== 'projection') {
-            $payload = [...$payload, ...$expensesReport->execute($filters, $request->user())];
+            $payload = [...$payload, ...$expensesReport->execute($filters, $request->user(), false)];
         }
         if ($canViewProjection && $mode !== 'actual') {
             $payload = [...$payload, ...$projectionReport->execute($filters)];

@@ -17,7 +17,7 @@ class ExpenseFrontendStructureTest extends TestCase
         $this->assertStringContainsString('Número, descripción o proveedor', $index);
         $this->assertStringNotContainsString('Operación automática de nómina', $index);
         $this->assertStringNotContainsString("section === 'payroll'", $index);
-        $this->assertStringContainsString('title="Gastos"', $layout);
+        $this->assertStringContainsString("title: 'Gastos'", $layout);
         $this->assertStringContainsString("startsWith('/expenses')", $layout);
         $this->assertStringContainsString("can('expenses.create')", $home);
         $this->assertStringContainsString('Registrar gasto', $home);
@@ -29,8 +29,9 @@ class ExpenseFrontendStructureTest extends TestCase
 
         $this->assertStringContainsString('Métodos de cobro', $earnings);
         $this->assertStringContainsString('Métodos de gasto', $earnings);
-        $this->assertStringContainsString('Gastos por categoría', $earnings);
-        $this->assertStringContainsString('Gastos por día', $earnings);
+        $this->assertStringNotContainsString('Categorías de gastos', $earnings);
+        $this->assertStringNotContainsString('Gastos por día', $earnings);
+        $this->assertStringNotContainsString('Ritmo del periodo', $earnings);
         $this->assertStringContainsString('Resultado disponible', $earnings);
         $this->assertStringContainsString('incluida la categoría Nómina', $earnings);
         $this->assertStringNotContainsString('Nómina pagada por empleado', $earnings);

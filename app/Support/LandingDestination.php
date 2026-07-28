@@ -37,6 +37,14 @@ final class LandingDestination
                 return route('configuration.services.index');
             }
 
+            if ($user->can(Permissions::SETTINGS_ACCESS) && $user->can(Permissions::SETTINGS_BUSINESS_HOURS_MANAGE)) {
+                return route('configuration.business-hours.index');
+            }
+
+            if ($user->can(Permissions::SETTINGS_ACCESS) && $user->can(Permissions::DAILY_CLOSE_VIEW)) {
+                return route('configuration.daily-close.index');
+            }
+
             return null;
         }
 

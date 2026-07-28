@@ -13,6 +13,8 @@ final class BuildSalesSummaryAction
 {
     public const TIMEZONE = ReportPeriod::TIMEZONE;
 
+    private const CHUNK_SIZE = 500;
+
     public function execute(array $filters): array
     {
         $period = $filters['period'] ?? 'today';
@@ -165,10 +167,11 @@ final class BuildSalesSummaryAction
     {
         $days = [];
         $columns = $usesItems
-            ? ['sales.sold_at', 'sale_items.sale_id', 'sale_items.quantity', 'sale_items.line_total', 'sale_items.allocated_card_fee_amount', 'sale_items.net_line_amount']
+            ? ['sale_items.id', 'sales.sold_at', 'sale_items.sale_id', 'sale_items.quantity', 'sale_items.line_total', 'sale_items.allocated_card_fee_amount', 'sale_items.net_line_amount']
             : ['sales.id', 'sales.sold_at', 'sales.total', 'sales.total_services', 'sales.card_fee_amount', 'sales.net_amount'];
+        $chunkColumn = $usesItems ? 'sale_items.id' : 'sales.id';
 
-        foreach ((clone $query)->get($columns) as $row) {
+        foreach ((clone $query)->select($columns)->lazyById(self::CHUNK_SIZE, $chunkColumn, 'id') as $row) {
             $date = CarbonImmutable::parse((string) $row->sold_at, 'UTC')->setTimezone(self::TIMEZONE)->format('Y-m-d');
             $days[$date] ??= ['sale_ids' => [], 'services_count' => 0, 'total_cents' => 0, 'card_fee_cents' => 0, 'net_cents' => 0];
             $days[$date]['sale_ids'][(int) ($usesItems ? $row->sale_id : $row->id)] = true;
@@ -202,19 +205,19 @@ final class BuildSalesSummaryAction
             Sale::PAYMENT_METHOD_TRANSFER => ['method' => Sale::PAYMENT_METHOD_TRANSFER, 'method_label' => 'Transferencia', 'payments_count' => 0, 'amount_cents' => 0, 'fee_cents' => 0, 'net_cents' => 0],
         ];
         $daily = [];
-        $saleIds = (clone $sales)->pluck('sales.id');
-        $includedSales = Sale::query()
-            ->whereKey($saleIds)
-            ->with(['payments', 'items' => fn ($query) => $query->orderBy('position')->orderBy('id')])
-            ->get();
+        $includedSales = (clone $sales)->with('payments');
 
-        foreach ($includedSales as $sale) {
+        if ($employeeId !== null) {
+            $includedSales->with(['items' => fn ($query) => $query->where('performed_by', $employeeId)]);
+        }
+
+        foreach ($includedSales->lazyById(self::CHUNK_SIZE, 'sales.id', 'id') as $sale) {
             $remainingAmount = $employeeId === null
                 ? Money::toCents($sale->total)
-                : Money::toCents($sale->items->where('performed_by', $employeeId)->sum('line_total'));
+                : Money::toCents($sale->items->sum('line_total'));
             $remainingFee = $employeeId === null
                 ? Money::toCents($sale->card_fee_amount)
-                : Money::toCents($sale->items->where('performed_by', $employeeId)->sum('allocated_card_fee_amount'));
+                : Money::toCents($sale->items->sum('allocated_card_fee_amount'));
             $date = $sale->sold_at->setTimezone(self::TIMEZONE)->format('Y-m-d');
 
             foreach ($sale->payments as $payment) {

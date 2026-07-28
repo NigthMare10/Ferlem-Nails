@@ -315,6 +315,110 @@ class Phase3BEarningsTest extends TestCase
                 ->has('daily', 0));
     }
 
+    public function test_report_chunks_more_than_one_thousand_completed_sales_without_changing_outputs(): void
+    {
+        $owner = $this->user('owner', ['name' => 'Owner']);
+        $firstId = ((int) Sale::query()->max('id')) + 1;
+        $now = now('UTC');
+        $sales = [];
+        $items = [];
+        $payments = [];
+
+        for ($offset = 0; $offset < 1005; $offset++) {
+            $id = $firstId + $offset;
+            $sequence = $offset + 1;
+            $sales[] = [
+                'id' => $id,
+                'sale_number' => sprintf('BULK-%06d', $sequence),
+                'sold_by' => $owner->id,
+                'sold_at' => '2026-07-19 16:00:00',
+                'subtotal' => '1.00',
+                'total' => '1.00',
+                'total_services' => 1,
+                'status' => Sale::STATUS_COMPLETED,
+                'payment_method' => Sale::PAYMENT_METHOD_CASH,
+                'card_fee_rate' => '0.00',
+                'card_fee_amount' => '0.00',
+                'net_amount' => '1.00',
+                'checkout_token' => sprintf('00000000-0000-4000-8000-%012d', $sequence),
+                'request_hash' => hash('sha256', (string) $sequence),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+            $items[] = [
+                'sale_id' => $id,
+                'service_id' => null,
+                'performed_by' => $owner->id,
+                'appointment_item_id' => null,
+                'position' => 1,
+                'service_name' => 'Servicio masivo',
+                'duration_minutes' => 30,
+                'unit_price' => '1.00',
+                'quantity' => 1,
+                'line_total' => '1.00',
+                'allocated_card_fee_amount' => '0.00',
+                'net_line_amount' => '1.00',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+            $payments[] = [
+                'sale_id' => $id,
+                'type' => SalePayment::TYPE_FINAL_PAYMENT,
+                'method' => Sale::PAYMENT_METHOD_CASH,
+                'amount' => '1.00',
+                'card_fee_rate' => '0.00',
+                'card_fee_amount' => '0.00',
+                'net_amount' => '1.00',
+                'appointment_deposit_id' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        foreach (array_chunk($sales, 50) as $chunk) {
+            DB::table('sales')->insert($chunk);
+        }
+        foreach (array_chunk($items, 50) as $chunk) {
+            DB::table('sale_items')->insert($chunk);
+        }
+        foreach (array_chunk($payments, 50) as $chunk) {
+            DB::table('sale_payments')->insert($chunk);
+        }
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $report = app(BuildSalesSummaryAction::class)->execute(['period' => 'today', 'date' => '2026-07-19']);
+        $unfilteredQueries = collect(DB::getQueryLog());
+
+        $this->assertSame('1005.00', $report['summary']['total_sold']);
+        $this->assertSame('0.00', $report['summary']['card_fee_amount']);
+        $this->assertSame('1005.00', $report['summary']['net_amount']);
+        $this->assertSame(1005, $report['summary']['sales_count']);
+        $this->assertSame(1005, $report['summary']['services_count']);
+        $this->assertSame('1.00', $report['summary']['average_sale']);
+        $this->assertSame(1005, $report['payment_distribution'][0]['payments_count']);
+        $this->assertSame('1005.00', $report['payment_distribution'][0]['amount']);
+        $this->assertSame(1005, $report['daily'][0]['sales_count']);
+        $this->assertSame('1005.00', $report['daily'][0]['total_sold']);
+        $this->assertFalse($unfilteredQueries->contains(fn (array $query) => preg_match('/sale_items.*sale_id.*\bin\s*\(/i', $query['query']) === 1));
+
+        DB::flushQueryLog();
+        $employeeReport = app(BuildSalesSummaryAction::class)->execute([
+            'period' => 'today',
+            'date' => '2026-07-19',
+            'employee_id' => $owner->id,
+        ]);
+        $employeeQueries = collect(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        $this->assertSame('1005.00', $employeeReport['summary']['total_sold']);
+        $this->assertSame(1005, $employeeReport['summary']['sales_count']);
+        $this->assertSame(1005, $employeeReport['summary']['services_count']);
+        $this->assertSame('1005.00', $employeeReport['employees'][0]['total_sold']);
+        $this->assertTrue($employeeQueries->contains(fn (array $query) => preg_match('/sale_items.*sale_id.*\bin\s*\(/i', $query['query']) === 1));
+        $this->assertLessThanOrEqual(501, $employeeQueries->max(fn (array $query) => count($query['bindings'])));
+    }
+
     public function test_report_uses_three_sales_queries_and_never_queries_cash_sessions(): void
     {
         $owner = $this->user('owner');

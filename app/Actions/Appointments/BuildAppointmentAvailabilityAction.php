@@ -5,8 +5,8 @@ namespace App\Actions\Appointments;
 use App\Models\Appointment;
 use App\Models\AppointmentItem;
 use App\Models\User;
-use App\Support\Permissions;
 use App\Support\BusinessHours;
+use App\Support\Permissions;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 

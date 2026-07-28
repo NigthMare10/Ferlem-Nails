@@ -77,7 +77,7 @@ class InvoiceModuleTest extends TestCase
         $this->assertStringContainsString('if (mobile.value) drawer.value = false;', $layout);
 
         $home = file_get_contents(resource_path('js/Pages/Home.vue'));
-        $this->assertStringContainsString('Ver facturas', $home);
+        $this->assertStringContainsString('>Facturas</VBtn>', $home);
         $this->assertStringContainsString("canAny(['sales.view_own', 'sales.view_all'])", $home);
     }
 

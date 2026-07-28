@@ -10,6 +10,20 @@ import UserMenu from '../Components/UserMenu.vue';
 
 withDefaults(defineProps<{ title?: string }>(), { title: 'Inicio' });
 
+type NavigationItem = {
+    visible: boolean;
+    icon: string;
+    title: string;
+    href: string;
+    active: boolean;
+    children?: NavigationItem[];
+};
+
+type NavigationGroup = {
+    title: string;
+    items: NavigationItem[];
+};
+
 const page = usePage();
 const { mobile } = useDisplay();
 const { can, canAny } = usePermissions();
@@ -18,8 +32,17 @@ const sidebarRail = ref(false);
 const auth = computed(() => page.props.auth as any);
 const currentUrl = computed(() => page.url);
 const canNavigateToInvoices = () => canAny(['sales.view_own', 'sales.view_all']);
+const configurationItems = computed<NavigationItem[]>(() =>
+    [
+        { visible: can('users.view'), icon: 'mdi-account-group-outline', title: 'Usuarios y permisos', href: '/configuration/users', active: currentUrl.value.startsWith('/configuration/users') },
+        { visible: can('services.view'), icon: 'mdi-hand-heart-outline', title: 'Servicios', href: '/configuration/services', active: currentUrl.value.startsWith('/configuration/services') },
+        { visible: can('settings.business_hours.manage'), icon: 'mdi-clock-outline', title: 'Horario de atención', href: '/configuration/business-hours', active: currentUrl.value.startsWith('/configuration/business-hours') },
+        { visible: can('daily_close.view'), icon: 'mdi-file-clock-outline', title: 'Cierre diario', href: '/configuration/daily-close', active: currentUrl.value.startsWith('/configuration/daily-close') },
+    ].filter(item => item.visible),
+);
+const openedNavigation = ref<string[]>(currentUrl.value.startsWith('/configuration') ? ['configuration'] : []);
 
-const navigationGroups = computed(() => [
+const navigationGroups = computed<NavigationGroup[]>(() => [
     {
         title: 'Jornada',
         items: [
@@ -40,7 +63,14 @@ const navigationGroups = computed(() => [
     {
         title: 'El estudio',
         items: [
-            { visible: can('settings.access') && canAny(['users.view', 'services.view']), icon: 'mdi-tune-variant', title: 'Configuración', href: '/configuration', active: currentUrl.value.startsWith('/configuration') },
+            {
+                visible: can('settings.access') && configurationItems.value.length > 0,
+                icon: 'mdi-tune-variant',
+                title: 'Configuración',
+                href: '/configuration',
+                active: currentUrl.value.startsWith('/configuration'),
+                children: configurationItems.value,
+            },
         ],
     },
 ]);
@@ -50,9 +80,23 @@ watch(mobile, value => {
     if (value) sidebarRail.value = false;
 });
 
+watch(currentUrl, value => {
+    if (value.startsWith('/configuration') && !openedNavigation.value.includes('configuration')) {
+        openedNavigation.value = [...openedNavigation.value, 'configuration'];
+    }
+});
+
+watch(sidebarRail, value => {
+    if (value) openedNavigation.value = [];
+});
+
 const navigate = (href: string) => {
     if (mobile.value) drawer.value = false;
     router.visit(href);
+};
+
+const revealConfiguration = () => {
+    if (!mobile.value && sidebarRail.value) sidebarRail.value = false;
 };
 
 const toggleNavigation = () => {
@@ -95,16 +139,43 @@ const navigationLabel = computed(() => {
 
                 <div class="app-sidebar__rule" />
 
-            <VList nav class="px-3 py-4" density="comfortable">
+            <VList v-model:opened="openedNavigation" nav class="px-3 py-4" density="comfortable">
                 <template v-for="group in navigationGroups" :key="group.title">
                     <VListSubheader v-if="group.items.some(item => item.visible) && !(sidebarRail && !mobile)" class="app-nav-label">
                         {{ group.title }}
                     </VListSubheader>
                     <template v-for="item in group.items" :key="item.href">
-                        <VTooltip :disabled="!(sidebarRail && !mobile)" location="end" :text="item.title">
+                        <VListGroup v-if="item.visible && item.children" value="configuration">
+                            <template #activator="{ props: activatorProps }">
+                                <VTooltip :disabled="!(sidebarRail && !mobile)" location="end" :text="item.title">
+                                    <template #activator="{ props: tooltipProps }">
+                                        <VListItem
+                                            v-bind="{ ...activatorProps, ...tooltipProps }"
+                                            :prepend-icon="item.icon"
+                                            :title="sidebarRail && !mobile ? undefined : item.title"
+                                            :aria-label="item.title"
+                                            :active="item.active && sidebarRail"
+                                            rounded="lg"
+                                            @click="revealConfiguration"
+                                        />
+                                    </template>
+                                </VTooltip>
+                            </template>
+                            <VListItem
+                                v-for="child in item.children"
+                                :key="child.href"
+                                :prepend-icon="child.icon"
+                                :title="child.title"
+                                :active="child.active"
+                                :aria-current="child.active ? 'page' : undefined"
+                                class="app-nav-child"
+                                rounded="lg"
+                                @click="navigate(child.href)"
+                            />
+                        </VListGroup>
+                        <VTooltip v-else-if="item.visible" :disabled="!(sidebarRail && !mobile)" location="end" :text="item.title">
                             <template #activator="{ props: tooltipProps }">
                                 <VListItem
-                                    v-if="item.visible"
                                     v-bind="tooltipProps"
                                     :prepend-icon="item.icon"
                                     :title="sidebarRail && !mobile ? undefined : item.title"
@@ -149,6 +220,8 @@ const navigationLabel = computed(() => {
 
 <style scoped>
 .app-nav-label { color: var(--sl-sidebar-muted); font-size: var(--sl-label-size); font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; }
+.app-nav-child { min-height: 44px; margin-inline-start: 12px; padding-inline-start: 14px !important; }
+.app-nav-child :deep(.v-list-item-title) { font-size: 1rem; }
 .app-sidebar__rule { height: 1px; margin: 0 20px; background: var(--sl-border); }
 .app-session { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px; border-radius: var(--sl-radius-compact); background: var(--sl-surface); box-shadow: var(--sl-shadow-inset); }
 .app-session--rail { justify-content: center; padding: 8px; }

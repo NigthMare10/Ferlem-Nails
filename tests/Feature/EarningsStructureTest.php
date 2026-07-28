@@ -14,9 +14,9 @@ class EarningsStructureTest extends TestCase
         $this->assertStringContainsString('Resultados reales', $page);
         $this->assertStringContainsString('Proyección', $page);
         $this->assertStringContainsString('Rendimiento por empleado', $page);
-        $this->assertStringContainsString('Resultados reales por día', $page);
+        $this->assertStringContainsString('Resultados diarios', $page);
         $this->assertStringContainsString('No hay ventas en este periodo', $page);
-        $this->assertStringContainsString('Las ventas completadas aparecerán aquí automáticamente.', $page);
+        $this->assertStringContainsString('Las ventas completadas aparecerán aquí automáticamente; anulaciones y citas no se mezclan.', $page);
         $this->assertStringContainsString('incluida la categoría Nómina', $page);
         $this->assertStringNotContainsString('Nómina pagada por empleado', $page);
         $this->assertStringNotContainsString('Nómina pendiente', $page);

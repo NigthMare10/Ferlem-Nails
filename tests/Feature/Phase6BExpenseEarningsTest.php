@@ -35,7 +35,7 @@ class Phase6BExpenseEarningsTest extends TestCase
     {
         $owner = $this->user('owner');
         $this->sale($owner, 'card', '1000.00');
-        $recorded = $this->expense($owner, '200.00', 'cash', 'materiales-e-implementos');
+        $this->expense($owner, '200.00', 'cash', 'materiales-e-implementos');
         $canceled = $this->expense($owner, '300.00', 'card', 'transporte');
         $this->actingAs($owner)->post(route('expenses.cancel', $canceled), ['cancellation_reason' => 'No corresponde.']);
 
@@ -47,15 +47,14 @@ class Phase6BExpenseEarningsTest extends TestCase
             ->where('actual.available_result', '760.00')
             ->where('expense_actual.expenses_count', 1)
             ->where('expense_actual.paid_expenses', '200.00')
-            ->where('expense_categories.0.category_name', $recorded->category_name_snapshot)
-            ->where('expense_categories.0.total', '200.00')
-            ->has('expense_daily', 1)
+            ->missing('expense_categories')
+            ->missing('expense_daily')
             ->where('expense_payment_distribution.0.total', '200.00')
             ->where('expense_payment_distribution.1.total', '0.00')
             ->where('expense_payment_distribution.2.total', '0.00'));
     }
 
-    public function test_expense_summary_respects_honduras_periods_and_only_returns_days_with_expenses(): void
+    public function test_expense_summary_respects_honduras_periods_without_removed_breakdowns(): void
     {
         $owner = $this->user('owner');
         $this->expense($owner, '10.00', 'cash', 'otros', '2026-07-01');
@@ -64,8 +63,8 @@ class Phase6BExpenseEarningsTest extends TestCase
 
         $this->actingAs($owner)->get('/earnings?period=month&month=2026-07&mode=actual')->assertInertia(fn (Assert $page) => $page
             ->where('expense_actual.paid_expenses', '30.00')
-            ->has('expense_daily', 2)
-            ->has('expense_categories', 1));
+            ->missing('expense_daily')
+            ->missing('expense_categories'));
     }
 
     public function test_sales_employee_and_payment_filters_do_not_hide_general_expenses(): void
@@ -79,6 +78,18 @@ class Phase6BExpenseEarningsTest extends TestCase
                 ->where('actual.gross_revenue', '0.00')
                 ->where('expense_actual.paid_expenses', '75.00')
                 ->where('actual.available_result', '-75.00'));
+    }
+
+    public function test_available_result_can_be_exactly_zero(): void
+    {
+        $owner = $this->user('owner');
+        $this->sale($owner, 'cash', '100.00');
+        $this->expense($owner, '100.00', 'cash', 'otros');
+
+        $this->get('/earnings?period=today&date=2026-07-27&mode=actual')->assertInertia(fn (Assert $page) => $page
+            ->where('actual.net_income', '100.00')
+            ->where('actual.paid_expenses', '100.00')
+            ->where('actual.available_result', '0.00'));
     }
 
     public function test_administrator_with_expense_report_permission_sees_no_sales_props(): void

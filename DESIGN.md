@@ -54,6 +54,16 @@ typography:
     fontSize: "1rem"
     fontWeight: 650
     lineHeight: 1.2
+  section-title:
+    fontFamily: "DM Sans, Arial, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 650
+    lineHeight: 1.2
+  metric:
+    fontFamily: "DM Sans, Arial, sans-serif"
+    fontSize: "1.5rem"
+    fontWeight: 700
+    lineHeight: 1.15
 rounded:
   control: "10px"
   compact: "12px"

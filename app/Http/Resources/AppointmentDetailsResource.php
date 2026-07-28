@@ -3,9 +3,9 @@
 namespace App\Http\Resources;
 
 use App\Actions\Appointments\CreateAppointmentAction;
+use App\Support\BusinessHours;
 use App\Support\Money;
 use App\Support\Permissions;
-use App\Support\BusinessHours;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;

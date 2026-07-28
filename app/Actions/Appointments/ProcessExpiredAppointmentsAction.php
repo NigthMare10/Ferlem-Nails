@@ -72,7 +72,7 @@ class ProcessExpiredAppointmentsAction
 
                 $this->publishNotification->executeForRecipients(
                     null, 'appointment.checkout_pending', 'Cita pendiente de cobro',
-                    "Tienes ".config('appointments.checkout_grace_minutes')." minutos para cobrar la cita de {$appointment->client_name}. Si no se registra el cobro, se marcará automáticamente como No llegó.",
+                    'Tienes '.config('appointments.checkout_grace_minutes')." minutos para cobrar la cita de {$appointment->client_name}. Si no se registra el cobro, se marcará automáticamente como No llegó.",
                     "/appointments?appointment={$appointment->getKey()}", ['type' => 'appointment', 'id' => $appointment->getKey()],
                     "appointment:{$appointment->getKey()}:checkout-grace", $now, $recipientIds,
                 );

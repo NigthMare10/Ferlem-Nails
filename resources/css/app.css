@@ -45,6 +45,8 @@
     --sl-heading-size: clamp(2rem, 2.6vw, 2.7rem);
     --sl-login-display-size: clamp(2.6rem, 5vw, 5.2rem);
     --sl-label-size: 0.75rem;
+    --sl-section-title-size: 1.5rem;
+    --sl-metric-size: 1.5rem;
     --sl-login-title-size: 1.75rem;
     font-family: 'DM Sans', 'Segoe UI', sans-serif;
     color: var(--sl-text);
@@ -220,7 +222,7 @@ select {
 }
 
 .login-visual .brand__mark { width: 96px; height: 96px; transform: scale(1.85); }
-.login-visual .brand__copy strong { font-size: 1.125rem; }
+.login-visual .brand__copy strong { font-size: 1rem; }
 .login-visual-footer { color: var(--sl-text-muted); }
 
 .app-sidebar {
@@ -309,7 +311,7 @@ select {
 .v-data-table { background: transparent !important; }
 .v-data-table__tr:hover > td { background: color-mix(in oklch, var(--sl-secondary), transparent 88%) !important; }
 .v-data-table-header__content { color: var(--sl-text-muted); font-size: var(--sl-label-size); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.invoice-desktop-filters, .invoice-mobile-filters, .report-section, .configuration-nav { border: 1px solid var(--sl-border) !important; background: var(--sl-surface) !important; box-shadow: var(--sl-shadow-raised) !important; }
+.invoice-desktop-filters, .invoice-mobile-filters { border: 1px solid var(--sl-border) !important; background: var(--sl-surface) !important; box-shadow: var(--sl-shadow-raised) !important; }
 .invoice-mobile-card, .mobile-cards .v-card { border: 0 !important; background: var(--sl-surface-soft) !important; box-shadow: var(--sl-shadow-inset); }
 .sales-create-page .v-text-field, .sales-create-page .v-select { position: relative; z-index: 1; }
 .sales-create-page__sticky-cart, .appointment-summary { filter: drop-shadow(0 12px 22px oklch(32% 0.025 346 / .08)); }

@@ -54,6 +54,14 @@ return [
             'report' => true,
         ],
 
+        'daily_closures' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/daily-closures'),
+            'serve' => false,
+            'throw' => true,
+            'report' => true,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

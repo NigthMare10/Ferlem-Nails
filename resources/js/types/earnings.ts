@@ -42,8 +42,6 @@ export type ActualResults = {
 };
 
 export type ExpenseActual = { paid_expenses: string; expenses_count: number };
-export type ExpenseCategorySummary = { category_name: string; expenses_count: number; total: string };
-export type ExpenseDailySummary = { date: string; date_label: string; expenses_count: number; total: string };
 export type ExpensePaymentDistribution = { method: 'cash' | 'card' | 'transfer'; method_label: string; expenses_count: number; total: string };
 export type AppointmentProjection = {
     appointments_count: number;
