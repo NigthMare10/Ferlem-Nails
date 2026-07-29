@@ -225,8 +225,98 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->assertSame('90.00', $sale->total);
         $this->assertSame(5, $sale->total_services);
         $this->assertSame(['Servicio repetido', 'Servicio repetido', 'Adicional'], $sale->items->pluck('service_name')->all());
+        $this->assertSame(['Descripción de Servicio repetido', 'Descripción de Servicio repetido', 'Descripción de Adicional'], $sale->items->pluck('service_description')->all());
         $this->assertSame(['40.00', '20.00', '30.00'], $sale->items->pluck('line_total')->all());
         $this->assertSame([null, null, $additional->id], $sale->items->pluck('service_id')->all());
+    }
+
+    public function test_reserved_item_without_service_relation_uses_nullable_description_snapshot_and_catalog_for_addition(): void
+    {
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $reservedService = $this->service('Nombre original', '100.00');
+        $appointment = $this->appointment($owner, [$this->line($reservedService, $employee)]);
+        $reservedItem = $appointment->items()->sole();
+        $reservedItem->service_name = 'Snapshot reservado';
+        $reservedItem->service_description = null;
+        $reservedItem->duration_minutes = 45;
+        $reservedItem->unit_price = '780.00';
+        $reservedItem->line_total = '780.00';
+        $reservedItem->save();
+        $reservedService->delete();
+        $this->assertNull($reservedItem->fresh()->service_id);
+
+        $additional = $this->service('Catálogo actual', '25.00');
+        $payload = $this->checkoutPayload($appointment);
+        $payload['items'][] = [
+            'appointment_item_id' => null,
+            'service_id' => $additional->id,
+            'quantity' => 2,
+            'performed_by' => $employee->id,
+        ];
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
+        $this->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
+
+        $sale = Sale::query()->with(['items', 'payments'])->sole();
+        $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
+        $this->assertSame(1, $sale->payments->count());
+        $this->assertSame(2, $sale->items->count());
+        $this->assertSame('Snapshot reservado', $sale->items[0]->service_name);
+        $this->assertNull($sale->items[0]->service_description);
+        $this->assertSame('780.00', $sale->items[0]->unit_price);
+        $this->assertSame(45, $sale->items[0]->duration_minutes);
+        $this->assertNull($sale->items[0]->service_id);
+        $this->assertSame($reservedItem->id, $sale->items[0]->appointment_item_id);
+        $this->assertSame('Catálogo actual', $sale->items[1]->service_name);
+        $this->assertSame('Descripción de Catálogo actual', $sale->items[1]->service_description);
+        $this->assertSame('25.00', $sale->items[1]->unit_price);
+        $this->assertSame($additional->id, $sale->items[1]->service_id);
+        $this->assertDatabaseCount('sales', 1);
+
+        $this->get(route('sales.receipt', $sale))->assertInertia(fn (Assert $page) => $page
+            ->where('sale.items.0.service_name', 'Snapshot reservado')
+            ->where('sale.items.0.service_description', null)
+            ->where('sale.items.0.unit_price', '780.00')
+            ->where('sale.items.1.service_name', 'Catálogo actual'));
+    }
+
+    public function test_inactive_reserved_service_keeps_appointment_snapshots(): void
+    {
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $service = $this->service('Reservado', '150.00');
+        $appointment = $this->appointment($owner, [$this->line($service, $employee)]);
+        $service->update([
+            'name' => 'Nombre nuevo',
+            'description' => 'Descripción nueva',
+            'price' => '999.00',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $this->checkoutPayload($appointment))->assertStatus(303);
+
+        $item = SaleItem::query()->sole();
+        $this->assertSame('Reservado', $item->service_name);
+        $this->assertSame('Descripción de Reservado', $item->service_description);
+        $this->assertSame('150.00', $item->unit_price);
+        $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
+    }
+
+    public function test_missing_required_reserved_snapshot_blocks_checkout_without_partial_sale(): void
+    {
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $appointment = $this->appointment($owner, [$this->line($this->service('Reservado'), $employee)]);
+        DB::table('appointment_items')->where('appointment_id', $appointment->id)->update(['service_name' => '']);
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $this->checkoutPayload($appointment))
+            ->assertSessionHasErrors(['items' => 'Un servicio reservado no conserva todos sus datos históricos. Corrige la cita antes de cobrar.']);
+
+        $this->assertSame(Appointment::STATUS_SCHEDULED, $appointment->fresh()->status);
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('sale_items', 0);
+        $this->assertDatabaseCount('sale_payments', 0);
     }
 
     public function test_reserved_line_cannot_disappear_without_explicit_confirmation(): void

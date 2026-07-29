@@ -224,29 +224,52 @@ class CheckoutAppointmentAction
             $quantity = (int) $line['quantity'];
             $performerId = (int) $line['performed_by'];
             $appointmentItem = ! empty($line['appointment_item_id']) ? $originalById->get((int) $line['appointment_item_id']) : null;
-            if (! $appointmentItem && empty($line['service_id'])) {
-                throw ValidationException::withMessages(['items' => 'Cada servicio adicional debe identificar un servicio vigente.']);
-            }
-            if (! $canAssign) {
-                $expectedPerformer = $appointmentItem?->assigned_to ?? $user->getKey();
-                if ($performerId !== $expectedPerformer) {
+
+            if ($appointmentItem) {
+                $this->validateReservedSnapshot($appointmentItem);
+                if (! $canAssign && $performerId !== $appointmentItem->assigned_to) {
                     throw new AuthorizationException('No tienes permiso para asignar servicios a otra persona.');
                 }
+
+                $unitPriceCents = Money::toCents($appointmentItem->unit_price);
+                $preparedLine = [
+                    'appointment_item_id' => $appointmentItem->getKey(),
+                    'service_id' => null,
+                    'performed_by' => $performerId,
+                    'service_name' => $appointmentItem->service_name,
+                    'service_description' => $appointmentItem->service_description,
+                    'duration_minutes' => $appointmentItem->duration_minutes,
+                ];
+            } else {
+                if (empty($line['service_id'])) {
+                    throw ValidationException::withMessages(['items' => 'Cada servicio adicional debe identificar un servicio vigente.']);
+                }
+                if (! $canAssign && $performerId !== $user->getKey()) {
+                    throw new AuthorizationException('No tienes permiso para asignar servicios a otra persona.');
+                }
+
+                $service = $services->get((int) $line['service_id']);
+                if (! $service || ! $service->is_active) {
+                    throw ValidationException::withMessages(['items' => 'Uno de los servicios adicionales ya no está disponible.']);
+                }
+
+                $unitPriceCents = Money::toCents($service->price);
+                $preparedLine = [
+                    'appointment_item_id' => null,
+                    'service_id' => $service->getKey(),
+                    'performed_by' => $performerId,
+                    'service_name' => $service->name,
+                    'service_description' => $service->description,
+                    'duration_minutes' => $service->duration_minutes,
+                ];
             }
 
-            $service = $appointmentItem ? null : $services->get((int) $line['service_id']);
-            $unitPriceCents = Money::toCents($appointmentItem?->unit_price ?? $service->price);
             $lineTotalCents = $unitPriceCents * $quantity;
             if ($lineTotalCents > self::MAX_AMOUNT_CENTS) {
                 throw ValidationException::withMessages(['items' => 'Una línea excede el monto permitido.']);
             }
-            $prepared[] = [
-                'appointment_item_id' => $appointmentItem?->getKey(),
-                'service_id' => $appointmentItem ? null : $service->getKey(),
-                'performed_by' => $performerId,
-                'service_name' => $appointmentItem?->service_name ?? $service->name,
-                'service_description' => $appointmentItem?->service_description ?? $service->description,
-                'duration_minutes' => $appointmentItem?->duration_minutes ?? $service->duration_minutes,
+
+            $prepared[] = [...$preparedLine,
                 'unit_price_cents' => $unitPriceCents,
                 'quantity' => $quantity,
                 'line_total_cents' => $lineTotalCents,
@@ -254,6 +277,19 @@ class CheckoutAppointmentAction
         }
 
         return $prepared;
+    }
+
+    private function validateReservedSnapshot(AppointmentItem $item): void
+    {
+        if (trim((string) $item->service_name) === ''
+            || ! is_numeric((string) $item->unit_price)
+            || $item->duration_minutes < 1
+            || ! $item->assigned_to
+            || $item->quantity < 1) {
+            throw ValidationException::withMessages([
+                'items' => 'Un servicio reservado no conserva todos sus datos históricos. Corrige la cita antes de cobrar.',
+            ]);
+        }
     }
 
     private function authorizeGlobal(User $user): void
