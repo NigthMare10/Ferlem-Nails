@@ -385,8 +385,7 @@ watch(() => props.openAppointmentId, appointmentId => {
                                         <div><VIcon icon="mdi-cash" /><strong>{{ money(appointment.visible_total) }}</strong></div>
                                     </div>
                                     <VAlert v-if="appointment.operational_status === 'pending_checkout'" type="warning" variant="tonal" density="compact" class="mt-3">
-                                        <template v-if="appointment.checkout_remaining_minutes && appointment.checkout_remaining_minutes > 0">Quedan {{ appointment.checkout_remaining_minutes }} minutos para cobrar.</template>
-                                        <template v-else>Cobrar antes de las {{ new Intl.DateTimeFormat('es-HN', { hour: 'numeric', minute: '2-digit', timeZone: timezone }).format(new Date(appointment.checkout_deadline!)) }}.</template>
+                                        Pendiente de cobro
                                     </VAlert>
                                     <p v-if="appointment.status_reason" class="status-reason mt-3 mb-0">
                                         <VIcon icon="mdi-text-box-outline" size="17" class="mr-1" /><strong>Motivo:</strong> {{ appointment.status_reason }}

@@ -15,8 +15,8 @@ Este documento gobierna exclusivamente Agenda y Citas. Complementa `docs/STUDIO_
 
 ## Vencimiento y cobro de citas (2026-07-28)
 
-- La hora final autoritativa es el máximo `scheduled_end` de los `appointment_items`. La cita queda Programada antes del inicio, En atención hasta el final y Pendiente de cobro durante `APPOINTMENT_CHECKOUT_GRACE_MINUTES` (30 por defecto).
-- `studio:process-expired-appointments` corre cada minuto: notifica una vez al entrar en gracia y, después del límite estricto, bloquea la cita, verifica que siga `scheduled` y sin venta, la marca `no_show` con actor Sistema y conserva evento/motivo legible.
+- La hora final autoritativa es el máximo `scheduled_end` de los `appointment_items`. La cita queda Programada antes del inicio, En atención hasta el final y Pendiente de cobro después de finalizar, sin vencimiento automático.
+- Una cita permanece `scheduled` hasta completarse mediante cobro o hasta que una persona la marque manualmente como No llegó o Cancelada.
 - Agenda y checkout vuelven a validar el límite en backend. Durante la gracia permite cobro y No llegó, pero no reprogramar ni cancelar; tras vencer, la Agenda procesa y excluye la cita mientras Historial conserva la auditoría.
 
 ## Tablero de progreso

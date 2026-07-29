@@ -3,15 +3,16 @@
 namespace Tests\Feature;
 
 use App\Actions\Appointments\CreateAppointmentAction;
-use App\Actions\Appointments\ProcessExpiredAppointmentsAction;
 use App\Models\Appointment;
-use App\Models\AppointmentEvent;
 use App\Models\InternalNotification;
+use App\Models\Sale;
 use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AppointmentCheckoutExpirationTest extends TestCase
@@ -31,97 +32,110 @@ class AppointmentCheckoutExpirationTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_checkout_is_available_during_service_after_end_and_at_grace_deadline(): void
+    public function test_scheduled_appointment_can_be_checked_out_during_hours_after_and_days_after_service(): void
     {
-        $employee = $this->user('employee');
-        $appointment = $this->appointment($employee, [$employee]);
-
-        foreach (['2026-07-21 08:30:00 America/Tegucigalpa', '2026-07-21 09:01:00 America/Tegucigalpa', '2026-07-21 09:30:00 America/Tegucigalpa'] as $now) {
+        foreach ([
+            '2026-07-21 08:30:00 America/Tegucigalpa',
+            '2026-07-21 15:00:00 America/Tegucigalpa',
+            '2026-07-24 10:00:00 America/Tegucigalpa',
+        ] as $now) {
+            Carbon::setTestNow('2026-07-21 07:00:00 America/Tegucigalpa');
+            $employee = $this->user('employee');
+            $appointment = $this->appointment($employee, $employee);
             Carbon::setTestNow($now);
+
             $this->actingAs($employee)->get("/sales/new?appointment={$appointment->id}")->assertOk();
+            $this->post("/appointments/{$appointment->id}/checkout", $this->checkoutPayload($appointment))->assertStatus(303);
+
+            $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
+            $this->assertSame($appointment->id, Sale::query()->latest('id')->value('appointment_id'));
         }
     }
 
-    public function test_expired_checkout_is_rejected_marked_no_show_and_removed_from_agenda(): void
+    public function test_past_scheduled_appointment_never_expires_and_remains_visible_in_agenda(): void
     {
         $owner = $this->user('owner');
         $employee = $this->user('employee');
-        $appointment = $this->appointment($owner, [$employee]);
-        Carbon::setTestNow('2026-07-21 09:31:00 America/Tegucigalpa');
-
-        $this->actingAs($owner)->get("/sales/new?appointment={$appointment->id}")
-            ->assertSessionHasErrors('appointment');
-        $this->assertSame(Appointment::STATUS_NO_SHOW, $appointment->fresh()->status);
-        $this->assertSame('Marcada automáticamente al vencer el tiempo disponible para cobrar.', $appointment->fresh()->no_show_reason);
-        $this->actingAs($owner)->get('/appointments?view=day&date=2026-07-21&month=2026-07')
-            ->assertInertia(fn ($page) => $page->has('appointments', 0));
-        $this->actingAs($owner)->get('/appointments/history')->assertOk();
-        $this->actingAs($owner)->getJson("/appointments/{$appointment->id}")
-            ->assertOk()->assertJsonPath('appointment.events.0.performed_by.name', 'Sistema');
-    }
-
-    public function test_agenda_get_filters_expired_appointments_without_mutating_them(): void
-    {
-        $owner = $this->user('owner');
-        $employee = $this->user('employee');
-        $appointment = $this->appointment($owner, [$employee]);
-        Carbon::setTestNow('2026-07-21 09:31:00 America/Tegucigalpa');
+        $appointment = $this->appointment($owner, $employee);
+        Carbon::setTestNow('2026-07-28 10:00:00 America/Tegucigalpa');
 
         $this->actingAs($owner)->get('/appointments?view=day&date=2026-07-21&month=2026-07')
-            ->assertOk()->assertInertia(fn ($page) => $page->has('appointments', 0));
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('appointments', 1)
+                ->where('appointments.0.id', $appointment->id)
+                ->where('appointments.0.status', Appointment::STATUS_SCHEDULED)
+                ->where('appointments.0.status_label', 'Pendiente de cobro')
+                ->where('appointments.0.can_checkout', true));
+
         $this->assertSame(Appointment::STATUS_SCHEDULED, $appointment->fresh()->status);
-        $this->assertSame(1, AppointmentEvent::query()->where('appointment_id', $appointment->id)->count());
+        $this->assertNull($appointment->no_show_at);
+        $this->assertSame(0, InternalNotification::query()->where('dedupe_key', 'like', '%checkout-grace%')->orWhere('dedupe_key', 'like', '%expired%')->count());
+        $this->assertArrayNotHasKey('studio:process-expired-appointments', Artisan::all());
+        $this->actingAs($owner)->get('/appointments/history')->assertOk();
     }
 
-    public function test_expiration_notifies_once_uses_total_shared_end_and_never_expires_completed_appointments(): void
+    public function test_past_scheduled_appointment_can_still_be_marked_no_show_manually(): void
     {
-        $owner = $this->user('owner');
-        $first = $this->user('employee');
-        $second = $this->user('employee');
-        $third = $this->user('employee');
-        $shared = $this->appointment($owner, [$first, $second]);
-        $completed = $this->appointment($owner, [$third]);
-        $completed->forceFill(['status' => Appointment::STATUS_COMPLETED])->save();
-        $action = app(ProcessExpiredAppointmentsAction::class);
+        $employee = $this->user('employee');
+        $appointment = $this->appointment($employee, $employee);
+        Carbon::setTestNow('2026-07-24 10:00:00 America/Tegucigalpa');
 
-        Carbon::setTestNow('2026-07-21 10:01:00 America/Tegucigalpa');
-        $action->execute();
-        $this->assertSame(Appointment::STATUS_SCHEDULED, $shared->fresh()->status);
-        $this->assertSame(Appointment::STATUS_COMPLETED, $completed->fresh()->status);
-        $pendingCount = InternalNotification::query()->where('dedupe_key', "appointment:{$shared->id}:checkout-grace")->count();
-        $this->assertGreaterThanOrEqual(3, $pendingCount);
+        $this->actingAs($employee)->post("/appointments/{$appointment->id}/no-show", [
+            'reason' => 'La clienta no se presentó.',
+        ])->assertStatus(303);
 
-        Carbon::setTestNow('2026-07-21 10:31:00 America/Tegucigalpa');
-        $action->execute();
-        $action->execute();
-        $this->assertSame(Appointment::STATUS_NO_SHOW, $shared->fresh()->status);
-        $this->assertSame(1, AppointmentEvent::query()->where('appointment_id', $shared->id)->where('type', AppointmentEvent::TYPE_NO_SHOW)->count());
-        $expiredCount = InternalNotification::query()->where('dedupe_key', "appointment:{$shared->id}:expired")->count();
-        $this->assertSame($pendingCount, $expiredCount);
+        $appointment->refresh();
+        $this->assertSame(Appointment::STATUS_NO_SHOW, $appointment->status);
+        $this->assertSame($employee->id, $appointment->no_show_by);
+        $this->assertSame('La clienta no se presentó.', $appointment->no_show_reason);
     }
 
-    public function test_agenda_checkout_ui_always_finishes_loading_and_surfaces_errors(): void
+    public function test_agenda_uses_pending_checkout_without_deadline_or_countdown_copy(): void
     {
         $page = file_get_contents(resource_path('js/Pages/Appointments/Index.vue'));
 
         $this->assertNotFalse($page);
-        $this->assertStringContainsString('checkoutLoading.value = false;', $page);
-        $this->assertStringContainsString('} finally {', $page);
-        $this->assertStringContainsString('checkoutError.value', $page);
-        $this->assertStringContainsString("operational_status === 'pending_checkout'", $page);
-        $this->assertStringContainsString('Quedan {{ appointment.checkout_remaining_minutes }} minutos para cobrar.', $page);
+        $this->assertStringContainsString('Pendiente de cobro', $page);
+        $this->assertStringNotContainsString('checkout_remaining_minutes', $page);
+        $this->assertStringNotContainsString('checkout_deadline', $page);
+        $this->assertStringNotContainsString('Quedan {{', $page);
+        $this->assertStringNotContainsString('Cobrar antes de', $page);
+        $this->assertStringContainsString('Atender y cobrar', $page);
+        $this->assertStringContainsString('No llegó', $page);
     }
 
-    private function appointment(User $actor, array $assignees): Appointment
+    private function appointment(User $actor, User $assignee): Appointment
     {
-        $service = Service::query()->create(['name' => 'Manicura', 'duration_minutes' => 60, 'price' => '100.00', 'is_active' => true]);
+        $service = Service::query()->create(['name' => 'Manicura', 'description' => 'Servicio reservado', 'duration_minutes' => 60, 'price' => '100.00', 'is_active' => true]);
 
         return app(CreateAppointmentAction::class)->execute($actor, [
-            'client_name' => 'María López', 'date' => '2026-07-21', 'start_time' => '08:00',
-            'items' => collect($assignees)->map(fn (User $assignee) => [
-                'service_id' => $service->id, 'assigned_to' => $assignee->id, 'quantity' => 1, 'duration_minutes' => 60,
-            ])->all(),
+            'client_name' => 'María López',
+            'date' => '2026-07-21',
+            'start_time' => '08:00',
+            'items' => [[
+                'service_id' => $service->id,
+                'assigned_to' => $assignee->id,
+                'quantity' => 1,
+                'duration_minutes' => 60,
+            ]],
         ]);
+    }
+
+    private function checkoutPayload(Appointment $appointment): array
+    {
+        return [
+            'checkout_token' => (string) Str::uuid(),
+            'appointment_id' => $appointment->id,
+            'payment_method' => 'cash',
+            'items' => $appointment->items()->orderBy('position')->get()->map(fn ($item) => [
+                'appointment_item_id' => $item->id,
+                'service_id' => $item->service_id,
+                'quantity' => $item->quantity,
+                'performed_by' => $item->assigned_to,
+            ])->all(),
+            'removed_appointment_item_ids' => [],
+        ];
     }
 
     private function user(string $role): User

@@ -63,8 +63,6 @@ export interface Appointment {
     can_resolve_deposit: boolean;
     can_checkout: boolean;
     operational_status: 'scheduled' | 'in_service' | 'pending_checkout' | 'completed' | 'canceled' | 'no_show';
-    checkout_deadline: string | null;
-    checkout_remaining_minutes: number | null;
     status_reason: string | null;
     visible_items: AppointmentItem[];
 }

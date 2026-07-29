@@ -38,13 +38,11 @@ class HomeController extends Controller
 
         $today = CarbonImmutable::now(CreateAppointmentAction::TIMEZONE);
         $todayStart = $today->startOfDay();
-        $expiredBefore = $today->subMinutes((int) config('appointments.checkout_grace_minutes'))->utc();
         $todayAppointmentsQuery = Appointment::query()
             ->with(['assignedTo:id,name', 'items.assignedTo:id,name', 'deposit', 'sale:id,appointment_id'])
             ->where('status', Appointment::STATUS_SCHEDULED)
             ->where('scheduled_start', '>=', $todayStart->utc())
             ->where('scheduled_start', '<', $todayStart->addDay()->utc())
-            ->whereHas('items', fn ($items) => $items->where('scheduled_end', '>', $expiredBefore))
             ->when(
                 ! $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL),
                 fn ($query) => $query->whereHas('items', fn ($items) => $items->where('assigned_to', $request->user()->getKey())),

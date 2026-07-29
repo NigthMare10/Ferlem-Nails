@@ -150,15 +150,13 @@ class CreateAppointmentAction
 
     private function ensureNoConflicts(array $prepared, ?int $excludeAppointmentId = null): void
     {
-        $expiredBefore = CarbonImmutable::now(self::TIMEZONE)->subMinutes((int) config('appointments.checkout_grace_minutes'))->utc();
         foreach ($prepared as $entry) {
             $conflict = AppointmentItem::query()
                 ->where('assigned_to', $entry['selected']['assigned_to'])
                 ->where('scheduled_start', '<', $entry['segmentEnd']->utc())
                 ->where('scheduled_end', '>', $entry['segmentStart']->utc())
-                ->whereHas('appointment', function ($query) use ($excludeAppointmentId, $expiredBefore) {
+                ->whereHas('appointment', function ($query) use ($excludeAppointmentId) {
                     $query->where('status', Appointment::STATUS_SCHEDULED);
-                    $query->whereHas('items', fn ($items) => $items->where('scheduled_end', '>', $expiredBefore));
                     if ($excludeAppointmentId) {
                         $query->whereKeyNot($excludeAppointmentId);
                     }

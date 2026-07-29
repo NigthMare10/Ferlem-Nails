@@ -70,16 +70,13 @@ class BuildAppointmentAvailabilityAction
 
     private function hasConflict(array $segments, ?int $excludeAppointmentId): bool
     {
-        $expiredBefore = CarbonImmutable::now(CreateAppointmentAction::TIMEZONE)
-            ->subMinutes((int) config('appointments.checkout_grace_minutes'))->utc();
         foreach ($segments as $segment) {
             if (AppointmentItem::query()
                 ->where('assigned_to', $segment['assigned_to'])
                 ->where('scheduled_start', '<', $segment['end']->utc())
                 ->where('scheduled_end', '>', $segment['start']->utc())
-                ->whereHas('appointment', function ($query) use ($excludeAppointmentId, $expiredBefore) {
+                ->whereHas('appointment', function ($query) use ($excludeAppointmentId) {
                     $query->where('status', Appointment::STATUS_SCHEDULED);
-                    $query->whereHas('items', fn ($items) => $items->where('scheduled_end', '>', $expiredBefore));
                     if ($excludeAppointmentId) {
                         $query->whereKeyNot($excludeAppointmentId);
                     }
