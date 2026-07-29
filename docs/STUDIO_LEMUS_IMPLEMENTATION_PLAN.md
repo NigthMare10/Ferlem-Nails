@@ -213,7 +213,7 @@ Cambio aprobado por el usuario el 2026-07-19. El roadmap 2B-2I se conserva como 
 - Navegacion: owner conserva Inicio, Nueva venta y Configuracion autorizada; employee inicia en `/sales/new` y solo ve Nueva venta; administrator inicia en Nueva venta cuando tiene permisos y usa su primera seccion de Configuracion si se retiran. `/cash` solo redirige a `/sales/new` para usuarios autorizados y no consulta ni modifica Caja.
 - Interfaz: `Sales/Create` incluye buscador, cards de servicios activos, carrito con multiples lineas, controles tactiles 1-50, total de servicios, total HNL, resumen sticky desktop, barra/bottom sheet movil y dialogo de confirmacion persistente durante proceso. No solicita cliente, impuestos, descuentos ni metodo de pago.
 - Recibo: vista Inertia independiente, basada exclusivamente en snapshots de `SaleItem`, con marca, numero, fecha/hora Honduras, vendedor, lineas, cantidades, precios, total de servicios, total, agradecimiento, botones Imprimir/Nueva venta y CSS `@page`/`@media print` para 80 mm. No usa PDF ni contiene datos fiscales inventados.
-- Permisos creados: `sales.access`, `sales.create`, `sales.view_own` y `sales.reprint`; owner, administrator y employee reciben los cuatro. Los permisos futuros `sales.view_all`, `sales.cancel`, `sales.apply_discount`, `reports.*` y `expenses.*` no se crearon. Seeders repetidos no duplican registros.
+- Permisos creados: `sales.access`, `sales.create`, `sales.view_own` y `sales.reprint`; owner, administrator y employee reciben los cuatro. Los permisos futuros `sales.view_all`, `sales.cancel`, `sales.apply_frequent_discount`, `reports.*` y `expenses.*` no se crearon. Seeders repetidos no duplican registros.
 - Retiro de Caja: se eliminaron la ruta POST de apertura, acción, excepción, Form Request, Resource, página, diálogo y prueba de concurrencia operativa. Quedan como legado sin uso `2026_07_19_120000_create_cash_sessions_table.php`, la tabla con su fila preexistente, `CashSession.php`, relaciones históricas de `User` y `CashController@index` exclusivamente como redirección. Los tres permisos `cash.*` permanecen como filas históricas en MySQL, pero ningún rol los tiene asignados y no autorizan rutas o navegación.
 - Pruebas: `php artisan test` directo fallo por `could not find driver`: 1 prueba paso y 58 terminaron con error SQLite. Cargando temporalmente `pdo_sqlite` y `sqlite3`, 59 pruebas y 279 aserciones pasaron. El INI temporal se elimino. La cobertura incluye permisos, landing, catalogo activo, validacion, consolidacion, calculo decimal, manipulacion, snapshots, rollback, idempotencia, recibos propios/ajenos, ausencia de Caja y seeders.
 - Build: `npm run build` correcto, 1,187 modulos transformados. Permanece la advertencia no bloqueante por chunks mayores de 500 kB.
@@ -492,7 +492,7 @@ Contenido minimo: marca, numero, fecha/hora, usuario que cobro, servicios, canti
 - Solo pueden venderse servicios activos.
 - Backend vuelve a consultar servicio, estado y precio dentro de la transaccion; ignora precios calculados por el navegador.
 - `sale_items` copia nombre, descripcion y precio unitario. Cambios o eliminaciones posteriores no alteran la venta.
-- MVP permite descuento fijo en HNL a nivel de venta solo con `sales.apply_discount`, con motivo obligatorio. Debe ser mayor que cero y menor que el subtotal. No hay descuento porcentual ni por linea.
+- MVP permite descuento fijo en HNL a nivel de venta solo con `sales.apply_frequent_discount`, con motivo obligatorio. Debe ser mayor que cero y menor que el subtotal. No hay descuento porcentual ni por linea.
 - Employee no recibe descuento por defecto.
 - No se permite cambiar precio unitario, conceptos manuales, servicios no configurados ni cortesias en el MVP. `sales.override_price` queda reservado y no se crea hasta aprobar esa funcionalidad.
 - Cantidad es entero positivo con limite operativo validado. El backend recalcula subtotal, descuento y total.
@@ -522,7 +522,7 @@ Recomendacion: cierre ciego. Primero se solicita efectivo contado; despues de co
 6. Modificar cantidad con controles tactiles y limites.
 7. Retirar servicios.
 8. Mostrar subtotal preliminar.
-9. Mostrar descuento solo con `sales.apply_discount`; exigir motivo.
+9. Mostrar descuento solo con `sales.apply_frequent_discount`; exigir motivo.
 10. Mostrar total preliminar.
 11. Abrir `PaymentDialog` sin perder carrito.
 12. Seleccionar efectivo, tarjeta o transferencia.
@@ -755,7 +755,7 @@ Leyenda: `Si` recomendado por defecto; `No` no asignar; `Opcional` asignacion di
 | `sales.view_detail` | Si | Si | Si | Requiere ademas alcance own/all |
 | `sales.reprint` | Si | Si | Si | Requiere ademas alcance de venta |
 | `sales.cancel` | Si | Si | No | Anular con motivo; nunca borrar |
-| `sales.apply_discount` | Si | Si | No | Descuento fijo y motivo |
+| `sales.apply_frequent_discount` | Si | Si | No | Descuento fijo y motivo |
 | `sales.override_price` | Si | No | No | Reservado; no crear en MVP |
 | `reports.sales.view` | Si | No | No | Ingresos brutos de ventas; asignable posteriormente a administrator |
 | `reports.cash.view` | Si | Si | No | Cierres/diferencias |
@@ -1010,7 +1010,7 @@ Cobertura acumulativa obligatoria:
 
 **Migraciones conceptuales:** tablas `sales`, `sale_items`, `payments` con FKs, indices, unicos, decimales y sin soft deletes. Agregar `discount_reason` y `checkout_token` segun modelo conceptual.
 
-**Permisos:** crear `sales.view_detail`, `sales.reprint`, `sales.apply_discount`. Asignar detalle/reimpresion a los tres roles segun scope futuro; descuento a owner/admin, no employee. No crear `sales.override_price`.
+**Permisos:** crear `sales.view_detail`, `sales.reprint`, `sales.apply_frequent_discount`. Asignar detalle/reimpresion a los tres roles segun scope futuro; descuento a owner/admin, no employee. No crear `sales.override_price`.
 
 **Pruebas automaticas:** transaccion/rollback; montos y precios manipulados; inactivo/cambio de precio; caja cerrada; efectivo insuficiente/cambio; referencias; descuento autorizado/no autorizado; doble envio/token; dos usuarios; numero unico; snapshots; receipt autorizado; sesion expirada donde sea automatizable; unit tests de calculos; suite/build.
 

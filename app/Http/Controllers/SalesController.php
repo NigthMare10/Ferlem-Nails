@@ -20,16 +20,20 @@ use App\Support\SaleAccess;
 use App\Support\TransferProofStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Permission;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SalesController extends Controller
 {
+    private ?bool $discountPermissionExists = null;
+
     public function create(Request $request): Response
     {
         $services = Service::query()
@@ -186,6 +190,21 @@ class SalesController extends Controller
 
     private function canApplyDiscount(User $user): bool
     {
+        if ($this->discountPermissionExists === null) {
+            $this->discountPermissionExists = Permission::query()
+                ->where('name', Permissions::SALES_APPLY_FREQUENT_DISCOUNT)
+                ->where('guard_name', 'web')
+                ->exists();
+
+            if (! $this->discountPermissionExists) {
+                Log::warning('Discount permission is missing; discount controls were disabled.');
+            }
+        }
+
+        if (! $this->discountPermissionExists) {
+            return false;
+        }
+
         return $user->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)
             && $user->hasAnyRole(['owner', 'administrator']);
     }

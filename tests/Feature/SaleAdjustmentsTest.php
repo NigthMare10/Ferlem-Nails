@@ -7,8 +7,11 @@ use App\Models\Service;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia as Assert;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class SaleAdjustmentsTest extends TestCase
@@ -100,5 +103,24 @@ class SaleAdjustmentsTest extends TestCase
         ])->assertSessionHasErrors('discount_percent');
 
         $this->assertDatabaseCount('sales', 0);
+    }
+
+    public function test_missing_discount_permission_disables_control_without_breaking_new_sale(): void
+    {
+        $owner = User::factory()->create(['is_active' => true]);
+        $owner->assignRole('owner');
+        Permission::query()->where('name', 'sales.apply_frequent_discount')->where('guard_name', 'web')->delete();
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        Log::spy();
+
+        $this->actingAs($owner)->get('/sales/new')
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Sales/Create')
+                ->where('canApplyDiscount', false));
+
+        Log::shouldHaveReceived('warning')
+            ->with('Discount permission is missing; discount controls were disabled.')
+            ->once();
     }
 }

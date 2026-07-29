@@ -176,6 +176,7 @@ STEP='migrar y regenerar cachés'
 cd "$APP_ROOT"
 "$PHP_BIN" artisan optimize:clear
 "$PHP_BIN" artisan migrate --force
+"$PHP_BIN" artisan permission:cache-reset
 "$PHP_BIN" artisan config:cache
 "$PHP_BIN" artisan route:cache
 "$PHP_BIN" artisan view:cache
