@@ -6,6 +6,7 @@ use App\Actions\Notifications\PublishInternalNotificationAction;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SalePayment;
+use App\Models\SaleAdditionalCharge;
 use App\Models\User;
 use App\Support\Money;
 use App\Support\SaleFinancials;
@@ -22,8 +23,11 @@ class PersistCompletedSaleAction
         string $requestHash,
         ?int $appointmentId = null,
         ?string $clientName = null,
+        array $additionalCharges = [],
+        int $discountCents = 0,
+        string $discountPercent = '0.00',
     ): Sale {
-        $financials = SaleFinancials::summarize($lines, $payments);
+        $financials = SaleFinancials::summarize($lines, $payments, $additionalCharges, $discountCents);
         $summaryMethod = $payments[array_key_last($payments)]['method'];
         $hasCardPayment = collect($payments)->contains(fn (array $payment) => $payment['method'] === Sale::PAYMENT_METHOD_CARD);
 
@@ -32,7 +36,11 @@ class PersistCompletedSaleAction
         $sale->client_name = $clientName;
         $sale->sold_by = $seller->getKey();
         $sale->sold_at = now('UTC');
-        $sale->subtotal = Money::fromCents($financials['total_cents']);
+        $sale->subtotal = Money::fromCents($financials['subtotal_cents']);
+        $sale->subtotal_before_discount = Money::fromCents($financials['subtotal_cents']);
+        $sale->is_frequent_client = $discountCents > 0;
+        $sale->discount_percent = $discountPercent;
+        $sale->discount_amount = Money::fromCents($financials['discount_cents']);
         $sale->total = Money::fromCents($financials['total_cents']);
         $sale->total_services = $financials['total_services'];
         $sale->status = Sale::STATUS_COMPLETED;
@@ -64,6 +72,16 @@ class PersistCompletedSaleAction
             $item->allocated_card_fee_amount = Money::fromCents($allocatedFeeCents);
             $item->net_line_amount = Money::fromCents($line['line_total_cents'] - $allocatedFeeCents);
             $item->save();
+        }
+
+        foreach ($additionalCharges as $charge) {
+            $additionalCharge = new SaleAdditionalCharge;
+            $additionalCharge->sale_id = $sale->getKey();
+            // The legacy column remains required; name is the authoritative snapshot.
+            $additionalCharge->description = $charge['name'];
+            $additionalCharge->name = $charge['name'];
+            $additionalCharge->amount = Money::fromCents($charge['amount_cents']);
+            $additionalCharge->save();
         }
 
         foreach ($payments as $paymentData) {
@@ -109,7 +127,7 @@ class PersistCompletedSaleAction
             );
         }
 
-        return $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
+        return $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'additionalCharges', 'payments']);
     }
 
     private function notificationMessage(string $saleNumber, array $payments): string

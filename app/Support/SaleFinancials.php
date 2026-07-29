@@ -41,7 +41,7 @@ final class SaleFinancials
         ];
     }
 
-    public static function summarize(array $lines, array $payments): array
+    public static function summarize(array $lines, array $payments, array $additionalCharges = [], int $discountCents = 0): array
     {
         if ($lines === [] || $payments === []) {
             throw ValidationException::withMessages(['items' => 'La venta requiere servicios y pagos.']);
@@ -60,18 +60,28 @@ final class SaleFinancials
             $totalServices += $quantity;
         }
 
+        $additionalCents = array_sum(array_column($additionalCharges, 'amount_cents'));
+        $subtotalCents = $totalCents + $additionalCents;
+        if ($discountCents < 0 || $discountCents > $subtotalCents) {
+            throw ValidationException::withMessages(['discount_amount' => 'El descuento no puede superar el subtotal.']);
+        }
+        $finalTotalCents = $subtotalCents - $discountCents;
         $paidCents = array_sum(array_column($payments, 'amount_cents'));
         $feeCents = array_sum(array_column($payments, 'fee_cents'));
-        if ($paidCents !== $totalCents || $feeCents > $totalCents) {
+        if ($paidCents !== $finalTotalCents || $feeCents > $finalTotalCents) {
             throw ValidationException::withMessages(['items' => 'Los pagos no coinciden con el total de la venta.']);
         }
 
         return [
-            'total_cents' => $totalCents,
+            'services_cents' => $totalCents,
+            'additional_cents' => $additionalCents,
+            'subtotal_cents' => $subtotalCents,
+            'discount_cents' => $discountCents,
+            'total_cents' => $finalTotalCents,
             'total_services' => $totalServices,
             'fee_cents' => $feeCents,
-            'net_cents' => $totalCents - $feeCents,
-            'fee_allocations' => self::allocateFee($lines, $feeCents, $totalCents),
+            'net_cents' => $finalTotalCents - $feeCents,
+            'fee_allocations' => self::allocateFee($lines, $feeCents, $finalTotalCents),
         ];
     }
 

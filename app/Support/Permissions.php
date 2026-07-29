@@ -9,6 +9,7 @@ final class Permissions
     public const SALES_ACCESS = 'sales.access';
 
     public const SALES_CREATE = 'sales.create';
+    public const SALES_APPLY_FREQUENT_DISCOUNT = 'sales.apply_frequent_discount';
 
     public const SALES_VIEW_OWN = 'sales.view_own';
 
@@ -111,7 +112,7 @@ final class Permissions
     public static function all(): array
     {
         return [self::NOTIFICATIONS_ACCESS,
-            self::SALES_ACCESS, self::SALES_CREATE, self::SALES_VIEW_OWN, self::SALES_VIEW_ALL,
+            self::SALES_ACCESS, self::SALES_CREATE, self::SALES_APPLY_FREQUENT_DISCOUNT, self::SALES_VIEW_OWN, self::SALES_VIEW_ALL,
             self::SALES_REPRINT, self::SALES_CANCEL, self::SALES_VIEW_TRANSFER_PROOF,
             self::SALES_UPLOAD_TRANSFER_PROOF,
             self::REPORTS_SALES_VIEW, self::REPORTS_EXPENSES_VIEW,

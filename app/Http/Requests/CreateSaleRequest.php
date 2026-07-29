@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Support\Permissions;
+use App\Support\SaleAdditionalCharges;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
@@ -29,6 +30,9 @@ class CreateSaleRequest extends FormRequest
             $name = trim($this->client_name);
             $this->merge(['client_name' => $name === '' ? null : $name]);
         }
+        if (is_array($this->input('additional_charges'))) {
+            $this->merge(['additional_charges' => SaleAdditionalCharges::canonicalizeInput($this->input('additional_charges'))]);
+        }
     }
 
     public function rules(): array
@@ -45,6 +49,11 @@ class CreateSaleRequest extends FormRequest
             'items' => ['required', 'array', 'min:1', 'max:100'],
             'items.*.service_id' => ['required', 'integer', 'exists:services,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:50'],
+            'additional_charges' => ['sometimes', 'array', 'max:20'],
+            'additional_charges.*.name' => ['required_with:additional_charges', 'string', 'max:120'],
+            'additional_charges.*.amount' => ['required_with:additional_charges', 'regex:/^(\d{1,10})(?:\.(\d{1,2}))?$/'],
+            'is_frequent_client' => ['sometimes', 'boolean'],
+            'discount_percent' => [Rule::prohibitedIf(fn () => ! $this->user()?->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)), 'nullable', 'regex:/^(?:\d{1,2}|100)(?:\.\d{1,2})?$/'],
         ];
     }
 
@@ -70,6 +79,9 @@ class CreateSaleRequest extends FormRequest
             'items.*.quantity.integer' => 'La cantidad debe ser un número entero.',
             'items.*.quantity.min' => 'La cantidad mínima es 1.',
             'items.*.quantity.max' => 'La cantidad máxima por servicio es 50.',
+            'additional_charges.*.name.required_with' => 'Cada cargo adicional debe incluir un nombre.',
+            'additional_charges.*.amount.required_with' => 'Cada cargo adicional debe incluir un monto.',
+            'additional_charges.*.amount.regex' => 'El monto de cada cargo adicional debe ser mayor que cero y tener máximo dos decimales.',
         ];
     }
 }

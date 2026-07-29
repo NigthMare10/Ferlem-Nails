@@ -74,7 +74,9 @@ class Phase4DAppointmentCheckoutTest extends TestCase
                 ->component('Sales/Create')
                 ->where('appointment.client_name', 'María López')
                 ->where('appointment.items.0.name', 'Snapshot reservado')
-                ->where('appointment.items.0.quantity', 2)
+                ->has('appointment.items', 2)
+                ->where('appointment.items.0.quantity', 1)
+                ->where('appointment.items.1.quantity', 1)
                 ->where('appointment.items.0.performed_by.id', $employee->id)
                 ->where('appointment.reserved_total', '246.90')
                 ->where('appointment.deposit.amount', '40.00')
@@ -142,6 +144,25 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
         $this->assertSame(1, $sale->items()->count());
         $this->assertSame('card', $sale->payments()->sole()->method);
+    }
+
+    public function test_appointment_checkout_persists_named_additional_charge_and_exposes_it_in_receipt(): void
+    {
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $appointment = $this->appointment($owner, [$this->line($this->service('Manicura', '100.00'), $employee)]);
+        $payload = $this->checkoutPayload($appointment);
+        $payload['additional_charges'] = [['name' => 'Diseño', 'amount' => '100.00']];
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
+
+        $sale = Sale::query()->with('additionalCharges')->sole();
+        $this->assertSame('200.00', $sale->total);
+        $this->assertSame(1, $sale->total_services);
+        $this->assertSame('Diseño', $sale->additionalCharges->sole()->name);
+        $this->get(route('sales.receipt', $sale))->assertInertia(fn (Assert $page) => $page
+            ->where('sale.additional_charges.0.name', 'Diseño')
+            ->where('sale.additional_charges.0.amount', '100.00'));
     }
 
     public function test_confirmation_button_wires_to_the_shared_submit_handler_and_keeps_errors_visible(): void

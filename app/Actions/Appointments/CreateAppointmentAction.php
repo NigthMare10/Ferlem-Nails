@@ -56,25 +56,26 @@ class CreateAppointmentAction
             $totalCents = 0;
             $prepared = [];
 
-            foreach ($items as $position => $selected) {
+            foreach ($items as $selected) {
                 $service = $services->get((int) $selected['service_id']);
                 if (! $service || ! $service->is_active) {
                     throw ValidationException::withMessages(['items' => 'Uno de los servicios ya no está disponible.']);
                 }
 
                 $unitPriceCents = $this->decimalToCents($service->price);
-                $lineTotalCents = $unitPriceCents * (int) $selected['quantity'];
-                if ($lineTotalCents > self::MAX_AMOUNT_CENTS || $totalCents + $lineTotalCents > self::MAX_AMOUNT_CENTS) {
+                if ($unitPriceCents > self::MAX_AMOUNT_CENTS || $totalCents + ($unitPriceCents * (int) $selected['quantity']) > self::MAX_AMOUNT_CENTS) {
                     throw ValidationException::withMessages(['items' => 'El total estimado de la cita excede el monto permitido.']);
                 }
 
-                $segmentEnd = $segmentStart->addMinutes((int) $selected['duration_minutes'] * (int) $selected['quantity']);
-                $prepared[] = compact('service', 'selected', 'segmentStart', 'segmentEnd', 'position') + [
-                    'unit_price' => $this->centsToDecimal($unitPriceCents),
-                    'line_total' => $this->centsToDecimal($lineTotalCents),
-                ];
-                $totalCents += $lineTotalCents;
-                $segmentStart = $segmentEnd;
+                foreach (range(1, (int) $selected['quantity']) as $_) {
+                    $segmentEnd = $segmentStart->addMinutes((int) $selected['duration_minutes']);
+                    $prepared[] = compact('service', 'selected', 'segmentStart', 'segmentEnd') + [
+                        'unit_price' => $this->centsToDecimal($unitPriceCents),
+                        'line_total' => $this->centsToDecimal($unitPriceCents),
+                    ];
+                    $totalCents += $unitPriceCents;
+                    $segmentStart = $segmentEnd;
+                }
             }
 
             if (! $scheduledStart->isSameDay($segmentStart)) {
@@ -99,7 +100,7 @@ class CreateAppointmentAction
             $appointment->created_by = $user->getKey();
             $appointment->save();
 
-            foreach ($prepared as $entry) {
+            foreach ($prepared as $position => $entry) {
                 $service = $entry['service'];
                 $selected = $entry['selected'];
                 $item = new AppointmentItem;
@@ -108,13 +109,13 @@ class CreateAppointmentAction
                 $item->service_name = $service->name;
                 $item->service_description = $service->description;
                 $item->assigned_to = $selected['assigned_to'];
-                $item->position = $entry['position'] + 1;
+                $item->position = $position + 1;
                 $item->scheduled_start = $entry['segmentStart']->utc();
                 $item->scheduled_end = $entry['segmentEnd']->utc();
                 $item->default_duration_minutes = $service->duration_minutes;
                 $item->duration_minutes = $selected['duration_minutes'];
                 $item->unit_price = $entry['unit_price'];
-                $item->quantity = $selected['quantity'];
+                $item->quantity = 1;
                 $item->line_total = $entry['line_total'];
                 $item->save();
             }

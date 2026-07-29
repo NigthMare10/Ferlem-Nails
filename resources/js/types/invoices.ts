@@ -35,10 +35,13 @@ export type InvoiceDetail = {
     sold_by: { name: string };
     payment_method_label: string;
     total: string;
+    subtotal: string;
+    discount_amount: string;
     total_services: number;
     receipt_url: string;
     related_appointment: { label: string; url: string } | null;
     items: Array<{ service_name: string; quantity: number; unit_price: string; line_total: string; performed_by: string | null }>;
+    additional_charges: Array<{ name: string; amount: string }>;
     payments: Array<{ id: number; type: string; type_label: string; method: 'cash' | 'card' | 'transfer'; method_label: string; amount: string; proof_status_label: string; proof_url: string | null; can_upload_proof: boolean }>;
     cancellation: { canceled_at_display: string; canceled_by: string | null; reason: string } | null;
     can_cancel: boolean;

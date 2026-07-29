@@ -139,6 +139,7 @@ const navigationLabel = computed(() => {
 
                 <div class="app-sidebar__rule" />
 
+            <div class="app-sidebar__navigation">
             <VList v-model:opened="openedNavigation" nav class="px-3 py-4" density="comfortable">
                 <template v-for="group in navigationGroups" :key="group.title">
                     <VListSubheader v-if="group.items.some(item => item.visible) && !(sidebarRail && !mobile)" class="app-nav-label">
@@ -189,6 +190,7 @@ const navigationLabel = computed(() => {
                     </template>
                 </template>
             </VList>
+            </div>
 
             <template #append>
                 <div class="pa-3">
@@ -223,6 +225,8 @@ const navigationLabel = computed(() => {
 .app-nav-child { min-height: 44px; margin-inline-start: 12px; padding-inline-start: 14px !important; }
 .app-nav-child :deep(.v-list-item-title) { font-size: 1rem; }
 .app-sidebar__rule { height: 1px; margin: 0 20px; background: var(--sl-border); }
+.app-sidebar :deep(.v-navigation-drawer__content) { display: flex; flex-direction: column; overflow: hidden; }
+.app-sidebar__navigation { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
 .app-session { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px; border-radius: var(--sl-radius-compact); background: var(--sl-surface); box-shadow: var(--sl-shadow-inset); }
 .app-session--rail { justify-content: center; padding: 8px; }
 .app-contextbar { display: flex; align-items: center; min-height: 48px; margin-bottom: 24px; padding: 4px 6px 4px 4px; border: 1px solid var(--sl-glass-border); border-radius: var(--sl-radius-pill); background: var(--sl-glass); box-shadow: var(--sl-shadow-raised); backdrop-filter: blur(18px) saturate(130%); }

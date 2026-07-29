@@ -8,6 +8,7 @@ use App\Models\Service;
 use App\Models\User;
 use App\Support\Money;
 use App\Support\Permissions;
+use App\Support\SaleAdditionalCharges;
 use App\Support\SaleFinancials;
 use App\Support\TransferProofStorage;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -33,6 +34,8 @@ class CreateSaleAction
         string $paymentMethod,
         ?UploadedFile $paymentProof = null,
         ?string $clientName = null,
+        array $additionalCharges = [],
+        ?string $discountAmount = null,
     ): Sale {
         if (! $user->is_active || ! $user->can(Permissions::SALES_ACCESS) || ! $user->can(Permissions::SALES_CREATE)) {
             throw new AuthorizationException;
@@ -49,7 +52,10 @@ class CreateSaleAction
 
         $normalizedItems = $this->normalizeItems($items);
         $clientName = $clientName !== null && trim($clientName) !== '' ? trim($clientName) : null;
-        $requestHash = $this->requestHash($normalizedItems, $clientName);
+        $charges = $this->normalizeCharges($additionalCharges);
+        $discountCents = Money::toCents($discountAmount ?? '0.00');
+        $this->authorizeDiscount($user, $discountCents);
+        $requestHash = $this->requestHash($normalizedItems, $clientName, $charges, $discountCents);
 
         if ($existing = $this->findByToken($checkoutToken)) {
             return $this->resolveExisting($existing, $user, $requestHash, $paymentMethod);
@@ -58,7 +64,7 @@ class CreateSaleAction
         $proof = $paymentProof ? $this->storeProof($paymentProof, $user) : null;
 
         try {
-            $sale = DB::transaction(function () use ($user, $normalizedItems, $checkoutToken, $requestHash, $paymentMethod, $proof, $clientName) {
+            $sale = DB::transaction(function () use ($user, $normalizedItems, $checkoutToken, $requestHash, $paymentMethod, $proof, $clientName, $charges, $discountCents) {
                 if ($existing = $this->findByToken($checkoutToken)) {
                     return $this->resolveExisting($existing, $user, $requestHash, $paymentMethod);
                 }
@@ -121,7 +127,11 @@ class CreateSaleAction
                     ];
                 }
 
-                $payment = SaleFinancials::payment(SalePayment::TYPE_FINAL_PAYMENT, $paymentMethod, $subtotalCents);
+                $totalCents = $subtotalCents + array_sum(array_column($charges, 'amount_cents')) - $discountCents;
+                if ($totalCents < 0) {
+                    throw ValidationException::withMessages(['discount_amount' => 'El descuento no puede superar el subtotal.']);
+                }
+                $payment = SaleFinancials::payment(SalePayment::TYPE_FINAL_PAYMENT, $paymentMethod, $totalCents);
 
                 return $this->persistCompletedSale->execute(
                     $user,
@@ -131,6 +141,8 @@ class CreateSaleAction
                     $requestHash,
                     null,
                     $clientName,
+                    $charges,
+                    $discountCents,
                 );
             }, 3);
 
@@ -199,13 +211,25 @@ class CreateSaleAction
         );
     }
 
-    private function requestHash(array $items, ?string $clientName): string
+    private function requestHash(array $items, ?string $clientName, array $charges = [], int $discountCents = 0): string
     {
         usort($items, fn (array $left, array $right) => $left['service_id'] <=> $right['service_id']);
 
-        $payload = $clientName === null ? $items : ['items' => $items, 'client_name' => $clientName];
+        $payload = ['items' => $items, 'client_name' => $clientName, 'additional_charges' => $charges, 'discount_cents' => $discountCents];
 
         return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
+    }
+
+    private function normalizeCharges(array $charges): array
+    {
+        return SaleAdditionalCharges::normalize($charges);
+    }
+
+    private function authorizeDiscount(User $user, int $discountCents): void
+    {
+        if ($discountCents > 0 && ! $user->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)) {
+            throw new AuthorizationException('No tienes permiso para aplicar descuentos.');
+        }
     }
 
     private function findByToken(string $checkoutToken): ?Sale

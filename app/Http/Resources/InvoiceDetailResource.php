@@ -24,6 +24,8 @@ class InvoiceDetailResource extends JsonResource
             'sold_by' => ['name' => $this->soldBy->name],
             'payment_method_label' => $methods->count() > 1 ? 'Mixto' : $this->methodLabel((string) $methods->first()),
             'total' => $this->total,
+            'subtotal' => $this->subtotal,
+            'discount_amount' => $this->discount_amount,
             'total_services' => $this->total_services,
             'receipt_url' => route('sales.receipt', $this->resource),
             'related_appointment' => $this->appointment_id ? [
@@ -36,6 +38,10 @@ class InvoiceDetailResource extends JsonResource
                 'unit_price' => $item->unit_price,
                 'line_total' => $item->line_total,
                 'performed_by' => $item->performedBy?->name,
+            ])->values(),
+            'additional_charges' => $this->additionalCharges->map(fn ($charge) => [
+                'name' => $charge->name ?: $charge->description ?: 'Cargo adicional',
+                'amount' => $charge->amount,
             ])->values(),
             'payments' => $this->payments->map(function ($payment) use ($request) {
                 $canViewProof = $payment->proof_path

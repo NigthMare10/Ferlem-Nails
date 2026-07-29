@@ -25,8 +25,15 @@ class SaleCheckoutStructureTest extends TestCase
         $this->assertStringContainsString('<SaleLineItem v-for="item in items"', $cart);
         $this->assertStringContainsString('<SalePaymentMethod', $cart);
         $this->assertStringContainsString('<SaleCheckoutSummary', $cart);
-        $this->assertStringContainsString('<SaleCheckoutSummary', $dialog);
-        $this->assertStringContainsString('<SalePaymentMethod', $dialog);
+        $this->assertStringContainsString('Cargos adicionales', $dialog);
+        $this->assertStringContainsString('Método de pago', $dialog);
+        $this->assertStringNotContainsString('<SaleCheckoutSummary', $dialog);
+        $this->assertStringNotContainsString('<SalePaymentMethod', $dialog);
+        $this->assertStringNotContainsString('<VTextField', $dialog);
+        $this->assertStringNotContainsString('<VCheckbox', $dialog);
+        $this->assertStringNotContainsString('update:paymentMethod', $dialog);
+        $this->assertStringContainsString('confirmationSnapshot', $page);
+        $this->assertStringContainsString('Object.freeze', $page);
         $this->assertStringContainsString('<SaleMobileCheckout', $page);
         $this->assertStringContainsString('v-if="showMobileCheckout"', $page);
         $this->assertStringContainsString('appointmentCart', $page);

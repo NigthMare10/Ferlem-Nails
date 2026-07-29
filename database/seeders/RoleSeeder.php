@@ -17,7 +17,7 @@ class RoleSeeder extends Seeder
         $owner->syncPermissions(Permissions::all());
         $administrator->syncPermissions([
             Permissions::NOTIFICATIONS_ACCESS,
-            Permissions::SALES_ACCESS, Permissions::SALES_CREATE, Permissions::SALES_VIEW_OWN, Permissions::SALES_REPRINT,
+            Permissions::SALES_ACCESS, Permissions::SALES_CREATE, Permissions::SALES_APPLY_FREQUENT_DISCOUNT, Permissions::SALES_VIEW_OWN, Permissions::SALES_REPRINT,
             Permissions::SALES_VIEW_ALL, Permissions::SALES_VIEW_TRANSFER_PROOF, Permissions::SALES_UPLOAD_TRANSFER_PROOF,
             Permissions::SETTINGS_ACCESS, Permissions::USERS_VIEW, Permissions::USERS_CREATE,
             Permissions::USERS_UPDATE, Permissions::USERS_ASSIGN_ROLE, Permissions::USERS_TOGGLE_STATUS,

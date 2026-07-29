@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Support\AppointmentCheckoutWindow;
 use App\Support\Money;
 use App\Support\Permissions;
+use App\Support\SaleAdditionalCharges;
 use App\Support\SaleFinancials;
 use App\Support\TransferProofStorage;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -37,6 +38,7 @@ class CheckoutAppointmentAction
     public function execute(User $user, Appointment $appointment, array $data): Sale
     {
         $this->authorizeGlobal($user);
+        $data['additional_charges'] = $this->normalizeCharges($data['additional_charges'] ?? []);
         $requestHash = $this->requestHash($appointment->getKey(), $data);
 
         if ($existing = $this->findByToken($data['checkout_token'])) {
@@ -71,7 +73,10 @@ class CheckoutAppointmentAction
                 }
 
                 $prepared = $this->prepareItems($user, $originalItems, $data);
-                $totalCents = collect($prepared)->sum('line_total_cents');
+                $charges = $data['additional_charges'];
+                $discountCents = Money::toCents($data['discount_amount'] ?? '0.00');
+                $this->authorizeDiscount($user, $discountCents);
+                $totalCents = collect($prepared)->sum('line_total_cents') + array_sum(array_column($charges, 'amount_cents')) - $discountCents;
                 if ($totalCents > self::MAX_AMOUNT_CENTS) {
                     throw ValidationException::withMessages(['items' => 'El total de la venta excede el monto permitido.']);
                 }
@@ -105,6 +110,8 @@ class CheckoutAppointmentAction
                     $requestHash,
                     $locked->getKey(),
                     $locked->client_name,
+                    $charges,
+                    $discountCents,
                 );
 
                 if ($depositCents > 0 && $deposit) {
@@ -204,9 +211,6 @@ class CheckoutAppointmentAction
             ->pluck('service_id')->filter()->map(fn ($id) => (int) $id)->unique()->sort()->values();
         $submittedAdditionalIds = collect($data['items'])->filter(fn ($line) => empty($line['appointment_item_id']))
             ->pluck('service_id')->filter()->map(fn ($id) => (int) $id);
-        if ($submittedAdditionalIds->duplicates()->isNotEmpty()) {
-            throw ValidationException::withMessages(['items' => 'Cada servicio adicional debe aparecer una sola vez. Ajusta su cantidad en la misma línea.']);
-        }
         $services = Service::query()->whereKey($additionalIds->all())->orderBy('id')->lockForUpdate()->get()->keyBy('id');
         if ($services->count() !== $additionalIds->count() || $services->contains(fn (Service $service) => ! $service->is_active)) {
             throw ValidationException::withMessages(['items' => 'Uno de los servicios adicionales ya no está disponible.']);
@@ -297,6 +301,8 @@ class CheckoutAppointmentAction
             'payment_method' => $data['payment_method'],
             'items' => $items,
             'removed_appointment_item_ids' => $removed,
+            'additional_charges' => $data['additional_charges'] ?? [],
+            'discount_amount' => $data['discount_amount'] ?? null,
         ], JSON_THROW_ON_ERROR));
     }
 
@@ -314,6 +320,18 @@ class CheckoutAppointmentAction
             throw ValidationException::withMessages(['checkout_token' => 'Esta confirmación ya fue utilizada con otra cita, selección o forma de pago.']);
         }
 
-        return $sale->loadMissing(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
+        return $sale->loadMissing(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'additionalCharges', 'payments']);
+    }
+
+    private function normalizeCharges(array $charges): array
+    {
+        return SaleAdditionalCharges::normalize($charges);
+    }
+
+    private function authorizeDiscount(User $user, int $discountCents): void
+    {
+        if ($discountCents > 0 && ! $user->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)) {
+            throw new AuthorizationException('No tienes permiso para aplicar descuentos.');
+        }
     }
 }

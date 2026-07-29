@@ -90,6 +90,7 @@ class SalesController extends Controller
                 'pending_balance' => Money::fromCents(max(0, Money::toCents($appointment->expected_total) - $depositCents)),
                 'can_assign' => $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN),
                 'can_resolve_deposit' => $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_RESOLVE_DEPOSIT),
+                'can_apply_discount' => $this->canApplyDiscount($request->user()),
                 'items' => $appointment->items->sortBy('position')->values()->map(fn ($item) => [
                     'appointment_item_id' => $item->id,
                     'service_id' => $item->service_id,
@@ -113,6 +114,7 @@ class SalesController extends Controller
             'services' => SaleServiceResource::collection($services)->resolve($request),
             'appointment' => $appointmentContext,
             'assignees' => $assignees->map->only(['id', 'name'])->values(),
+            'canApplyDiscount' => $this->canApplyDiscount($request->user()),
         ]);
     }
 
@@ -126,6 +128,8 @@ class SalesController extends Controller
             $data['payment_method'],
             $data['payment_proof'] ?? null,
             $data['client_name'] ?? null,
+            $data['additional_charges'] ?? [],
+            $data['discount_amount'] ?? null,
         );
 
         return to_route('sales.receipt', $sale, 303);
@@ -136,7 +140,7 @@ class SalesController extends Controller
         $user = $request->user();
         abort_unless($user->can(Permissions::SALES_REPRINT) && SaleAccess::canView($user, $sale), 403);
 
-        $sale->load(['soldBy:id,name', 'canceledBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
+        $sale->load(['soldBy:id,name', 'canceledBy:id,name', 'appointment', 'items.performedBy:id,name', 'additionalCharges', 'payments']);
 
         return Inertia::render('Sales/Receipt', [
             'sale' => (new SaleReceiptResource($sale))->resolve($request),
@@ -192,5 +196,11 @@ class SalesController extends Controller
                     && $appointment->items->contains(fn ($item) => $item->assigned_to === $user->getKey())));
 
         abort_unless($canView, 403);
+    }
+
+    private function canApplyDiscount(User $user): bool
+    {
+        return $user->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)
+            && $user->hasAnyRole(['owner', 'administrator']);
     }
 }

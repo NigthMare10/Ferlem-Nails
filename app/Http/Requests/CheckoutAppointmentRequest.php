@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Support\Permissions;
+use App\Support\SaleAdditionalCharges;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
@@ -33,6 +34,9 @@ class CheckoutAppointmentRequest extends FormRequest
         if (! $this->has('removed_appointment_item_ids')) {
             $this->merge(['removed_appointment_item_ids' => []]);
         }
+        if (is_array($this->input('additional_charges'))) {
+            $this->merge(['additional_charges' => SaleAdditionalCharges::canonicalizeInput($this->input('additional_charges'))]);
+        }
     }
 
     public function rules(): array
@@ -52,6 +56,11 @@ class CheckoutAppointmentRequest extends FormRequest
             'items.*.performed_by' => ['required', 'integer'],
             'removed_appointment_item_ids' => ['present', 'array'],
             'removed_appointment_item_ids.*' => ['integer', 'distinct'],
+            'additional_charges' => ['sometimes', 'array', 'max:20'],
+            'additional_charges.*.name' => ['required_with:additional_charges', 'string', 'max:120'],
+            'additional_charges.*.amount' => ['required_with:additional_charges', 'regex:/^(\d{1,10})(?:\.(\d{1,2}))?$/'],
+            'is_frequent_client' => ['sometimes', 'boolean'],
+            'discount_percent' => [Rule::prohibitedIf(fn () => ! $this->user()?->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)), 'nullable', 'regex:/^(?:\d{1,2}|100)(?:\.\d{1,2})?$/'],
         ];
     }
 
@@ -71,6 +80,9 @@ class CheckoutAppointmentRequest extends FormRequest
             'items.*.quantity.max' => 'La cantidad máxima por línea es 50.',
             'items.*.performed_by.required' => 'Selecciona quién realizó cada servicio.',
             'removed_appointment_item_ids.present' => 'Confirma explícitamente cualquier servicio reservado que no se realizó.',
+            'additional_charges.*.name.required_with' => 'Cada cargo adicional debe incluir un nombre.',
+            'additional_charges.*.amount.required_with' => 'Cada cargo adicional debe incluir un monto.',
+            'additional_charges.*.amount.regex' => 'El monto de cada cargo adicional debe ser mayor que cero y tener máximo dos decimales.',
         ];
     }
 }

@@ -20,6 +20,7 @@ const { sale } = defineProps<{
         sold_at: string;
         sold_at_display: string;
         subtotal: string;
+        discount_amount: string;
         total: string;
         total_services: number;
         payment_method: 'cash' | 'card' | 'transfer';
@@ -27,6 +28,7 @@ const { sale } = defineProps<{
         client: { name: string; phone: string | null } | null;
         sold_by: { id: number; name: string };
         items: ReceiptItem[];
+        additional_charges: Array<{ name: string; amount: string }>;
         payments: Array<{ id: number; type: 'deposit_applied' | 'final_payment'; type_label: string; method: 'cash' | 'card' | 'transfer'; method_label: string; amount: string; proof_url: string | null }>;
         status: 'completed' | 'canceled';
         is_canceled: boolean;
@@ -76,8 +78,6 @@ const printReceipt = () => window.print();
                     <p>{{ sale.cancellation.reason }}</p>
                 </section>
 
-                <div class="receipt-divider" />
-
                 <dl class="receipt-meta">
                     <div><dt>Número</dt><dd>{{ sale.sale_number }}</dd></div>
                     <div><dt>Fecha</dt><dd>{{ sale.sold_at_display }}</dd></div>
@@ -99,6 +99,14 @@ const printReceipt = () => window.print();
                     </div>
                 </section>
 
+                <template v-if="sale.additional_charges.length">
+                    <div class="receipt-divider" />
+                    <section class="receipt-items" aria-label="Cargos adicionales">
+                        <strong class="receipt-items__heading">Cargos adicionales</strong>
+                        <div v-for="charge in sale.additional_charges" :key="charge.name" class="receipt-item__line"><span>{{ charge.name }}</span><strong>{{ money(charge.amount) }}</strong></div>
+                    </section>
+                </template>
+
                 <template v-if="sale.payments.length">
                     <div class="receipt-divider" />
                     <section class="receipt-payments">
@@ -112,6 +120,8 @@ const printReceipt = () => window.print();
 
                 <dl class="receipt-totals">
                     <div><dt>Total de servicios</dt><dd>{{ sale.total_services }}</dd></div>
+                    <div><dt>Subtotal</dt><dd>{{ money(sale.subtotal) }}</dd></div>
+                    <div v-if="Number(sale.discount_amount) > 0"><dt>Descuento</dt><dd>− {{ money(sale.discount_amount) }}</dd></div>
                     <div class="receipt-total"><dt>Total</dt><dd>{{ money(sale.total) }}</dd></div>
                 </dl>
 

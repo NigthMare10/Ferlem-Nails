@@ -12,6 +12,11 @@ export type SaleCartItem = SaleService & {
 
 export type PaymentMethod = 'cash' | 'card' | 'transfer';
 
+export type SaleAdditionalCharge = {
+    name: string;
+    amount: string;
+};
+
 export type AppointmentCheckoutContext = {
     id: number;
     client_name: string;
@@ -23,6 +28,7 @@ export type AppointmentCheckoutContext = {
     pending_balance: string;
     can_assign: boolean;
     can_resolve_deposit: boolean;
+    can_apply_discount: boolean;
     deposit: null | { id: number; amount: string; available_amount: string; payment_method: PaymentMethod; payment_method_label: string; card_fee_amount: string };
     items: Array<{
         appointment_item_id: number;

@@ -29,6 +29,10 @@ class Sale extends Model
             'sold_at' => 'immutable_datetime',
             'canceled_at' => 'immutable_datetime',
             'subtotal' => 'decimal:2',
+            'subtotal_before_discount' => 'decimal:2',
+            'is_frequent_client' => 'boolean',
+            'discount_percent' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'total' => 'decimal:2',
             'total_services' => 'integer',
             'card_fee_rate' => 'decimal:2',
@@ -82,5 +86,10 @@ class Sale extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(SalePayment::class)->orderBy('id');
+    }
+
+    public function additionalCharges(): HasMany
+    {
+        return $this->hasMany(SaleAdditionalCharge::class)->orderBy('id');
     }
 }
