@@ -27,6 +27,12 @@ class CheckoutAppointmentRequest extends FormRequest
                 $this->merge([$field => strtolower(trim($this->{$field}))]);
             }
         }
+
+        // Empty arrays are omitted by multipart FormData, but an empty removal
+        // list is a valid explicit confirmation that every reserved item remains.
+        if (! $this->has('removed_appointment_item_ids')) {
+            $this->merge(['removed_appointment_item_ids' => []]);
+        }
     }
 
     public function rules(): array

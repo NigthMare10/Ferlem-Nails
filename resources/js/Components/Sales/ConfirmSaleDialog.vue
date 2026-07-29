@@ -79,6 +79,7 @@ const { xs } = useDisplay();
                     prepend-icon="mdi-check"
                     :loading="processing"
                     :disabled="processing"
+                    type="button"
                     @click="emit('confirm')"
                 >
                     Confirmar y generar recibo

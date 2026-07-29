@@ -44,6 +44,7 @@ const removalPending = ref<string | null>(null);
 let additionalSequence = 0;
 const form = useForm({
     checkout_token: crypto.randomUUID(),
+    appointment_id: props.appointment?.id ?? null as number | null,
     payment_method: 'cash' as PaymentMethod,
     client_name: props.appointment?.client_name ?? '',
     items: [] as Array<{ service_id: number | null; appointment_item_id?: number | null; quantity: number; performed_by?: number }>,
@@ -89,9 +90,11 @@ const showMobileCheckout = computed(() => smAndDown.value && activeItemsCount.va
 const saleError = computed(() => {
     const errors = form.errors as Record<string, string>;
     return errors.items
+        || errors.appointment
         || errors.checkout_token
         || errors.payment_method
         || errors.payment_proof
+        || errors.removed_appointment_item_ids
         || Object.entries(errors).find(([key]) => key.startsWith('items.'))?.[1]
         || '';
 });

@@ -126,6 +126,57 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
     }
 
+    public function test_multipart_checkout_accepts_an_empty_reserved_item_removal_list_and_redirects_to_the_receipt(): void
+    {
+        $employee = $this->user('employee');
+        $appointment = $this->appointment($employee, [$this->line($this->service('Manicura'), $employee)]);
+        $payload = $this->checkoutPayload($appointment, method: 'card');
+        unset($payload['removed_appointment_item_ids']);
+
+        $response = $this->actingAs($employee)
+            ->post("/appointments/{$appointment->id}/checkout", $payload)
+            ->assertStatus(303);
+
+        $sale = Sale::query()->sole();
+        $response->assertRedirect(route('sales.receipt', $sale));
+        $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
+        $this->assertSame(1, $sale->items()->count());
+        $this->assertSame('card', $sale->payments()->sole()->method);
+    }
+
+    public function test_confirmation_button_wires_to_the_shared_submit_handler_and_keeps_errors_visible(): void
+    {
+        $page = file_get_contents(resource_path('js/Pages/Sales/Create.vue'));
+        $dialog = file_get_contents(resource_path('js/Components/Sales/ConfirmSaleDialog.vue'));
+
+        $this->assertNotFalse($page);
+        $this->assertNotFalse($dialog);
+        $this->assertStringContainsString('@confirm="submit"', $page);
+        $this->assertStringContainsString('appointment_id: props.appointment?.id', $page);
+        $this->assertStringContainsString('errors.appointment', $page);
+        $this->assertStringContainsString('errors.removed_appointment_item_ids', $page);
+        $this->assertStringContainsString('type="button"', $dialog);
+        $this->assertStringContainsString('@click="emit(\'confirm\')"', $dialog);
+        $this->assertStringContainsString(':disabled="processing"', $dialog);
+    }
+
+    public function test_normal_sale_checkout_still_creates_one_sale_and_redirects_to_the_receipt(): void
+    {
+        $employee = $this->user('employee');
+        $service = $this->service('Pedicura', '250.00');
+        $token = (string) Str::uuid();
+
+        $response = $this->actingAs($employee)->post('/sales', [
+            'checkout_token' => $token,
+            'payment_method' => 'transfer',
+            'items' => [['service_id' => $service->id, 'quantity' => 1]],
+        ])->assertStatus(303);
+
+        $sale = Sale::query()->sole();
+        $response->assertRedirect(route('sales.receipt', $sale));
+        $this->assertSame('transfer', $sale->payments()->sole()->method);
+    }
+
     public function test_reserved_snapshots_repeated_lines_additions_quantity_and_confirmed_removal_are_preserved(): void
     {
         $owner = $this->user('owner');
@@ -563,6 +614,7 @@ class Phase4DAppointmentCheckoutTest extends TestCase
     {
         return [
             'checkout_token' => $token ?? (string) Str::uuid(),
+            'appointment_id' => $appointment->id,
             'payment_method' => $method,
             'items' => $appointment->items()->orderBy('position')->get()->map(fn ($item) => [
                 'appointment_item_id' => $item->id,
