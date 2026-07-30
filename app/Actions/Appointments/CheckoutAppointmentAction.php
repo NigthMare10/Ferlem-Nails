@@ -66,8 +66,11 @@ class CheckoutAppointmentAction
                 }
 
                 $prepared = $this->prepareItems($user, $originalItems, $data);
-                $charges = $data['additional_charges'];
-                $discountCents = Money::toCents($data['discount_amount'] ?? '0.00');
+                $charges = $this->assignChargePerformers($prepared, $data['additional_charges']);
+                $discountCents = Money::percentageOfCents(
+                    collect($prepared)->sum('line_total_cents') + array_sum(array_column($charges, 'amount_cents')),
+                    $data['discount_percent'] ?? '0.00',
+                );
                 $this->authorizeDiscount($user, $discountCents);
                 $totalCents = collect($prepared)->sum('line_total_cents') + array_sum(array_column($charges, 'amount_cents')) - $discountCents;
                 if ($totalCents > self::MAX_AMOUNT_CENTS) {
@@ -105,6 +108,7 @@ class CheckoutAppointmentAction
                     $locked->client_name,
                     $charges,
                     $discountCents,
+                    $data['discount_percent'] ?? '0.00',
                 );
 
                 if ($depositCents > 0 && $deposit) {
@@ -292,6 +296,24 @@ class CheckoutAppointmentAction
         }
     }
 
+    private function assignChargePerformers(array $items, array $charges): array
+    {
+        $performerIds = collect($items)->pluck('performed_by')->unique()->values();
+        if ($performerIds->count() === 1) {
+            return array_map(fn (array $charge) => [...$charge, 'performed_by' => (int) $performerIds->first()], $charges);
+        }
+
+        foreach ($charges as $charge) {
+            if (! $charge['performed_by'] || ! $performerIds->contains((int) $charge['performed_by'])) {
+                throw ValidationException::withMessages([
+                    'additional_charges' => 'Selecciona para cada cargo una empleada participante en la cita.',
+                ]);
+            }
+        }
+
+        return $charges;
+    }
+
     private function authorizeGlobal(User $user): void
     {
         if (! $user->is_active
@@ -331,7 +353,7 @@ class CheckoutAppointmentAction
             'items' => $items,
             'removed_appointment_item_ids' => $removed,
             'additional_charges' => $data['additional_charges'] ?? [],
-            'discount_amount' => $data['discount_amount'] ?? null,
+            'discount_percent' => $data['discount_percent'] ?? null,
         ], JSON_THROW_ON_ERROR));
     }
 

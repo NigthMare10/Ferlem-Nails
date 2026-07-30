@@ -69,12 +69,12 @@
 <h2>Desglose por empleado</h2>
 @if(count($employees))
 <table class="data">
-    <thead><tr><th>Empleado</th><th class="num">Servicios</th><th class="num">Ventas</th><th class="num">Bruto</th><th class="num">POS</th><th class="num">Neto</th><th class="num">Proyección</th><th class="num">Participación</th></tr></thead>
+    <thead><tr><th>Empleado</th><th class="num">Servicios</th><th class="num">Bruto</th><th class="num">POS</th><th class="num">Neto</th><th class="num">Proyección</th><th class="num">Participación</th></tr></thead>
     <tbody>
     @foreach($employees as $employee)
         <tr>
-            <td><strong>{{ $employee['name'] }}</strong><br><span class="muted">{{ collect($employee['payment_methods'])->pluck('method_label')->implode(', ') ?: 'Sin pagos' }} · Comisiones/deducciones: no aplican</span></td>
-            <td class="num">{{ $employee['services_count'] }}</td><td class="num">{{ $employee['sales_count'] }}</td>
+            <td><strong>{{ $employee['name'] }}</strong><br><span class="muted">Comisiones/deducciones: no aplican</span></td>
+            <td class="num">{{ $employee['services_count'] }}</td>
             <td class="num">L {{ number_format((float) $employee['total_sold'], 2) }}</td><td class="num">L {{ number_format((float) $employee['card_fee_amount'], 2) }}</td><td class="num">L {{ number_format((float) $employee['net_amount'], 2) }}</td>
             <td class="num">L {{ number_format((float) $employee['projected_income'], 2) }}</td><td class="num">{{ $employee['participation_percentage'] }}%</td>
         </tr>

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Actions\DailyClose\CreateDailyCloseReportAction;
+use App\Actions\Reports\BuildSalesSummaryAction;
 use App\Mail\DailyCloseReportMail;
 use App\Models\DailyCloseReport;
 use App\Models\DailyCloseSetting;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Services\DailyCloseEmailSender;
 use App\Services\DailyClosePdfGenerator;
 use App\Support\ReportPeriod;
+use App\Support\DailyCloseReportData;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -178,6 +180,25 @@ class DailyCloseTest extends TestCase
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf');
         $this->get('/daily-close/download?date=2026-07-28')->assertOk()->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_daily_close_uses_the_same_financial_totals_as_earnings(): void
+    {
+        $owner = $this->configuredOwner(['owner@example.com']);
+        $this->sale($owner, 'SL-009998', '2026-07-29 02:00:00', '100.00', '4.00', '96.00');
+
+        $earnings = app(BuildSalesSummaryAction::class)->execute(['period' => 'today', 'date' => '2026-07-28']);
+        $data = app(DailyCloseReportData::class)->build(
+            CarbonImmutable::parse('2026-07-28', ReportPeriod::TIMEZONE),
+            $owner,
+            $owner->name,
+        );
+
+        $this->assertSame($earnings['actual']['gross_revenue'], $data['actual']['gross_revenue']);
+        $this->assertSame($earnings['actual']['pos_fee'], $data['actual']['pos_fee']);
+        $this->assertSame($earnings['actual']['net_income'], $data['actual']['net_income']);
+        $this->assertSame('100.00', number_format((float) collect($data['employees'])->sum('participation_percentage'), 2, '.', ''));
+        $this->assertSame($earnings['employees'], collect($data['employees'])->map(fn (array $employee) => collect($employee)->except(['employee_commission', 'deductions', 'participation_percentage', 'projected_income', 'projected_services_count'])->all())->all());
     }
 
     public function test_pdf_failure_marks_every_recipient_failed_and_sends_no_email(): void

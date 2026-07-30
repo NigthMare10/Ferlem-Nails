@@ -19,6 +19,9 @@ defineProps<{
     balanceFeeCents: number;
     totalFeeCents: number;
     netAmountCents: number;
+    chargeAssignees: Array<{ id: number; name: string }>;
+    defaultChargePerformerId: number | null;
+    showChargePerformer: boolean;
 }>();
 
 const frequentClient = defineModel<boolean>('frequentClient', { required: true });
@@ -36,6 +39,9 @@ const additionalCharges = defineModel<SaleAdditionalCharge[]>('additionalCharges
             v-model:additional-charges="additionalCharges"
             :can-apply-discount="canApplyDiscount"
             :processing="processing"
+            :charge-assignees="chargeAssignees"
+            :default-charge-performer-id="defaultChargePerformerId"
+            :show-charge-performer="showChargePerformer"
         />
 
         <div class="summary-row"><span>Servicios realizados</span><strong>{{ totalServices }}</strong></div>

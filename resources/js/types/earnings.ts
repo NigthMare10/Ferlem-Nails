@@ -51,9 +51,13 @@ export type AppointmentProjection = {
     pending_balance: string;
 };
 
-export type EmployeeSummary = EarningsSummary & {
+export type EmployeeSummary = {
     id: number;
     name: string;
+    services_count: number;
+    total_sold: string;
+    card_fee_amount: string;
+    net_amount: string;
     projected_appointments_count?: number;
     projected_services_count?: number;
     projected_income?: string;

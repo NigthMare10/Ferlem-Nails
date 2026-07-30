@@ -57,12 +57,10 @@ class EarningsController extends Controller
                 $row = [
                     'id' => (int) $id,
                     'name' => $actual['name'] ?? $projected['name'],
-                    'sales_count' => $actual['sales_count'] ?? 0,
                     'services_count' => $actual['services_count'] ?? 0,
                     'total_sold' => $actual['total_sold'] ?? '0.00',
                     'card_fee_amount' => $actual['card_fee_amount'] ?? '0.00',
                     'net_amount' => $actual['net_amount'] ?? '0.00',
-                    'average_sale' => $actual['average_sale'] ?? '0.00',
                 ];
 
                 return $hasProjection ? [

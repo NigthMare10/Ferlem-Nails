@@ -15,6 +15,7 @@ export type PaymentMethod = 'cash' | 'card' | 'transfer';
 export type SaleAdditionalCharge = {
     name: string;
     amount: string;
+    performed_by: number | null;
 };
 
 export type AppointmentCheckoutContext = {

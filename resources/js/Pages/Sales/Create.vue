@@ -19,12 +19,14 @@ const props = defineProps<{
     services: SaleService[];
     appointment: AppointmentCheckoutContext | null;
     assignees: Array<{ id: number; name: string }>;
+    canAssignPerformer: boolean;
     canApplyDiscount: boolean;
 }>();
 const page = usePage<{ auth: { user: { id: number; name: string } } }>();
 const { smAndDown } = useDisplay();
 const search = ref('');
 const cart = ref<SaleCartItem[]>([]);
+const directPerformerId = ref<number | null>(props.canAssignPerformer ? (props.assignees[0]?.id ?? null) : page.props.auth.user.id);
 const mobileCheckoutHeight = ref(0);
 const confirmDialog = ref(false);
 const additionalChargesEnabled = ref(false);
@@ -60,6 +62,18 @@ const appointmentCart = ref<AppointmentSaleCartItem[]>((props.appointment?.items
     performer_name: item.performed_by.name,
     reserved: true,
 })));
+const chargeAssignees = computed(() => {
+    if (!props.appointment) return props.assignees;
+
+    const participants = new Map<number, string>();
+    appointmentCart.value.forEach(item => participants.set(item.performed_by, item.performer_name));
+    return Array.from(participants, ([id, name]) => ({ id, name }));
+});
+const showChargePerformer = computed(() => Boolean(props.appointment) && chargeAssignees.value.length > 1);
+const defaultChargePerformerId = computed(() => {
+    if (!props.appointment) return directPerformerId.value;
+    return chargeAssignees.value.length === 1 ? chargeAssignees.value[0].id : null;
+});
 const removedReserved = ref<number[]>([]);
 const removalPending = ref<string | null>(null);
 let additionalSequence = 0;
@@ -154,7 +168,7 @@ function captureConfirmation(): void {
             quantity: item.quantity,
             performed_by: item.performed_by,
         }))
-        : cart.value.map(item => ({ service_id: item.id, quantity: item.quantity }));
+        : cart.value.map(item => ({ service_id: item.id, quantity: item.quantity, performed_by: directPerformerId.value ?? undefined }));
 
     confirmationSnapshot.value = Object.freeze({
         items: Object.freeze(confirmationItems.value.map(item => Object.freeze({ ...item }))),
@@ -301,6 +315,19 @@ function refundExcess(): void {
             />
 
             <VTextField v-if="!appointment" v-model="form.client_name" label="Nombre de la clienta (opcional)" maxlength="120" counter="120" prepend-inner-icon="mdi-account-outline" :error-messages="form.errors.client_name" :disabled="form.processing" class="mb-5" />
+            <VSelect
+                v-if="!appointment && canAssignPerformer"
+                v-model="directPerformerId"
+                label="Atendida por"
+                :items="assignees"
+                item-title="name"
+                item-value="id"
+                :error-messages="form.errors['items.0.performed_by'] || form.errors.items"
+                :disabled="form.processing || !assignees.length"
+                :hint="assignees.length ? 'Se aplicará a todos los servicios de esta venta.' : 'No hay personal operativo activo disponible.'"
+                persistent-hint
+                class="mb-5"
+            />
             <template v-if="appointment">
                 <VAlert type="info" variant="tonal" class="mb-5">
                     Abrir esta pantalla no completa la cita. Permanecerá programada hasta confirmar el cobro.
@@ -356,7 +383,10 @@ function refundExcess(): void {
                                     :total-fee-cents="appointmentTotalFeeCents"
                                     :net-amount-cents="appointmentNetAmountCents"
                                     :can-apply-discount="canApplyDiscount || appointment.can_apply_discount"
-                                    :processing="form.processing"
+                                     :processing="form.processing"
+                                     :charge-assignees="chargeAssignees"
+                                     :default-charge-performer-id="defaultChargePerformerId"
+                                     :show-charge-performer="showChargePerformer"
                                 />
                                 <VAlert v-if="appointmentBelowDeposit" type="error" variant="tonal" density="compact" class="mt-4">
                                     El adelanto disponible supera los servicios por {{ formatHnl(depositExcessCents) }}. Debe devolverse exactamente ese excedente antes de completar.
@@ -427,6 +457,9 @@ function refundExcess(): void {
                             :net-amount-cents="netAmountCents"
                             :can-apply-discount="canApplyDiscount"
                             :processing="form.processing"
+                            :charge-assignees="chargeAssignees"
+                            :default-charge-performer-id="defaultChargePerformerId"
+                            :show-charge-performer="showChargePerformer"
                             :payment-proof="form.payment_proof"
                             :proof-error="form.errors.payment_proof"
                             @increase="increase"
@@ -468,6 +501,9 @@ function refundExcess(): void {
                     :net-amount-cents="netAmountCents"
                     :can-apply-discount="canApplyDiscount"
                     :processing="form.processing"
+                    :charge-assignees="chargeAssignees"
+                    :default-charge-performer-id="defaultChargePerformerId"
+                    :show-charge-performer="showChargePerformer"
                     :payment-proof="form.payment_proof"
                     :proof-error="form.errors.payment_proof"
                     @increase="increase"
@@ -502,6 +538,9 @@ function refundExcess(): void {
                             :net-amount-cents="appointmentNetAmountCents"
                             :can-apply-discount="canApplyDiscount || appointment.can_apply_discount"
                             :processing="form.processing"
+                            :charge-assignees="chargeAssignees"
+                            :default-charge-performer-id="defaultChargePerformerId"
+                            :show-charge-performer="showChargePerformer"
                         >
                             <template #services>
                                 <div class="my-3">

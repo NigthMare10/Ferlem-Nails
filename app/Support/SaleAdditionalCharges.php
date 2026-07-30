@@ -17,6 +17,7 @@ final class SaleAdditionalCharges
             return [
                 'name' => $charge['name'] ?? $charge['description'] ?? null,
                 'amount' => $charge['amount'] ?? null,
+                'performed_by' => isset($charge['performed_by']) ? (int) $charge['performed_by'] : null,
             ];
         }, array_values($charges));
     }
@@ -45,7 +46,7 @@ final class SaleAdditionalCharges
                 ]);
             }
 
-            return ['name' => $name, 'amount_cents' => $amountCents];
+            return ['name' => $name, 'amount_cents' => $amountCents, 'performed_by' => $charge['performed_by'] ?? null];
         }, self::canonicalizeInput($charges));
     }
 }

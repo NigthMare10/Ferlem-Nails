@@ -36,6 +36,7 @@ class CreateSaleAction
         ?string $clientName = null,
         array $additionalCharges = [],
         ?string $discountAmount = null,
+        ?string $discountPercent = null,
     ): Sale {
         if (! $user->is_active || ! $user->can(Permissions::SALES_ACCESS) || ! $user->can(Permissions::SALES_CREATE)) {
             throw new AuthorizationException;
@@ -53,9 +54,7 @@ class CreateSaleAction
         $normalizedItems = $this->normalizeItems($items);
         $clientName = $clientName !== null && trim($clientName) !== '' ? trim($clientName) : null;
         $charges = $this->normalizeCharges($additionalCharges);
-        $discountCents = Money::toCents($discountAmount ?? '0.00');
-        $this->authorizeDiscount($user, $discountCents);
-        $requestHash = $this->requestHash($normalizedItems, $clientName, $charges, $discountCents);
+        $requestHash = $this->requestHash($normalizedItems, $clientName, $charges, $discountAmount, $discountPercent);
 
         if ($existing = $this->findByToken($checkoutToken)) {
             return $this->resolveExisting($existing, $user, $requestHash, $paymentMethod);
@@ -64,7 +63,7 @@ class CreateSaleAction
         $proof = $paymentProof ? $this->storeProof($paymentProof, $user) : null;
 
         try {
-            $sale = DB::transaction(function () use ($user, $normalizedItems, $checkoutToken, $requestHash, $paymentMethod, $proof, $clientName, $charges, $discountCents) {
+            $sale = DB::transaction(function () use ($user, $normalizedItems, $checkoutToken, $requestHash, $paymentMethod, $proof, $clientName, $charges, $discountAmount, $discountPercent) {
                 if ($existing = $this->findByToken($checkoutToken)) {
                     return $this->resolveExisting($existing, $user, $requestHash, $paymentMethod);
                 }
@@ -93,6 +92,30 @@ class CreateSaleAction
                 $preparedItems = [];
                 $subtotalCents = 0;
                 $totalServices = 0;
+                $performerIds = collect($normalizedItems)->pluck('performed_by')->filter()->unique()->values();
+                $canAssign = $user->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN);
+                $implicitPerformer = false;
+                if ($canAssign && $performerIds->isEmpty()) {
+                    $implicitPerformer = true;
+                    $performerIds->push(User::query()
+                        ->where('is_active', true)
+                        ->permission(Permissions::APPOINTMENTS_PERFORM)
+                        ->orderBy('name')
+                        ->lockForUpdate()
+                        ->value('id') ?? $user->getKey());
+                }
+                if ($canAssign && ($performerIds->count() !== 1 || ! $performerIds->first())) {
+                    throw ValidationException::withMessages(['items' => 'Selecciona quién atendió esta venta.']);
+                }
+                if (! $canAssign && $performerIds->contains(fn (int $id) => $id !== $user->getKey())) {
+                    throw new AuthorizationException('No tienes permiso para asignar servicios a otra persona.');
+                }
+                $performerId = $canAssign ? (int) $performerIds->first() : $user->getKey();
+                $performer = User::query()->whereKey($performerId)->lockForUpdate()->first();
+                if (! $performer || ! $performer->is_active || (! $implicitPerformer && ! $performer->hasPermissionTo(Permissions::APPOINTMENTS_PERFORM))) {
+                    throw ValidationException::withMessages(['items' => 'La persona seleccionada no está disponible para realizar servicios.']);
+                }
+                $charges = array_map(fn (array $charge) => [...$charge, 'performed_by' => $performerId], $charges);
 
                 foreach ($normalizedItems as $item) {
                     $service = $services->get($item['service_id']);
@@ -117,7 +140,7 @@ class CreateSaleAction
                     $preparedItems[] = [
                         'service_id' => $service->getKey(),
                         'appointment_item_id' => null,
-                        'performed_by' => $user->getKey(),
+                        'performed_by' => $performerId,
                         'service_name' => $service->name,
                         'service_description' => $service->description,
                         'duration_minutes' => $service->duration_minutes,
@@ -127,6 +150,10 @@ class CreateSaleAction
                     ];
                 }
 
+                $discountCents = $discountAmount !== null
+                    ? Money::toCents($discountAmount)
+                    : Money::percentageOfCents($subtotalCents + array_sum(array_column($charges, 'amount_cents')), $discountPercent ?? '0.00');
+                $this->authorizeDiscount($user, $discountCents);
                 $totalCents = $subtotalCents + array_sum(array_column($charges, 'amount_cents')) - $discountCents;
                 if ($totalCents < 0) {
                     throw ValidationException::withMessages(['discount_amount' => 'El descuento no puede superar el subtotal.']);
@@ -143,6 +170,7 @@ class CreateSaleAction
                     $clientName,
                     $charges,
                     $discountCents,
+                    $discountPercent ?? '0.00',
                 );
             }, 3);
 
@@ -195,27 +223,26 @@ class CreateSaleAction
         foreach ($items as $item) {
             $serviceId = (int) ($item['service_id'] ?? 0);
             $quantity = (int) ($item['quantity'] ?? 0);
-            $quantities[$serviceId] = ($quantities[$serviceId] ?? 0) + $quantity;
+            $performedBy = isset($item['performed_by']) ? (int) $item['performed_by'] : null;
+            $key = $serviceId.':'.($performedBy ?? 'self');
+            $quantities[$key] = ($quantities[$key] ?? ['service_id' => $serviceId, 'performed_by' => $performedBy, 'quantity' => 0]);
+            $quantities[$key]['quantity'] += $quantity;
 
-            if ($serviceId < 1 || $quantity < 1 || $quantities[$serviceId] > 50) {
+            if ($serviceId < 1 || $quantity < 1 || $quantities[$key]['quantity'] > 50) {
                 throw ValidationException::withMessages([
                     'items' => 'Cada servicio debe tener una cantidad entre 1 y 50.',
                 ]);
             }
         }
 
-        return array_map(
-            fn (int $serviceId, int $quantity) => ['service_id' => $serviceId, 'quantity' => $quantity],
-            array_keys($quantities),
-            array_values($quantities),
-        );
+        return array_values($quantities);
     }
 
-    private function requestHash(array $items, ?string $clientName, array $charges = [], int $discountCents = 0): string
+    private function requestHash(array $items, ?string $clientName, array $charges = [], ?string $discountAmount = null, ?string $discountPercent = null): string
     {
         usort($items, fn (array $left, array $right) => $left['service_id'] <=> $right['service_id']);
 
-        $payload = ['items' => $items, 'client_name' => $clientName, 'additional_charges' => $charges, 'discount_cents' => $discountCents];
+        $payload = ['items' => $items, 'client_name' => $clientName, 'additional_charges' => $charges, 'discount_amount' => $discountAmount, 'discount_percent' => $discountPercent];
 
         return hash('sha256', json_encode($payload, JSON_THROW_ON_ERROR));
     }

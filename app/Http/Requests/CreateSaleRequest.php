@@ -49,9 +49,11 @@ class CreateSaleRequest extends FormRequest
             'items' => ['required', 'array', 'min:1', 'max:100'],
             'items.*.service_id' => ['required', 'integer', 'exists:services,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:50'],
+            'items.*.performed_by' => ['nullable', 'integer', 'exists:users,id'],
             'additional_charges' => ['sometimes', 'array', 'max:20'],
             'additional_charges.*.name' => ['required_with:additional_charges', 'string', 'max:120'],
             'additional_charges.*.amount' => ['required_with:additional_charges', 'regex:/^(\d{1,10})(?:\.(\d{1,2}))?$/'],
+            'additional_charges.*.performed_by' => ['nullable', 'integer', 'exists:users,id'],
             'is_frequent_client' => ['sometimes', 'boolean'],
             'discount_percent' => [Rule::prohibitedIf(fn () => ! $this->user()?->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)), 'nullable', 'regex:/^(?:\d{1,2}|100)(?:\.\d{1,2})?$/'],
         ];

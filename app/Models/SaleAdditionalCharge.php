@@ -25,4 +25,9 @@ class SaleAdditionalCharge extends Model
     {
         return $this->belongsTo(Sale::class);
     }
+
+    public function performedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'performed_by');
+    }
 }

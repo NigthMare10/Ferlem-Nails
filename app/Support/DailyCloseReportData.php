@@ -28,13 +28,11 @@ final class DailyCloseReportData
         $projection = $this->projectionReport->execute($filters);
         $grossCents = Money::toCents($sales['actual']['gross_revenue']);
 
-        $employees = collect($sales['employees'])->map(function (array $employee) use ($filters, $grossCents, $projection) {
-            $employeeReport = $this->salesReport->execute([...$filters, 'employee_id' => $employee['id']]);
+        $employees = collect($sales['employees'])->map(function (array $employee) use ($grossCents, $projection) {
             $projected = collect($projection['projection_employees'] ?? [])->firstWhere('id', $employee['id']);
 
             return [
                 ...$employee,
-                'payment_methods' => collect($employeeReport['payment_distribution'])->filter(fn (array $method) => $method['payments_count'] > 0)->values()->all(),
                 'employee_commission' => null,
                 'deductions' => null,
                 'participation_percentage' => $grossCents === 0 ? '0.00' : number_format(Money::toCents($employee['total_sold']) * 100 / $grossCents, 2, '.', ''),

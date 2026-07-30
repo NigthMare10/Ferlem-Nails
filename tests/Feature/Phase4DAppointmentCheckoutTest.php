@@ -160,9 +160,32 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->assertSame('200.00', $sale->total);
         $this->assertSame(1, $sale->total_services);
         $this->assertSame('Diseño', $sale->additionalCharges->sole()->name);
+        $this->assertSame($employee->id, $sale->additionalCharges->sole()->performed_by);
         $this->get(route('sales.receipt', $sale))->assertInertia(fn (Assert $page) => $page
             ->where('sale.additional_charges.0.name', 'Diseño')
             ->where('sale.additional_charges.0.amount', '100.00'));
+    }
+
+    public function test_sale_from_shared_appointment_requires_charge_assignment_to_a_participant(): void
+    {
+        $owner = $this->user('owner');
+        $first = $this->user('employee');
+        $second = $this->user('employee');
+        $outsider = $this->user('employee');
+        $appointment = $this->appointment($owner, [
+            $this->line($this->service('Manicura', '100.00'), $first),
+            $this->line($this->service('Pedicura', '100.00'), $second),
+        ]);
+        $payload = $this->checkoutPayload($appointment);
+        $payload['additional_charges'] = [['name' => 'Diseño', 'amount' => '30.00', 'performed_by' => $outsider->id]];
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $payload)
+            ->assertSessionHasErrors('additional_charges');
+
+        $payload['checkout_token'] = (string) Str::uuid();
+        $payload['additional_charges'][0]['performed_by'] = $second->id;
+        $this->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
+        $this->assertSame($second->id, Sale::query()->sole()->additionalCharges()->sole()->performed_by);
     }
 
     public function test_confirmation_button_wires_to_the_shared_submit_handler_and_keeps_errors_visible(): void

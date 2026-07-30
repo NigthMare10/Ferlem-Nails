@@ -70,7 +70,7 @@ class PersistCompletedSaleAction
             $item->quantity = $line['quantity'];
             $item->line_total = Money::fromCents($line['line_total_cents']);
             $item->allocated_card_fee_amount = Money::fromCents($allocatedFeeCents);
-            $item->net_line_amount = Money::fromCents($line['line_total_cents'] - $allocatedFeeCents);
+            $item->net_line_amount = Money::fromCents($financials['line_final_cents'][$index] - $allocatedFeeCents);
             $item->save();
         }
 
@@ -81,6 +81,7 @@ class PersistCompletedSaleAction
             $additionalCharge->description = $charge['name'];
             $additionalCharge->name = $charge['name'];
             $additionalCharge->amount = Money::fromCents($charge['amount_cents']);
+            $additionalCharge->performed_by = $charge['performed_by'];
             $additionalCharge->save();
         }
 
@@ -127,7 +128,7 @@ class PersistCompletedSaleAction
             );
         }
 
-        return $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'additionalCharges', 'payments']);
+        return $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'additionalCharges.performedBy:id,name', 'payments']);
     }
 
     private function notificationMessage(string $saleNumber, array $payments): string

@@ -104,6 +104,81 @@ class Phase3ASaleTest extends TestCase
         $this->assertCount(2, $sale->items);
     }
 
+    public function test_direct_sale_performer_selection_is_authoritative_for_owner_and_administrator(): void
+    {
+        $owner = $this->user('owner');
+        $administrator = $this->user('administrator');
+        $performer = $this->user('employee', ['name' => 'Operativa']);
+        $service = $this->service();
+
+        $this->actingAs($owner)->get('/sales/new')
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('canAssignPerformer', true)
+                ->has('assignees', 2));
+        $this->post('/sales', $this->payload([['service_id' => $service->id, 'quantity' => 1, 'performed_by' => $performer->id]]));
+        $ownerSale = Sale::query()->firstOrFail();
+        $this->assertSame($owner->id, $ownerSale->sold_by);
+        $this->assertSame($performer->id, $ownerSale->items()->sole()->performed_by);
+
+        $this->actingAs($owner)->post('/sales', [
+            ...$this->payload([['service_id' => $service->id, 'quantity' => 1, 'performed_by' => $performer->id]]),
+            'additional_charges' => [['name' => 'Diseño', 'amount' => '25.00', 'performed_by' => $owner->id]],
+        ]);
+        $this->assertSame($performer->id, Sale::query()->latest('id')->firstOrFail()->additionalCharges()->sole()->performed_by);
+
+        $this->actingAs($administrator)->post('/sales', [
+            ...$this->payload([['service_id' => $service->id, 'quantity' => 1, 'performed_by' => $performer->id]]),
+            'additional_charges' => [['name' => 'Francés', 'amount' => '15.00', 'performed_by' => $owner->id]],
+        ]);
+        $administratorSale = Sale::query()->latest('id')->firstOrFail();
+        $this->assertSame($administrator->id, $administratorSale->sold_by);
+        $this->assertSame($performer->id, $administratorSale->items()->sole()->performed_by);
+        $this->assertSame($performer->id, $administratorSale->additionalCharges()->sole()->performed_by);
+    }
+
+    public function test_employee_is_auto_assigned_and_cannot_fabricate_another_performer(): void
+    {
+        $employee = $this->user('employee');
+        $other = $this->user('employee');
+        $service = $this->service();
+
+        $this->actingAs($employee)->get('/sales/new')
+            ->assertInertia(fn (Assert $page) => $page->where('canAssignPerformer', false)->has('assignees', 0));
+        $this->post('/sales', $this->payload([['service_id' => $service->id, 'quantity' => 1]]))->assertStatus(303);
+        $this->assertSame($employee->id, Sale::query()->firstOrFail()->items()->sole()->performed_by);
+
+        $this->actingAs($employee)->post('/sales', [
+            ...$this->payload([['service_id' => $service->id, 'quantity' => 1]]),
+            'additional_charges' => [['name' => 'Perla', 'amount' => '10.00', 'performed_by' => $other->id]],
+        ])->assertStatus(303);
+        $this->assertSame($employee->id, Sale::query()->latest('id')->firstOrFail()->additionalCharges()->sole()->performed_by);
+
+        $this->post('/sales', $this->payload([['service_id' => $service->id, 'quantity' => 1, 'performed_by' => $other->id]]))->assertForbidden();
+        $this->assertDatabaseCount('sales', 2);
+    }
+
+    public function test_discount_and_pos_fee_are_distributed_after_discount_between_service_and_charge(): void
+    {
+        $owner = $this->user('owner');
+        $service = $this->service(['price' => '100.00']);
+
+        $this->actingAs($owner)->post('/sales', [
+            ...$this->payload([['service_id' => $service->id, 'quantity' => 1, 'performed_by' => $owner->id]]),
+            'payment_method' => Sale::PAYMENT_METHOD_CARD,
+            'is_frequent_client' => true,
+            'discount_percent' => '10.00',
+            'additional_charges' => [['name' => 'Diseño', 'amount' => '100.00']],
+        ])->assertStatus(303);
+
+        $sale = Sale::query()->with('items')->sole();
+        $this->assertSame('20.00', $sale->discount_amount);
+        $this->assertSame('180.00', $sale->total);
+        $this->assertSame('7.20', $sale->card_fee_amount);
+        $this->assertSame('3.60', $sale->items->sole()->allocated_card_fee_amount);
+        $this->assertSame('86.40', $sale->items->sole()->net_line_amount);
+        $this->assertSame($owner->id, $sale->additionalCharges()->sole()->performed_by);
+    }
+
     public function test_repeated_services_are_consolidated(): void
     {
         $employee = $this->user('employee');

@@ -133,7 +133,6 @@ const kpis = computed(() =>
 const employeeHeaders = computed(() => [
     { title: 'Empleado', key: 'name' },
     { title: 'Servicios', key: 'services_count', align: 'end' as const },
-    { title: 'Ventas', key: 'sales_count', align: 'end' as const },
     { title: 'Ingreso bruto', key: 'total_sold', align: 'end' as const },
     { title: 'Comisión POS', key: 'card_fee_amount', align: 'end' as const },
     { title: 'Comisión empleado', key: 'employee_commission', align: 'end' as const, sortable: false },
@@ -395,7 +394,7 @@ function sendClose(): void {
                         <span>Contribución real</span>
                         <h2 id="employee-title">Rendimiento por empleado</h2>
                     </div>
-                    <p>El servicio se atribuye a quien lo realiza, no a quien cobra</p>
+                    <p>Servicios y cargos se atribuyen a quien realiza el trabajo, no a quien cobra</p>
                 </div>
                 <template v-if="employees.length">
                     <VDataTable :headers="employeeHeaders" :items="employees" class="desktop-table" :items-per-page="-1" hide-default-footer>
@@ -415,7 +414,7 @@ function sendClose(): void {
                             <div class="employee-card__head">
                                 <div>
                                     <strong>{{ employee.name }}</strong
-                                    ><span>{{ count(employee.services_count) }} servicios · {{ count(employee.sales_count) }} ventas</span>
+                                    ><span>{{ count(employee.services_count) }} servicios realizados</span>
                                 </div>
                                 <b>{{ participation(employee) }}</b>
                             </div>

@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { SaleAdditionalCharge } from '../../types/sales';
 
-defineProps<{
+const props = defineProps<{
     canApplyDiscount: boolean;
     processing?: boolean;
+    chargeAssignees: Array<{ id: number; name: string }>;
+    defaultChargePerformerId: number | null;
+    showChargePerformer: boolean;
 }>();
 
 const frequentClient = defineModel<boolean>('frequentClient', { required: true });
@@ -31,7 +34,7 @@ function updateDiscountPercent(value: string | number | null): void {
 function toggleAdditionalCharges(value: boolean | null): void {
     if (value) {
         additionalChargesEnabled.value = true;
-        if (!additionalCharges.value.length) additionalCharges.value.push({ name: '', amount: '' });
+        if (!additionalCharges.value.length) additionalCharges.value.push(blankCharge());
         return;
     }
 
@@ -43,7 +46,11 @@ function toggleAdditionalCharges(value: boolean | null): void {
 }
 
 function addCharge(): void {
-    additionalCharges.value.push({ name: '', amount: '' });
+    additionalCharges.value.push(blankCharge());
+}
+
+function blankCharge(): SaleAdditionalCharge {
+    return { name: '', amount: '', performed_by: props.defaultChargePerformerId };
 }
 
 function removeCharge(index: number): void {
@@ -89,6 +96,7 @@ function removeCharge(index: number): void {
             <div v-for="(charge, index) in additionalCharges" :key="index" class="sale-checkout-adjustments__charge">
                 <VTextField v-model="charge.name" label="Nombre del cargo" maxlength="120" :disabled="processing" hide-details />
                 <VTextField v-model="charge.amount" label="Total" prefix="L" type="number" min="0.01" step="0.01" inputmode="decimal" :disabled="processing" hide-details />
+                <VSelect v-if="showChargePerformer" v-model="charge.performed_by" label="Corresponde a" :items="chargeAssignees" item-title="name" item-value="id" :disabled="processing" hide-details />
                 <VBtn icon="mdi-close" variant="text" :disabled="processing" :aria-label="`Eliminar ${charge.name || 'cargo adicional'}`" @click="removeCharge(index)" />
             </div>
             <VBtn variant="text" prepend-icon="mdi-plus" :disabled="processing" class="sale-checkout-adjustments__add" @click="addCharge">Agregar otro cargo</VBtn>
@@ -105,12 +113,12 @@ function removeCharge(index: number): void {
 
 .sale-checkout-adjustments__discount { width: 100%; }
 .sale-checkout-adjustments__charges { display: grid; gap: 12px; }
-.sale-checkout-adjustments__charge { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 0.55fr) 44px; gap: 8px; align-items: center; }
+.sale-checkout-adjustments__charge { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 0.55fr) minmax(150px, 0.75fr) 44px; gap: 8px; align-items: center; }
 .sale-checkout-adjustments__add { justify-self: start; }
 
 @media (max-width: 599px) {
     .sale-checkout-adjustments__charge { grid-template-columns: minmax(0, 1fr) 44px; }
-    .sale-checkout-adjustments__charge .v-input:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+    .sale-checkout-adjustments__charge .v-input:not(:first-child) { grid-column: 1 / -1; }
     .sale-checkout-adjustments__charge .v-btn { grid-column: 2; grid-row: 1; }
     .sale-checkout-adjustments__add { width: 100%; }
 }

@@ -96,7 +96,8 @@ class SalesController extends Controller
             ];
         }
 
-        $assignees = $appointmentContext && $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN)
+        $canAssignPerformer = $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN);
+        $assignees = ($appointmentContext || $canAssignPerformer) && $canAssignPerformer
             ? User::query()->where('is_active', true)->permission(Permissions::APPOINTMENTS_PERFORM)->orderBy('name')->get(['id', 'name'])
             : collect();
 
@@ -104,6 +105,7 @@ class SalesController extends Controller
             'services' => SaleServiceResource::collection($services)->resolve($request),
             'appointment' => $appointmentContext,
             'assignees' => $assignees->map->only(['id', 'name'])->values(),
+            'canAssignPerformer' => ! $appointmentContext && $canAssignPerformer,
             'canApplyDiscount' => $this->canApplyDiscount($request->user()),
         ]);
     }
@@ -119,7 +121,8 @@ class SalesController extends Controller
             $data['payment_proof'] ?? null,
             $data['client_name'] ?? null,
             $data['additional_charges'] ?? [],
-            $data['discount_amount'] ?? null,
+            null,
+            $data['discount_percent'] ?? null,
         );
 
         return to_route('sales.receipt', $sale, 303);

@@ -20,6 +20,9 @@ defineProps<{
     processing?: boolean;
     paymentProof?: File | null;
     proofError?: string;
+    chargeAssignees: Array<{ id: number; name: string }>;
+    defaultChargePerformerId: number | null;
+    showChargePerformer: boolean;
 }>();
 
 const frequentClient = defineModel<boolean>('frequentClient', { required: true });
@@ -77,6 +80,9 @@ defineEmits<{
                     :net-amount-cents="netAmountCents"
                     :can-apply-discount="canApplyDiscount"
                     :processing="processing"
+                    :charge-assignees="chargeAssignees"
+                    :default-charge-performer-id="defaultChargePerformerId"
+                    :show-charge-performer="showChargePerformer"
                 >
                     <template #services>
                         <div class="sale-cart__items my-3">
