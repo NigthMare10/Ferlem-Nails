@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatTime } from '../../utils/time';
 import { computed, ref } from 'vue';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import AppointmentDetailsDialog from '../../Components/Appointments/AppointmentDetailsDialog.vue';
@@ -160,7 +161,7 @@ function clearDetails(): void {
         <VCard class="surface-card history-results" rounded="xl" :class="{ 'history-loading': loading }">
             <VProgressLinear v-if="loading" indeterminate color="primary" aria-label="Cargando historial" />
             <VDataTable :headers="headers" :items="records" :loading="loading" class="history-desktop-table" hide-default-footer>
-                <template #item.schedule="{ item }"><strong>{{ item.date_display }}</strong><div class="text-caption text-medium-emphasis">{{ item.start_time }}–{{ item.end_time }}</div></template>
+                <template #item.schedule="{ item }"><strong>{{ item.date_display }}</strong><div class="text-caption text-medium-emphasis">{{ formatTime(item.start_time) }}–{{ formatTime(item.end_time) }}</div></template>
                 <template #item.status="{ item }"><VChip :color="statusColor(item.status)" variant="tonal" size="small">{{ item.status_label }}</VChip></template>
                 <template #item.services="{ item }"><div class="history-services">{{ servicesLabel(item) }}</div></template>
                 <template #item.personnel="{ item }">{{ item.personnel?.join(', ') || 'Sin asignar' }}</template>
@@ -175,7 +176,7 @@ function clearDetails(): void {
                 <EmptyState v-else-if="!records.length" icon="mdi-calendar-search-outline" title="No se encontraron citas" description="Ajusta los filtros para consultar otros registros." />
                 <VCard v-for="appointment in records" v-else :key="appointment.id" variant="outlined" rounded="lg" class="history-mobile-card">
                     <VCardText class="pa-4">
-                        <div class="history-card-heading"><div><div class="font-weight-bold">{{ appointment.client_name }}</div><div class="text-caption text-medium-emphasis">{{ appointment.date_display }} · {{ appointment.start_time }}–{{ appointment.end_time }}</div></div><VChip :color="statusColor(appointment.status)" variant="tonal" size="small">{{ appointment.status_label }}</VChip></div>
+                        <div class="history-card-heading"><div><div class="font-weight-bold">{{ appointment.client_name }}</div><div class="text-caption text-medium-emphasis">{{ appointment.date_display }} · {{ formatTime(appointment.start_time) }}–{{ formatTime(appointment.end_time) }}</div></div><VChip :color="statusColor(appointment.status)" variant="tonal" size="small">{{ appointment.status_label }}</VChip></div>
                         <div class="history-card-section"><span>Servicios</span><strong>{{ servicesLabel(appointment) }}</strong></div>
                         <div v-if="appointment.personnel" class="history-card-section"><span>Personal</span><strong>{{ appointment.personnel.join(', ') }}</strong></div>
                         <div class="history-card-summary"><div><span>Estimado visible</span><strong>{{ money(appointment.visible_total) }}</strong></div><div><span>Adelanto</span><strong>{{ depositLabel(appointment) }}</strong></div></div>

@@ -98,7 +98,7 @@ class AppointmentDialogStructureTest extends TestCase
         $this->assertStringNotContainsString("openMode('reschedule')", $component);
         $this->assertStringNotContainsString("openMode('cancel')", $component);
         $this->assertStringNotContainsString("openMode('no_show')", $component);
-        $this->assertStringNotContainsString('Cerrar detalle', $component);
+        $this->assertStringContainsString('Cerrar detalle', $component);
     }
 
     public function test_dialog_uses_natural_desktop_height_and_compact_loading_states(): void

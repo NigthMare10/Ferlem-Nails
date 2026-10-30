@@ -2,6 +2,10 @@
 import { computed, ref, watch } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 import { useDisplay } from 'vuetify';
+import { formatTime } from '../../utils/time';
+import LoyaltyAwardDialog from '../LoyaltyAwardDialog.vue';
+import { usePermissions } from '../../composables/usePermissions';
+const { can } = usePermissions();
 import type { AppointmentAssignee, AppointmentDetails } from '../../types/appointments';
 
 type DialogMode = 'detail' | 'edit' | 'reschedule' | 'cancel' | 'no_show' | 'deposit';
@@ -102,7 +106,7 @@ watch([() => props.modelValue, () => props.appointment, () => props.initialMode]
 function resolveInitialMode(initialMode: InitialDialogMode, appointment: AppointmentDetails): InitialDialogMode {
     if (initialMode === 'reschedule' && props.canUpdate && appointment.status === 'scheduled' && appointment.can_reschedule) return initialMode;
     const canResolvePending = !appointment.has_pending_deposit || (props.canResolveDeposit && appointment.can_resolve_deposit);
-    if (initialMode === 'cancel' && props.canCancel && appointment.status === 'scheduled' && appointment.can_change_status && canResolvePending) return initialMode;
+    if (initialMode === 'cancel' && props.canCancel && appointment.status === 'scheduled' && appointment.can_cancel && canResolvePending) return initialMode;
     if (initialMode === 'no_show' && props.canMarkNoShow && appointment.status === 'scheduled' && appointment.can_change_status && appointment.can_mark_no_show_now && canResolvePending) return initialMode;
     return 'detail';
 }
@@ -269,7 +273,7 @@ watch(
         <VCard v-if="modelValue" class="appointment-dialog-card">
             <VToolbar color="surface" flat class="dialog-header">
                 <VToolbarTitle class="font-weight-bold">{{ title }}</VToolbarTitle>
-                <VBtn icon="mdi-close" aria-label="Cerrar" :disabled="dialogBusy" @click="closeDialog" />
+                <VBtn icon="mdi-close" aria-label="Cerrar detalle de cita" :disabled="dialogBusy" @click="closeDialog" />
             </VToolbar>
             <VDivider />
 
@@ -298,17 +302,20 @@ watch(
 
                     <div class="detail-grid mt-6">
                         <VCard variant="outlined" rounded="lg" class="detail-tile"><VIcon icon="mdi-calendar-outline" color="primary" /><div><span>Fecha</span><strong class="text-capitalize">{{ dateLabel(appointment.date) }}</strong></div></VCard>
-                        <VCard variant="outlined" rounded="lg" class="detail-tile"><VIcon icon="mdi-clock-outline" color="primary" /><div><span>Horario{{ appointment.is_shared && !canViewAll ? ' de tus servicios' : '' }}</span><strong>{{ appointment.visible_start_time }} – {{ appointment.visible_end_time }}</strong></div></VCard>
+                        <VCard variant="outlined" rounded="lg" class="detail-tile"><VIcon icon="mdi-clock-outline" color="primary" /><div><span>Horario{{ appointment.is_shared && !canViewAll ? ' de tus servicios' : '' }}</span><strong>{{ formatTime(appointment.visible_start_time) }} – {{ formatTime(appointment.visible_end_time) }}</strong></div></VCard>
                         <VCard v-if="canViewAll" variant="outlined" rounded="lg" class="detail-tile"><VIcon icon="mdi-account-star-outline" color="primary" /><div><span>Personal participante</span><strong>{{ [...new Set(appointment.visible_items.map(item => item.assigned_to.name))].join(', ') }}</strong></div></VCard>
                         <VCard variant="outlined" rounded="lg" class="detail-tile"><VIcon icon="mdi-timer-sand" color="primary" /><div><span>Duración{{ appointment.is_shared && !canViewAll ? ' propia' : ' total' }}</span><strong>{{ appointment.visible_duration_minutes }} min</strong></div></VCard>
                     </div>
                     <VChip v-if="appointment.is_shared" color="secondary" variant="tonal" class="mt-4">Cita compartida</VChip>
+                    <VAlert v-if="appointment.outside_business_hours" type="warning" variant="tonal" density="compact" class="mt-4">
+                        Esta cita está fuera del horario de atención configurado actualmente.
+                    </VAlert>
 
                     <section class="mt-7">
                         <div class="section-title">Servicios reservados</div>
                         <VCard variant="outlined" rounded="lg" class="overflow-hidden">
                             <div v-for="item in appointment.visible_items" :key="item.id" class="reserved-service pa-4">
-                                <div><div class="font-weight-bold">{{ item.start_time }}–{{ item.end_time }} · {{ item.service_name }}<template v-if="canViewAll"> · {{ item.assigned_to.name }}</template></div><div class="text-caption text-medium-emphasis">{{ item.duration_minutes === item.default_duration_minutes ? `${item.duration_minutes} min habituales` : `Duración ajustada: ${item.duration_minutes} min · habitual ${item.default_duration_minutes} min` }} · {{ money(item.unit_price) }} cada uno</div></div>
+                                <div><div class="font-weight-bold">{{ formatTime(item.start_time) }}–{{ formatTime(item.end_time) }} · {{ item.service_name }}<template v-if="canViewAll"> · {{ item.assigned_to.name }}</template></div><div class="text-caption text-medium-emphasis">{{ item.duration_minutes === item.default_duration_minutes ? `${item.duration_minutes} min habituales` : `Duración ajustada: ${item.duration_minutes} min · habitual ${item.default_duration_minutes} min` }} · {{ money(item.unit_price) }} cada uno</div></div>
                                 <div class="text-right"><div class="text-caption">Cantidad {{ item.quantity }}</div><strong>{{ money(item.line_total) }}</strong></div>
                             </div>
                             <div class="total-row pa-4"><span>{{ appointment.is_shared && !canViewAll ? 'Subtotal propio' : 'Total estimado' }}</span><strong>{{ money(appointment.visible_total) }}</strong></div>
@@ -336,6 +343,7 @@ watch(
                         <VAlert type="success" variant="tonal"><strong>Completada:</strong> {{ appointment.completed_at_display }}</VAlert>
                     </section>
                     <section v-if="appointment.linked_sale" class="mt-7">
+                        <LoyaltyAwardDialog v-if="can('loyalty.award') && appointment.status === 'completed'" :sale-id="appointment.linked_sale.id" />
                         <div class="section-title">Venta vinculada</div>
                         <VCard variant="outlined" rounded="lg" class="pa-4 d-flex align-center justify-space-between ga-3">
                             <div><strong>{{ appointment.linked_sale.sale_number }}</strong><div class="text-caption text-medium-emphasis">Total {{ money(appointment.linked_sale.total) }}</div></div>
@@ -368,11 +376,11 @@ watch(
                     <VAlert v-if="rescheduleErrors.appointment" type="error" variant="tonal" class="mb-5">{{ rescheduleErrors.appointment }}</VAlert>
                     <VAlert type="info" variant="tonal" density="compact" class="mb-5">Los servicios, cantidades, duración y total reservado no cambian al reprogramar.</VAlert>
                     <div class="form-section-title">Nuevo horario</div>
-                    <VRow><VCol cols="12" sm="7"><VTextField v-model="rescheduleForm.date" type="date" label="Fecha" :error-messages="rescheduleForm.errors.date" :disabled="rescheduleForm.processing" /></VCol><VCol cols="12" sm="5"><VSelect v-model="rescheduleForm.start_time" label="Hora disponible" :items="availableTimes" :loading="availabilityLoading" :disabled="!availableTimes.length || rescheduleForm.processing" :error-messages="rescheduleForm.errors.start_time" /></VCol></VRow>
+                    <VRow><VCol cols="12" sm="7"><VTextField v-model="rescheduleForm.date" type="date" label="Fecha" :error-messages="rescheduleForm.errors.date" :disabled="rescheduleForm.processing" /></VCol><VCol cols="12" sm="5"><VSelect v-model="rescheduleForm.start_time" label="Hora disponible" :items="availableTimes.map(value => ({ title:formatTime(value), value }))" :loading="availabilityLoading" :disabled="!availableTimes.length || rescheduleForm.processing" :error-messages="rescheduleForm.errors.start_time" /></VCol></VRow>
                     <VAlert v-if="availabilityMessage" type="warning" variant="tonal" density="compact" class="mb-3">{{ availabilityMessage }}</VAlert>
                     <VCard variant="outlined" rounded="lg" class="pa-4 mt-2">
                         <div class="text-overline text-primary mb-2">Servicios reservados</div>
-                        <div v-for="(item, index) in appointment.visible_items" :key="item.id" class="mb-3"><div class="text-body-2">{{ item.service_name }} · {{ item.duration_minutes }} min · {{ item.start_time }}–{{ item.end_time }}</div><VSelect v-if="canAssign" v-model="rescheduleForm.assignments[index].assigned_to" label="Persona asignada" density="compact" class="mt-2" :items="assignees" item-title="name" item-value="id" :disabled="rescheduleForm.processing" /><div v-else class="text-caption text-medium-emphasis">{{ item.assigned_to.name }}</div></div>
+                        <div v-for="(item, index) in appointment.visible_items" :key="item.id" class="mb-3"><div class="text-body-2">{{ item.service_name }} · {{ item.duration_minutes }} min · {{ formatTime(item.start_time) }}–{{ formatTime(item.end_time) }}</div><VSelect v-if="canAssign" v-model="rescheduleForm.assignments[index].assigned_to" label="Persona asignada" density="compact" class="mt-2" :items="assignees" item-title="name" item-value="id" :disabled="rescheduleForm.processing" /><div v-else class="text-caption text-medium-emphasis">{{ item.assigned_to.name }}</div></div>
                         <div class="summary-grid mt-4"><div><span>Duración total</span><strong>{{ appointment.visible_duration_minutes }} min</strong></div><div><span>Nueva finalización</span><strong>{{ estimatedEnd }}</strong></div><div><span>Total estimado</span><strong>{{ money(appointment.visible_total) }}</strong></div></div>
                     </VCard>
                     <VTextarea v-model="rescheduleForm.reschedule_note" label="Motivo o nota de reprogramación (opcional)" rows="3" counter="500" :error-messages="rescheduleForm.errors.reschedule_note" :disabled="rescheduleForm.processing" class="mt-5" />
@@ -388,7 +396,7 @@ watch(
 
                 <template v-else-if="mode === 'cancel'">
                     <VAlert v-if="cancelErrors.appointment" type="error" variant="tonal" class="mb-5">{{ cancelErrors.appointment }}</VAlert>
-                    <div class="terminal-summary"><strong>{{ appointment.client_name }}</strong><span class="text-capitalize">{{ dateLabel(appointment.date) }} · {{ appointment.visible_start_time }}</span><span>{{ appointment.visible_items.map(item => item.service_name).join(', ') }}</span></div>
+                    <div class="terminal-summary"><strong>{{ appointment.client_name }}</strong><span class="text-capitalize">{{ dateLabel(appointment.date) }} · {{ formatTime(appointment.visible_start_time) }}</span><span>{{ appointment.visible_items.map(item => item.service_name).join(', ') }}</span></div>
                     <VAlert type="warning" variant="tonal" class="my-5">La cita dejará de ocupar estos horarios.</VAlert>
                     <VTextarea v-model="cancelForm.reason" label="Motivo" rows="4" counter="500" :error-messages="cancelForm.errors.reason" :disabled="cancelForm.processing" autofocus />
                     <VCard v-if="appointment.has_pending_deposit" variant="outlined" rounded="lg" class="pa-4 mt-5"><div class="form-section-title">Resolver saldo disponible de {{ money(appointment.deposit!.available_amount ?? '0.00') }}</div><VAlert v-if="cancelForm.errors.deposit_resolution" type="error" variant="tonal" density="compact" class="mb-3">{{ cancelForm.errors.deposit_resolution }}</VAlert><VSelect v-model="cancelForm.deposit_resolution" label="Resolución obligatoria" :items="[{ title: 'Devolución completa', value: 'full_refund' }, { title: 'Retención completa', value: 'full_retention' }, { title: 'Devolución parcial', value: 'partial_refund' }]" :disabled="cancelForm.processing" /><VTextField v-if="cancelForm.deposit_resolution === 'partial_refund'" v-model="cancelForm.refund_amount" type="number" min="0.01" step="0.01" :max="appointment.deposit!.available_amount" label="Monto a devolver" prefix="L" :error-messages="cancelForm.errors.refund_amount" :disabled="cancelForm.processing" /><VTextarea v-model="cancelForm.resolution_notes" label="Nota de resolución (opcional)" rows="2" counter="500" :error-messages="cancelForm.errors.resolution_notes" :disabled="cancelForm.processing" /></VCard>
@@ -396,7 +404,7 @@ watch(
 
                 <template v-else-if="mode === 'no_show'">
                     <VAlert v-if="noShowErrors.appointment" type="error" variant="tonal" class="mb-5">{{ noShowErrors.appointment }}</VAlert>
-                    <div class="terminal-summary"><strong>{{ appointment.client_name }}</strong><span class="text-capitalize">{{ dateLabel(appointment.date) }} · {{ appointment.visible_start_time }}</span></div>
+                    <div class="terminal-summary"><strong>{{ appointment.client_name }}</strong><span class="text-capitalize">{{ dateLabel(appointment.date) }} · {{ formatTime(appointment.visible_start_time) }}</span></div>
                     <VAlert type="warning" variant="tonal" class="my-5">La cita se marcará como no presentada.</VAlert>
                     <VTextarea v-model="noShowForm.reason" label="Motivo" rows="4" counter="500" :error-messages="noShowForm.errors.reason" :disabled="noShowForm.processing" autofocus />
                     <VCard v-if="appointment.has_pending_deposit" variant="outlined" rounded="lg" class="pa-4 mt-5"><div class="form-section-title">Resolver saldo disponible de {{ money(appointment.deposit!.available_amount ?? '0.00') }}</div><VAlert v-if="noShowForm.errors.deposit_resolution" type="error" variant="tonal" density="compact" class="mb-3">{{ noShowForm.errors.deposit_resolution }}</VAlert><VSelect v-model="noShowForm.deposit_resolution" label="Resolución obligatoria" :items="[{ title: 'Devolución completa', value: 'full_refund' }, { title: 'Retención completa', value: 'full_retention' }, { title: 'Devolución parcial', value: 'partial_refund' }]" :disabled="noShowForm.processing" /><VTextField v-if="noShowForm.deposit_resolution === 'partial_refund'" v-model="noShowForm.refund_amount" type="number" min="0.01" step="0.01" :max="appointment.deposit!.available_amount" label="Monto a devolver" prefix="L" :error-messages="noShowForm.errors.refund_amount" :disabled="noShowForm.processing" /><VTextarea v-model="noShowForm.resolution_notes" label="Nota de resolución (opcional)" rows="2" counter="500" :error-messages="noShowForm.errors.resolution_notes" :disabled="noShowForm.processing" /></VCard>

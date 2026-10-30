@@ -184,7 +184,7 @@ class Phase4AAppointmentTest extends TestCase
 
         $this->actingAs($employee)->post('/appointments', $payload)->assertStatus(303);
 
-        $this->assertDatabaseCount('appointment_items', 2);
+        $this->assertDatabaseCount('appointment_items', 3);
         $item = AppointmentItem::query()->where('service_id', $first->id)->firstOrFail();
         $this->assertSame('Manicura clásica', $item->service_name);
         $this->assertSame('Detalle original', $item->service_description);
@@ -199,7 +199,7 @@ class Phase4AAppointmentTest extends TestCase
         $this->assertSame('250.00', $item->unit_price);
     }
 
-    public function test_repeated_services_are_consolidated(): void
+    public function test_repeated_services_are_expanded_into_individual_reservations(): void
     {
         $employee = $this->user('employee');
         $service = $this->service(['duration_minutes' => 30, 'price' => '100.00']);
@@ -208,7 +208,7 @@ class Phase4AAppointmentTest extends TestCase
 
         $this->actingAs($employee)->post('/appointments', $payload)->assertStatus(303);
 
-        $this->assertDatabaseCount('appointment_items', 2);
+        $this->assertDatabaseCount('appointment_items', 3);
         $this->assertEquals(3, AppointmentItem::query()->sum('quantity'));
         $this->assertEquals('300.00', AppointmentItem::query()->sum('line_total'));
     }

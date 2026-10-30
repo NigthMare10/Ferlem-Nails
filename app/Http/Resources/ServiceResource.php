@@ -11,6 +11,7 @@ class ServiceResource extends JsonResource
     {
         return ['id' => $this->id, 'name' => $this->name, 'description' => $this->description,
             'duration_minutes' => $this->duration_minutes, 'price' => $this->price,
+            'is_promotion' => (bool) $this->is_promotion, 'loyalty_points' => (int) $this->loyalty_points,
             'is_active' => $this->is_active, 'created_at' => $this->created_at?->toISOString()];
     }
 }

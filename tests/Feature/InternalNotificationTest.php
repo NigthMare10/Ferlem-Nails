@@ -43,11 +43,11 @@ class InternalNotificationTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_permission_is_only_assigned_to_owner_and_administrator(): void
+    public function test_notification_access_is_available_to_staff_roles_but_recipients_remain_scoped(): void
     {
         $this->assertTrue(Role::findByName('owner')->hasPermissionTo(Permissions::NOTIFICATIONS_ACCESS));
         $this->assertTrue(Role::findByName('administrator')->hasPermissionTo(Permissions::NOTIFICATIONS_ACCESS));
-        $this->assertFalse(Role::findByName('employee')->hasPermissionTo(Permissions::NOTIFICATIONS_ACCESS));
+        $this->assertTrue(Role::findByName('employee')->hasPermissionTo(Permissions::NOTIFICATIONS_ACCESS));
     }
 
     public function test_publication_only_targets_active_authorized_owner_and_administrator_without_secrets(): void
@@ -82,7 +82,8 @@ class InternalNotificationTest extends TestCase
         $ownerNotification = $owner->internalNotifications()->firstOrFail();
 
         $this->get('/notifications')->assertRedirect(route('login'));
-        $this->actingAs($employee)->getJson('/notifications')->assertForbidden();
+        $this->actingAs($employee)->get('/notifications')->assertInertia(fn (Assert $page) => $page->has('notifications.data', 0));
+        $this->patchJson("/notifications/{$ownerNotification->id}/read")->assertNotFound();
         $this->actingAs($administrator)
             ->patchJson("/notifications/{$ownerNotification->id}/read")
             ->assertNotFound();
@@ -127,7 +128,7 @@ class InternalNotificationTest extends TestCase
             ->where('auth.notifications.unread_count', 1)
             ->where('auth.notifications.recent.0.type', 'test.shared'));
         $this->actingAs($employee)->get('/sales/new')->assertInertia(fn (Assert $page) => $page
-            ->missing('auth.notifications'));
+            ->where('auth.notifications.unread_count', 0)->has('auth.notifications.recent', 0));
     }
 
     public function test_duplicate_fact_is_ignored_and_outer_rollback_removes_publication(): void

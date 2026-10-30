@@ -16,7 +16,6 @@ class BuildAppointmentCalendarAction
         $end = $start->addMonth();
         $viewAll = $user->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL);
         $assigneeId = $viewAll ? $employeeId : $user->getKey();
-
         $items = AppointmentItem::query()
             ->select(['id', 'appointment_id', 'assigned_to', 'service_name', 'scheduled_start', 'scheduled_end'])
             ->with([
@@ -25,7 +24,8 @@ class BuildAppointmentCalendarAction
             ])
             ->where('scheduled_start', '>=', $start->utc())
             ->where('scheduled_start', '<', $end->utc())
-            ->whereHas('appointment', fn ($query) => $query->where('status', Appointment::STATUS_SCHEDULED))
+            ->whereHas('appointment', fn ($query) => $query
+                ->where('status', Appointment::STATUS_SCHEDULED))
             ->when($assigneeId, fn ($query) => $query->where('assigned_to', $assigneeId))
             ->orderBy('scheduled_start')
             ->get();

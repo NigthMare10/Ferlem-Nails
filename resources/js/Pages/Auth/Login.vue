@@ -22,29 +22,30 @@ const submit = () => {
     <VApp>
         <VMain class="login-shell">
             <VRow no-gutters class="login-grid">
-                <VCol cols="12" md="5" lg="6" class="login-visual">
+                <VCol cols="12" md="6" class="login-visual">
                     <div class="login-visual-content">
-                        <StudioLemusBrand tone="light" />
+                        <StudioLemusBrand tone="dark" />
                         <div class="login-message">
-                            <div class="text-overline font-weight-bold mb-3" style="opacity: .72">Tu estudio, en orden</div>
-                            <h1 class="text-h3 font-weight-bold mb-4">Administración sencilla para tu estudio</h1>
-                            <p class="text-h6 font-weight-regular mb-0" style="max-width: 470px; opacity: .78">
-                                Un espacio claro y práctico para cuidar cada detalle de Studio Lemus.
+                            <div class="login-kicker">El pulso de tu estudio</div>
+                            <h1>Todo el día de tu salón,<br>en calma.</h1>
+                            <p>
+                                Agenda, cobros y decisiones claras en un espacio hecho para trabajar con intención.
                             </p>
                         </div>
                         <p class="login-visual-footer text-body-2 mb-0" style="opacity: .62">
-                            Simple, cálido y hecho para tu día a día.
+                            Studio Lemus · operación con tacto
                         </p>
                     </div>
                 </VCol>
 
-                <VCol cols="12" md="7" lg="6" class="login-form-panel">
+                <VCol cols="12" md="6" class="login-form-panel">
                     <div class="login-form-wrap">
                         <VCard class="login-card pa-2 pa-sm-5">
                             <VCardText>
                                 <div class="mb-7">
-                                    <h2 class="text-h4 font-weight-bold mb-2">Bienvenida</h2>
-                                    <p class="text-body-1 text-medium-emphasis mb-0">Ingresa tus datos para continuar</p>
+                                    <div class="login-form-kicker">Acceso privado</div>
+                                    <h2 class="text-h4 font-weight-bold mb-2">Bienvenida de vuelta</h2>
+                                    <p class="text-body-1 text-medium-emphasis mb-0">Ingresa para continuar con tu jornada.</p>
                                 </div>
 
                                 <VAlert

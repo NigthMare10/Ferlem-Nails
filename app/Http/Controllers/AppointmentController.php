@@ -30,6 +30,7 @@ use App\Http\Resources\AppointmentResource;
 use App\Http\Resources\SaleServiceResource;
 use App\Models\Appointment;
 use App\Models\AppointmentItem;
+use App\Models\EmployeeBreak;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\Permissions;
@@ -78,7 +79,7 @@ class AppointmentController extends Controller
                 ! $user->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL),
                 fn ($query) => $query->whereKey($user->getKey()),
             )
-            ->orderBy('name')
+            ->orderBy('display_order')->orderBy('name')
             ->get(['id', 'name']);
 
         $services = Service::query()->where('is_active', true)->orderBy('name')->get();
@@ -95,6 +96,12 @@ class AppointmentController extends Controller
             'assignees' => $assignees->map->only(['id', 'name'])->values(),
             'services' => SaleServiceResource::collection($services)->resolve($request),
             'openAppointmentId' => $request->integer('appointment') ?: null,
+            'employee_breaks' => $view === 'day' ? EmployeeBreak::whereIn('user_id', $assignees->pluck('id'))
+                ->when($employeeId, fn ($q) => $q->where('user_id', $employeeId))
+                ->where(fn ($q) => $q->where('date', $date)->orWhere(fn ($q) => $q->whereNull('date')->where('weekday', CarbonImmutable::parse($date)->dayOfWeek)))
+                ->get()->filter(function ($break) use ($date) {
+                    return $break->date || ! EmployeeBreak::where('user_id', $break->user_id)->where('date', $date)->exists();
+                })->map(fn ($break) => ['id' => $break->id, 'name' => $assignees->firstWhere('id', $break->user_id)?->name, 'start_time' => $break->starts_at, 'end_time' => $break->ends_at])->values() : [],
         ]);
     }
 
@@ -187,6 +194,8 @@ class AppointmentController extends Controller
 
         return to_route('appointments.index', [
             'date' => $updated->scheduled_start->setTimezone(CreateAppointmentAction::TIMEZONE)->format('Y-m-d'),
+            'month' => $updated->scheduled_start->setTimezone(CreateAppointmentAction::TIMEZONE)->format('Y-m'),
+            'view' => 'day',
         ], 303)->with('success', 'La cita fue actualizada correctamente.');
     }
 

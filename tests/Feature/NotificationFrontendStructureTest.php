@@ -14,7 +14,7 @@ class NotificationFrontendStructureTest extends TestCase
         $this->assertNotFalse($layout);
         $this->assertNotFalse($bell);
         $this->assertStringContainsString('<NotificationBell', $layout);
-        $this->assertStringContainsString('auth?.notifications', $bell);
+        $this->assertStringContainsString('auth.value?.notifications', $bell);
         $this->assertStringContainsString('refreshNotifications', $bell);
         $this->assertStringNotContainsString("only: ['auth']", $bell);
         $this->assertStringContainsString('60_000', $bell);
@@ -44,7 +44,7 @@ class NotificationFrontendStructureTest extends TestCase
         $this->assertStringContainsString('fetch(url', $composable);
         $this->assertStringNotContainsString('router.patch', $bell);
         $this->assertStringNotContainsString('router.patch', $page);
-        $this->assertStringContainsString("router.get('/notifications'", $page);
+        $this->assertMatchesRegularExpression("/router\\.get\\(\\s*'\\/notifications'/", $page);
     }
 
     public function test_notifications_page_has_filters_actions_empty_state_and_responsive_pagination(): void

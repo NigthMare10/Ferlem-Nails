@@ -12,20 +12,49 @@ import SaleLineItem from '../../Components/Sales/SaleLineItem.vue';
 import SalePaymentMethod from '../../Components/Sales/SalePaymentMethod.vue';
 import SaleMobileCheckout from '../../Components/Sales/SaleMobileCheckout.vue';
 import ServiceCard from '../../Components/Sales/ServiceCard.vue';
-import type { AppointmentCheckoutContext, AppointmentSaleCartItem, PaymentMethod, SaleCartItem, SaleService } from '../../types/sales';
+import { discountedLineTotal } from '../../utils/discount';
+import type { AppointmentCheckoutContext, AppointmentSaleCartItem, PaymentMethod, SaleAdditionalCharge, SaleCartItem, SaleService } from '../../types/sales';
 import { centsToDecimal, decimalToCents, formatHnl, percentageOfCents } from '../../utils/money';
 
 const props = defineProps<{
     services: SaleService[];
     appointment: AppointmentCheckoutContext | null;
     assignees: Array<{ id: number; name: string }>;
+    canAssignPerformer: boolean;
+    canApplyDiscount: boolean;
+    canApplyItemDiscount: boolean;
 }>();
 const page = usePage<{ auth: { user: { id: number; name: string } } }>();
 const { smAndDown } = useDisplay();
 const search = ref('');
+const catalogTab = ref('services');
+function lineTotal(item: { price: string; quantity: number; discount_type?: string | null; discount_value?: string }): number {
+    return discountedLineTotal(item);
+}
 const cart = ref<SaleCartItem[]>([]);
+const directPerformerId = ref<number | null>(props.canAssignPerformer ? (props.assignees[0]?.id ?? null) : page.props.auth.user.id);
 const mobileCheckoutHeight = ref(0);
 const confirmDialog = ref(false);
+const additionalChargesEnabled = ref(false);
+type ConfirmationSnapshot = Readonly<{
+    items: readonly SaleCartItem[];
+    payloadItems: readonly { service_id: number | null; appointment_item_id?: number | null; quantity: number; performed_by?: number }[];
+    removedAppointmentItemIds: readonly number[];
+    additionalCharges: readonly Readonly<SaleAdditionalCharge>[];
+    isFrequentClient: boolean;
+    discountPercent: string;
+    serviceSubtotalCents: number;
+    additionalChargesCents: number;
+    subtotalCents: number;
+    discountCents: number;
+    totalCents: number;
+    totalServices: number;
+    paymentMethod: PaymentMethod;
+    cardFeeCents: number;
+    netAmountCents: number;
+    balanceCents: number;
+}>;
+const confirmationSnapshot = ref<ConfirmationSnapshot | null>(null);
 const appointmentCart = ref<AppointmentSaleCartItem[]>((props.appointment?.items ?? []).map(item => ({
     key: `reserved-${item.appointment_item_id}`,
     appointment_item_id: item.appointment_item_id,
@@ -39,16 +68,32 @@ const appointmentCart = ref<AppointmentSaleCartItem[]>((props.appointment?.items
     performer_name: item.performed_by.name,
     reserved: true,
 })));
+const chargeAssignees = computed(() => {
+    if (!props.appointment) return props.assignees;
+
+    const participants = new Map<number, string>();
+    appointmentCart.value.forEach(item => participants.set(item.performed_by, item.performer_name));
+    return Array.from(participants, ([id, name]) => ({ id, name }));
+});
+const showChargePerformer = computed(() => Boolean(props.appointment) && chargeAssignees.value.length > 1);
+const defaultChargePerformerId = computed(() => {
+    if (!props.appointment) return directPerformerId.value;
+    return chargeAssignees.value.length === 1 ? chargeAssignees.value[0].id : null;
+});
 const removedReserved = ref<number[]>([]);
 const removalPending = ref<string | null>(null);
 let additionalSequence = 0;
 const form = useForm({
     checkout_token: crypto.randomUUID(),
+    appointment_id: props.appointment?.id ?? null as number | null,
     payment_method: 'cash' as PaymentMethod,
     client_name: props.appointment?.client_name ?? '',
     items: [] as Array<{ service_id: number | null; appointment_item_id?: number | null; quantity: number; performed_by?: number }>,
     removed_appointment_item_ids: [] as number[],
     payment_proof: null as File | null,
+    additional_charges: [] as SaleAdditionalCharge[],
+    is_frequent_client: false,
+    discount_percent: '',
 });
 const excessRefundForm = useForm({
     amount: '',
@@ -59,17 +104,26 @@ const excessRefundErrors = computed(() => excessRefundForm.errors as Record<stri
 
 const filteredServices = computed(() => {
     const term = search.value.trim().toLocaleLowerCase('es');
-    if (!term) return props.services;
+    const catalog = props.services.filter(service => !!service.is_promotion === (catalogTab.value === 'promotions'));
+    if (!term) return catalog;
 
-    return props.services.filter(service =>
+    return catalog.filter(service =>
         service.name.toLocaleLowerCase('es').includes(term)
         || (service.description ?? '').toLocaleLowerCase('es').includes(term),
     );
 });
 const totalServices = computed(() => cart.value.reduce((total, item) => total + item.quantity, 0));
-const totalCents = computed(() => cart.value.reduce((total, item) => total + (decimalToCents(item.price) * item.quantity), 0));
+const additionalChargesCents = computed(() => form.additional_charges.reduce((total, charge) => total + decimalToCents(charge.amount || '0'), 0));
+const serviceSubtotalCents = computed(() => cart.value.reduce((total, item) => total + lineTotal(item), 0));
+const subtotalCents = computed(() => serviceSubtotalCents.value + additionalChargesCents.value);
+const discountPercent = computed(() => Math.min(100, Math.max(0, Number(form.discount_percent) || 0)));
+const discountCents = computed(() => form.is_frequent_client ? percentageOfCents(subtotalCents.value, discountPercent.value) : 0);
+const totalCents = computed(() => Math.max(0, subtotalCents.value - discountCents.value));
 const appointmentTotalServices = computed(() => appointmentCart.value.reduce((total, item) => total + item.quantity, 0));
-const appointmentTotalCents = computed(() => appointmentCart.value.reduce((total, item) => total + (decimalToCents(item.price) * item.quantity), 0));
+const appointmentServiceSubtotalCents = computed(() => appointmentCart.value.reduce((total, item) => total + lineTotal(item), 0));
+const appointmentSubtotalCents = computed(() => appointmentServiceSubtotalCents.value + additionalChargesCents.value);
+const appointmentDiscountCents = computed(() => form.is_frequent_client ? percentageOfCents(appointmentSubtotalCents.value, discountPercent.value) : 0);
+const appointmentTotalCents = computed(() => Math.max(0, appointmentSubtotalCents.value - appointmentDiscountCents.value));
 const depositCents = computed(() => props.appointment?.deposit ? decimalToCents(props.appointment.deposit.available_amount) : 0);
 const depositFeeCents = computed(() => props.appointment?.deposit ? decimalToCents(props.appointment.deposit.card_fee_amount) : 0);
 const appointmentBalanceCents = computed(() => Math.max(0, appointmentTotalCents.value - depositCents.value));
@@ -89,10 +143,16 @@ const showMobileCheckout = computed(() => smAndDown.value && activeItemsCount.va
 const saleError = computed(() => {
     const errors = form.errors as Record<string, string>;
     return errors.items
+        || errors.appointment
         || errors.checkout_token
         || errors.payment_method
         || errors.payment_proof
+        || errors.discount_percent
+        || errors.is_frequent_client
+        || errors.additional_charges
+        || errors.removed_appointment_item_ids
         || Object.entries(errors).find(([key]) => key.startsWith('items.'))?.[1]
+        || Object.entries(errors).find(([key]) => key.startsWith('additional_charges.'))?.[1]
         || '';
 });
 const confirmationItems = computed<SaleCartItem[]>(() => (props.appointment
@@ -103,8 +163,42 @@ const confirmationItems = computed<SaleCartItem[]>(() => (props.appointment
         duration_minutes: item.duration_minutes,
         price: item.price,
         quantity: item.quantity,
+        discount_type:item.discount_type,discount_value:item.discount_value,discount_reason:item.discount_reason,
     }))
     : cart.value));
+
+function captureConfirmation(): void {
+    const appointmentMode = Boolean(props.appointment);
+    const payloadItems = appointmentMode
+        ? appointmentCart.value.map(item => ({
+            appointment_item_id: item.appointment_item_id,
+            service_id: item.service_id,
+            quantity: item.quantity,
+            performed_by: item.performed_by,
+            discount_type: item.discount_type, discount_value: item.discount_value, discount_reason: item.discount_reason,
+            expected_price:item.price,
+        }))
+        : cart.value.map(item => ({ service_id: item.id, quantity: item.quantity, performed_by: directPerformerId.value ?? undefined, discount_type: item.discount_type, discount_value: item.discount_value, discount_reason: item.discount_reason, expected_price:item.price }));
+
+    confirmationSnapshot.value = Object.freeze({
+        items: Object.freeze(confirmationItems.value.map(item => Object.freeze({ ...item }))),
+        payloadItems: Object.freeze(payloadItems.map(item => Object.freeze({ ...item }))),
+        removedAppointmentItemIds: Object.freeze([...removedReserved.value]),
+        additionalCharges: Object.freeze(form.additional_charges.map(charge => Object.freeze({ ...charge }))),
+        isFrequentClient: form.is_frequent_client,
+        discountPercent: form.discount_percent,
+        serviceSubtotalCents: appointmentMode ? appointmentServiceSubtotalCents.value : serviceSubtotalCents.value,
+        additionalChargesCents: additionalChargesCents.value,
+        subtotalCents: appointmentMode ? appointmentSubtotalCents.value : subtotalCents.value,
+        discountCents: appointmentMode ? appointmentDiscountCents.value : discountCents.value,
+        totalCents: appointmentMode ? appointmentTotalCents.value : totalCents.value,
+        totalServices: appointmentMode ? appointmentTotalServices.value : totalServices.value,
+        paymentMethod: form.payment_method,
+        cardFeeCents: appointmentMode ? appointmentTotalFeeCents.value : cardFeeCents.value,
+        netAmountCents: appointmentMode ? appointmentNetAmountCents.value : netAmountCents.value,
+        balanceCents: appointmentMode ? appointmentBalanceCents.value : totalCents.value,
+    });
+}
 
 const quantityFor = (serviceId: number) => cart.value.find(item => item.id === serviceId)?.quantity ?? 0;
 const add = (service: SaleService) => {
@@ -134,32 +228,30 @@ const remove = (serviceId: number) => {
 const openConfirmation = () => {
     if (!cart.value.length || form.processing) return;
     form.clearErrors();
+    captureConfirmation();
     confirmDialog.value = true;
 };
 const submit = () => {
+    const snapshot = confirmationSnapshot.value;
+    if (!snapshot || form.processing) return;
+
+    form.payment_method = snapshot.paymentMethod;
+    form.additional_charges = snapshot.additionalCharges.map(charge => ({ ...charge }));
+    form.is_frequent_client = snapshot.isFrequentClient;
+    form.discount_percent = snapshot.discountPercent;
+    form.items = snapshot.payloadItems.map(item => ({ ...item }));
+    form.removed_appointment_item_ids = [...snapshot.removedAppointmentItemIds];
+
     if (props.appointment) {
-        if (!appointmentCart.value.length || appointmentBelowDeposit.value || form.processing) return;
-        form.items = appointmentCart.value.map(item => ({
-            appointment_item_id: item.appointment_item_id,
-            service_id: item.service_id,
-            quantity: item.quantity,
-            performed_by: item.performed_by,
-        }));
-        form.removed_appointment_item_ids = removedReserved.value;
+        if (!snapshot.items.length || appointmentBelowDeposit.value) return;
         form.post(`/appointments/${props.appointment.id}/checkout`, { preserveScroll: true, forceFormData: true });
         return;
     }
-    if (!cart.value.length || form.processing) return;
-    form.items = cart.value.map(item => ({ service_id: item.id, quantity: item.quantity }));
+    if (!snapshot.items.length) return;
     form.post('/sales', { preserveScroll: true, forceFormData: true });
 };
 
 function addAppointmentService(service: SaleService): void {
-    const existing = appointmentCart.value.find(item => !item.reserved && item.service_id === service.id);
-    if (existing) {
-        if (existing.quantity < 50) existing.quantity++;
-        return;
-    }
     const defaultPerformer = props.appointment?.can_assign
         ? props.assignees[0]
         : page.props.auth.user;
@@ -197,6 +289,7 @@ function updateAppointmentPerformer(item: AppointmentSaleCartItem, performerId: 
 function openAppointmentConfirmation(): void {
     if (!appointmentCart.value.length || appointmentBelowDeposit.value || form.processing) return;
     form.clearErrors();
+    captureConfirmation();
     confirmDialog.value = true;
 }
 
@@ -232,7 +325,20 @@ function refundExcess(): void {
             />
 
             <VTextField v-if="!appointment" v-model="form.client_name" label="Nombre de la clienta (opcional)" maxlength="120" counter="120" prepend-inner-icon="mdi-account-outline" :error-messages="form.errors.client_name" :disabled="form.processing" class="mb-5" />
-
+            <VTabs v-model="catalogTab" class="mb-4"><VTab value="services">Servicios</VTab><VTab value="promotions">Promociones</VTab></VTabs>
+            <VSelect
+                v-if="!appointment && canAssignPerformer"
+                v-model="directPerformerId"
+                label="Atendida por"
+                :items="assignees"
+                item-title="name"
+                item-value="id"
+                :error-messages="form.errors['items.0.performed_by'] || form.errors.items"
+                :disabled="form.processing || !assignees.length"
+                :hint="assignees.length ? 'Se aplicará a todos los servicios de esta venta.' : 'No hay personal operativo activo disponible.'"
+                persistent-hint
+                class="mb-5"
+            />
             <template v-if="appointment">
                 <VAlert type="info" variant="tonal" class="mb-5">
                     Abrir esta pantalla no completa la cita. Permanecerá programada hasta confirmar el cobro.
@@ -247,7 +353,7 @@ function refundExcess(): void {
                             <VDivider />
                             <VCardText class="pa-4 pa-sm-5">
                                 <div class="text-overline text-primary mb-3">Trabajo realizado</div>
-                                <SaleLineItem v-for="item in appointmentCart" :key="item.key" :item-key="item.key" :name="item.name" :price="item.price" :quantity="item.quantity" :duration-minutes="item.duration_minutes" :reserved="item.reserved" :processing="form.processing" @increase="item.quantity++" @decrease="item.quantity > 1 ? item.quantity-- : removeAppointmentLine(item)" @remove="removeAppointmentLine(item)">
+                                <SaleLineItem v-for="item in appointmentCart" :key="item.key" :discount-line="canApplyItemDiscount ? item : undefined" :item-key="item.key" :name="item.name" :price="item.price" :quantity="item.quantity" :discount-type="item.discount_type" :discount-value="item.discount_value" :duration-minutes="item.duration_minutes" :reserved="item.reserved" :processing="form.processing" @increase="item.quantity++" @decrease="item.quantity > 1 ? item.quantity-- : removeAppointmentLine(item)" @remove="removeAppointmentLine(item)">
                                     <template #notice>
                                         <VAlert v-if="removalPending === item.key" type="warning" variant="tonal" density="compact" class="mt-3">
                                             Confirma que este servicio reservado no se realizó.
@@ -263,13 +369,36 @@ function refundExcess(): void {
                         <VTextField v-model="search" label="Buscar servicios adicionales" prepend-inner-icon="mdi-magnify" clearable hide-details class="mb-4" />
                         <VRow dense><VCol v-for="service in filteredServices" :key="service.id" cols="12" sm="6"><ServiceCard :service="service" :selected-quantity="appointmentCart.find(item => !item.reserved && item.service_id === service.id)?.quantity ?? 0" @add="addAppointmentService" /></VCol></VRow>
                     </VCol>
-                    <VCol cols="12" lg="5">
+                    <VCol v-if="!smAndDown" cols="12" lg="5">
                         <VCard class="surface-card appointment-summary" rounded="xl">
                             <VCardItem class="pa-5"><VCardTitle class="font-weight-bold">Resumen de cobro</VCardTitle><VCardSubtitle>La venta conserva el valor completo del trabajo.</VCardSubtitle></VCardItem>
                             <VDivider />
                             <VCardText class="pa-5">
                                 <SalePaymentMethod v-model="form.payment_method" v-model:payment-proof="form.payment_proof" :amount-cents="appointmentBalanceCents" :processing="form.processing" :balance-payment="depositCents > 0" :proof-error="form.errors.payment_proof" class="mb-4" />
-                                <SaleCheckoutSummary :total-cents="appointmentTotalCents" :total-services="appointmentTotalServices" :payment-method="form.payment_method" :deposit-cents="depositCents" :deposit-fee-cents="depositFeeCents" :balance-cents="appointmentBalanceCents" :balance-fee-cents="appointmentBalanceFeeCents" :total-fee-cents="appointmentTotalFeeCents" :net-amount-cents="appointmentNetAmountCents" />
+                                <SaleCheckoutSummary
+                                    v-model:frequent-client="form.is_frequent_client"
+                                    v-model:discount-percent="form.discount_percent"
+                                    v-model:additional-charges-enabled="additionalChargesEnabled"
+                                    v-model:additional-charges="form.additional_charges"
+                                    :service-subtotal-cents="appointmentServiceSubtotalCents"
+                                    :additional-charges-cents="additionalChargesCents"
+                                    :subtotal-cents="appointmentSubtotalCents"
+                                    :discount-cents="appointmentDiscountCents"
+                                    :total-cents="appointmentTotalCents"
+                                    :total-services="appointmentTotalServices"
+                                    :payment-method="form.payment_method"
+                                    :deposit-cents="depositCents"
+                                    :deposit-fee-cents="depositFeeCents"
+                                    :balance-cents="appointmentBalanceCents"
+                                    :balance-fee-cents="appointmentBalanceFeeCents"
+                                    :total-fee-cents="appointmentTotalFeeCents"
+                                    :net-amount-cents="appointmentNetAmountCents"
+                                    :can-apply-discount="canApplyDiscount || appointment.can_apply_discount"
+                                     :processing="form.processing"
+                                     :charge-assignees="chargeAssignees"
+                                     :default-charge-performer-id="defaultChargePerformerId"
+                                     :show-charge-performer="showChargePerformer"
+                                />
                                 <VAlert v-if="appointmentBelowDeposit" type="error" variant="tonal" density="compact" class="mt-4">
                                     El adelanto disponible supera los servicios por {{ formatHnl(depositExcessCents) }}. Debe devolverse exactamente ese excedente antes de completar.
                                 </VAlert>
@@ -323,13 +452,26 @@ function refundExcess(): void {
                 <VCol v-if="!smAndDown" cols="12" md="5" lg="4">
                     <div class="sales-create-page__sticky-cart">
                         <SaleCart
+                            v-model:frequent-client="form.is_frequent_client"
+                            v-model:discount-percent="form.discount_percent"
+                            v-model:additional-charges-enabled="additionalChargesEnabled"
+                            v-model:additional-charges="form.additional_charges"
                             :items="cart"
+                            :service-subtotal-cents="serviceSubtotalCents"
+                            :additional-charges-cents="additionalChargesCents"
+                            :subtotal-cents="subtotalCents"
+                            :discount-cents="discountCents"
                             :total-cents="totalCents"
                             :total-services="totalServices"
                             :payment-method="form.payment_method"
                             :card-fee-cents="cardFeeCents"
                             :net-amount-cents="netAmountCents"
+                            :can-apply-discount="canApplyDiscount"
+                            :can-apply-item-discount="canApplyItemDiscount"
                             :processing="form.processing"
+                            :charge-assignees="chargeAssignees"
+                            :default-charge-performer-id="defaultChargePerformerId"
+                            :show-charge-performer="showChargePerformer"
                             :payment-proof="form.payment_proof"
                             :proof-error="form.errors.payment_proof"
                             @increase="increase"
@@ -355,13 +497,26 @@ function refundExcess(): void {
             >
                 <SaleCart
                     v-if="!appointment"
+                    v-model:frequent-client="form.is_frequent_client"
+                    v-model:discount-percent="form.discount_percent"
+                    v-model:additional-charges-enabled="additionalChargesEnabled"
+                    v-model:additional-charges="form.additional_charges"
                     :items="cart"
+                    :service-subtotal-cents="serviceSubtotalCents"
+                    :additional-charges-cents="additionalChargesCents"
+                    :subtotal-cents="subtotalCents"
+                    :discount-cents="discountCents"
                     :total-cents="totalCents"
                     :total-services="totalServices"
                     :payment-method="form.payment_method"
                     :card-fee-cents="cardFeeCents"
                     :net-amount-cents="netAmountCents"
+                    :can-apply-discount="canApplyDiscount"
+                    :can-apply-item-discount="canApplyItemDiscount"
                     :processing="form.processing"
+                    :charge-assignees="chargeAssignees"
+                    :default-charge-performer-id="defaultChargePerformerId"
+                    :show-charge-performer="showChargePerformer"
                     :payment-proof="form.payment_proof"
                     :proof-error="form.errors.payment_proof"
                     @increase="increase"
@@ -375,9 +530,37 @@ function refundExcess(): void {
                     <VCardItem class="pa-5"><VCardTitle class="font-weight-bold">Resumen de cobro</VCardTitle></VCardItem>
                     <VDivider />
                     <VCardText class="pa-4">
-                        <SaleLineItem v-for="item in appointmentCart" :key="item.key" :item-key="item.key" :name="item.name" :price="item.price" :quantity="item.quantity" :duration-minutes="item.duration_minutes" :reserved="item.reserved" :processing="form.processing" @increase="item.quantity++" @decrease="item.quantity > 1 ? item.quantity-- : removeAppointmentLine(item)" @remove="removeAppointmentLine(item)" />
                         <SalePaymentMethod v-model="form.payment_method" v-model:payment-proof="form.payment_proof" :amount-cents="appointmentBalanceCents" :processing="form.processing" :balance-payment="depositCents > 0" :proof-error="form.errors.payment_proof" class="mt-4" />
-                        <SaleCheckoutSummary :total-cents="appointmentTotalCents" :total-services="appointmentTotalServices" :payment-method="form.payment_method" :deposit-cents="depositCents" :deposit-fee-cents="depositFeeCents" :balance-cents="appointmentBalanceCents" :balance-fee-cents="appointmentBalanceFeeCents" :total-fee-cents="appointmentTotalFeeCents" :net-amount-cents="appointmentNetAmountCents" />
+                        <SaleCheckoutSummary
+                            v-model:frequent-client="form.is_frequent_client"
+                            v-model:discount-percent="form.discount_percent"
+                            v-model:additional-charges-enabled="additionalChargesEnabled"
+                            v-model:additional-charges="form.additional_charges"
+                            :service-subtotal-cents="appointmentServiceSubtotalCents"
+                            :additional-charges-cents="additionalChargesCents"
+                            :subtotal-cents="appointmentSubtotalCents"
+                            :discount-cents="appointmentDiscountCents"
+                            :total-cents="appointmentTotalCents"
+                            :total-services="appointmentTotalServices"
+                            :payment-method="form.payment_method"
+                            :deposit-cents="depositCents"
+                            :deposit-fee-cents="depositFeeCents"
+                            :balance-cents="appointmentBalanceCents"
+                            :balance-fee-cents="appointmentBalanceFeeCents"
+                            :total-fee-cents="appointmentTotalFeeCents"
+                            :net-amount-cents="appointmentNetAmountCents"
+                            :can-apply-discount="canApplyDiscount || appointment.can_apply_discount"
+                            :processing="form.processing"
+                            :charge-assignees="chargeAssignees"
+                            :default-charge-performer-id="defaultChargePerformerId"
+                            :show-charge-performer="showChargePerformer"
+                        >
+                            <template #services>
+                                <div class="my-3">
+                                    <SaleLineItem v-for="item in appointmentCart" :key="item.key" :discount-line="canApplyItemDiscount ? item : undefined" :discount-type="item.discount_type" :discount-value="item.discount_value" :item-key="item.key" :name="item.name" :price="item.price" :quantity="item.quantity" :duration-minutes="item.duration_minutes" :reserved="item.reserved" :processing="form.processing" @increase="item.quantity++" @decrease="item.quantity > 1 ? item.quantity-- : removeAppointmentLine(item)" @remove="removeAppointmentLine(item)" />
+                                </div>
+                            </template>
+                        </SaleCheckoutSummary>
                         <VAlert v-if="appointmentBelowDeposit" type="error" variant="tonal" density="compact" class="mt-4">Debe devolverse el excedente del adelanto antes de completar.</VAlert>
                         <VBtn block color="primary" size="large" class="mt-4" :loading="form.processing" :disabled="form.processing || appointmentBelowDeposit" @click="openAppointmentConfirmation">Completar y cobrar {{ formatHnl(appointmentBalanceCents) }}</VBtn>
                     </VCardText>
@@ -385,23 +568,25 @@ function refundExcess(): void {
             </SaleMobileCheckout>
 
             <ConfirmSaleDialog
+                v-if="confirmationSnapshot"
                 v-model="confirmDialog"
-                :items="confirmationItems"
-                :total-cents="appointment ? appointmentTotalCents : totalCents"
-                :total-services="appointment ? appointmentTotalServices : totalServices"
-                :payment-method="form.payment_method"
-                :card-fee-cents="appointment ? appointmentTotalFeeCents : cardFeeCents"
-                :net-amount-cents="appointment ? appointmentNetAmountCents : netAmountCents"
+                :items="confirmationSnapshot.items"
+                :additional-charges="confirmationSnapshot.additionalCharges"
+                :service-subtotal-cents="confirmationSnapshot.serviceSubtotalCents"
+                :additional-charges-cents="confirmationSnapshot.additionalChargesCents"
+                :subtotal-cents="confirmationSnapshot.subtotalCents"
+                :discount-percent="confirmationSnapshot.discountPercent"
+                :discount-cents="confirmationSnapshot.discountCents"
+                :total-cents="confirmationSnapshot.totalCents"
+                :total-services="confirmationSnapshot.totalServices"
+                :payment-method="confirmationSnapshot.paymentMethod"
+                :card-fee-cents="confirmationSnapshot.cardFeeCents"
+                :net-amount-cents="confirmationSnapshot.netAmountCents"
                 :appointment-mode="Boolean(appointment)"
                 :deposit-cents="depositCents"
-                :deposit-fee-cents="depositFeeCents"
-                :balance-cents="appointmentBalanceCents"
-                :balance-fee-cents="appointmentBalanceFeeCents"
+                :balance-cents="confirmationSnapshot.balanceCents"
                 :processing="form.processing"
                 :error="saleError"
-                :payment-proof="form.payment_proof"
-                @update:payment-method="form.payment_method = $event"
-                @update:payment-proof="form.payment_proof = $event"
                 @confirm="submit"
             />
         </div>

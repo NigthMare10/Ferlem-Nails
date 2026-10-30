@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 class PublishInternalNotificationAction
 {
     public function execute(
-        User $actor,
+        ?User $actor,
         string $type,
         string $title,
         string $message,
@@ -24,7 +24,7 @@ class PublishInternalNotificationAction
         ?string $recipientPermission = null,
     ): void {
         $notification = new InternalNotification($type, $title, $message, $url, $actor, $entity, $occurredAt);
-        $payload = json_encode($notification->toDatabase($actor), JSON_THROW_ON_ERROR);
+        $payload = json_encode($notification->toDatabase($actor ?? new User), JSON_THROW_ON_ERROR);
         $now = now('UTC');
 
         User::query()
@@ -34,17 +34,28 @@ class PublishInternalNotificationAction
             ->when($recipientPermission, fn ($query) => $query->permission($recipientPermission))
             ->select('users.id')
             ->eachById(function (User $recipient) use ($dedupeKey, $now, $payload) {
-                DB::table((new InternalNotificationRecord)->getTable())->insertOrIgnore([
-                    'id' => (string) Str::uuid(),
-                    'type' => InternalNotification::class,
-                    'notifiable_type' => User::class,
-                    'notifiable_id' => $recipient->getKey(),
-                    'dedupe_key' => $dedupeKey,
-                    'data' => $payload,
-                    'read_at' => null,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
+                $this->store($recipient, $dedupeKey, $now, $payload);
             });
+    }
+
+    public function executeForRecipients(?User $actor, string $type, string $title, string $message, string $url, array $entity, string $dedupeKey, CarbonInterface $occurredAt, array $recipientIds): void
+    {
+        $notification = new InternalNotification($type, $title, $message, $url, $actor, $entity, $occurredAt);
+        $payload = json_encode($notification->toDatabase($actor ?? new User), JSON_THROW_ON_ERROR);
+        $now = now('UTC');
+
+        User::query()->where('is_active', true)->whereKey($recipientIds)->eachById(
+            fn (User $recipient) => $this->store($recipient, $dedupeKey, $now, $payload),
+        );
+    }
+
+    private function store(User $recipient, string $dedupeKey, CarbonInterface $now, string $payload): void
+    {
+        DB::table((new InternalNotificationRecord)->getTable())->insertOrIgnore([
+            'id' => (string) Str::uuid(), 'type' => InternalNotification::class,
+            'notifiable_type' => User::class, 'notifiable_id' => $recipient->getKey(),
+            'dedupe_key' => $dedupeKey, 'data' => $payload, 'read_at' => null,
+            'created_at' => $now, 'updated_at' => $now,
+        ]);
     }
 }

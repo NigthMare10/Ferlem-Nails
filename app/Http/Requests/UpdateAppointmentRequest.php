@@ -28,6 +28,16 @@ class UpdateAppointmentRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'expected_updated_at' => ['required_with:items', 'string'],
+            'expected_revision' => ['required_with:items', 'string', 'size:64'],
+            'date' => ['required_with:items', 'date_format:Y-m-d'],
+            'start_time' => ['required_with:items', 'date_format:H:i'],
+            'items' => ['sometimes', 'array', 'min:1', 'max:100'],
+            'items.*.id' => ['nullable', 'integer'],
+            'items.*.service_id' => ['required', 'integer'],
+            'items.*.assigned_to' => ['required', 'integer'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:20'],
+            'items.*.duration_minutes' => ['required', 'integer', 'min:5', 'max:480', 'multiple_of:5'],
             'client_name' => ['required', 'string', 'max:120'],
             'client_phone' => ['nullable', 'string', 'max:30'],
             'notes' => ['nullable', 'string', 'max:1000'],

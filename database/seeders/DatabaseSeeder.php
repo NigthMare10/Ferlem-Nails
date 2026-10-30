@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RoleSeeder::class,
+            BusinessHourSeeder::class,
+            ExpenseCategorySeeder::class,
+            DailyCloseSettingSeeder::class,
         ]);
     }
 }

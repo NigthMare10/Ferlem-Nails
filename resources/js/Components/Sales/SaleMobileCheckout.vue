@@ -16,6 +16,7 @@ const emit = defineEmits<{
 }>();
 
 const open = ref(false);
+const pendingCheckout = ref(false);
 const bar = ref<HTMLElement | null>(null);
 let observer: ResizeObserver | undefined;
 
@@ -29,7 +30,17 @@ function close(): void {
 
 function checkout(): void {
     if (props.processing || props.checkoutDisabled) return;
+    if (!open.value) {
+        emit('checkout');
+        return;
+    }
+    pendingCheckout.value = true;
     close();
+}
+
+function afterSheetLeave(): void {
+    if (!pendingCheckout.value) return;
+    pendingCheckout.value = false;
     emit('checkout');
 }
 
@@ -56,7 +67,7 @@ onBeforeUnmount(() => observer?.disconnect());
         </VBtn>
     </div>
 
-    <VBottomSheet v-model="open" :disabled="processing" max-height="88dvh" class="sale-mobile-checkout-sheet">
+    <VBottomSheet v-model="open" :disabled="processing" max-height="88dvh" class="sale-mobile-checkout-sheet" @after-leave="afterSheetLeave">
         <VCard class="sale-mobile-checkout-sheet__card">
             <VCardActions class="justify-end px-4 pt-3 pb-0">
                 <VBtn variant="text" prepend-icon="mdi-close" :disabled="processing" @click="close">Cerrar resumen</VBtn>

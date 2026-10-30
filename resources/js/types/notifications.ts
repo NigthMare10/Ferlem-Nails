@@ -13,7 +13,18 @@ export interface AuthNotifications {
     recent: NotificationItem[];
 }
 
+export interface NotificationAuthContext {
+    user?: { id: number | string };
+    notifications?: AuthNotifications;
+}
+
 export interface NotificationSnapshot extends AuthNotifications {
+    as_of: string;
+}
+
+export interface NotificationBulkReadResult {
+    updated_count: number;
+    unread_count: number;
     as_of: string;
 }
 

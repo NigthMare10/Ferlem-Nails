@@ -12,8 +12,10 @@ use App\Models\Sale;
 use App\Models\SalePayment;
 use App\Models\Service;
 use App\Models\User;
+use App\Support\ItemDiscount;
 use App\Support\Money;
 use App\Support\Permissions;
+use App\Support\SaleAdditionalCharges;
 use App\Support\SaleFinancials;
 use App\Support\TransferProofStorage;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -36,6 +38,7 @@ class CheckoutAppointmentAction
     public function execute(User $user, Appointment $appointment, array $data): Sale
     {
         $this->authorizeGlobal($user);
+        $data['additional_charges'] = $this->normalizeCharges($data['additional_charges'] ?? []);
         $requestHash = $this->requestHash($appointment->getKey(), $data);
 
         if ($existing = $this->findByToken($data['checkout_token'])) {
@@ -64,7 +67,13 @@ class CheckoutAppointmentAction
                 }
 
                 $prepared = $this->prepareItems($user, $originalItems, $data);
-                $totalCents = collect($prepared)->sum('line_total_cents');
+                $charges = $this->assignChargePerformers($prepared, $data['additional_charges']);
+                $discountCents = Money::percentageOfCents(
+                    collect($prepared)->sum('line_total_cents') + array_sum(array_column($charges, 'amount_cents')),
+                    $data['discount_percent'] ?? '0.00',
+                );
+                $this->authorizeDiscount($user, $discountCents);
+                $totalCents = collect($prepared)->sum('line_total_cents') + array_sum(array_column($charges, 'amount_cents')) - $discountCents;
                 if ($totalCents > self::MAX_AMOUNT_CENTS) {
                     throw ValidationException::withMessages(['items' => 'El total de la venta excede el monto permitido.']);
                 }
@@ -90,6 +99,9 @@ class CheckoutAppointmentAction
                 } elseif ($proof) {
                     throw ValidationException::withMessages(['payment_proof' => 'No se puede adjuntar una captura porque el adelanto cubre todo el saldo.']);
                 }
+                if ($payments === []) {
+                    $payments[] = SaleFinancials::payment(SalePayment::TYPE_FINAL_PAYMENT, $data['payment_method'], 0);
+                }
                 $sale = $this->persistCompletedSale->execute(
                     $user,
                     $prepared,
@@ -98,6 +110,9 @@ class CheckoutAppointmentAction
                     $requestHash,
                     $locked->getKey(),
                     $locked->client_name,
+                    $charges,
+                    $discountCents,
+                    $data['discount_percent'] ?? '0.00',
                 );
 
                 if ($depositCents > 0 && $deposit) {
@@ -197,15 +212,12 @@ class CheckoutAppointmentAction
             ->pluck('service_id')->filter()->map(fn ($id) => (int) $id)->unique()->sort()->values();
         $submittedAdditionalIds = collect($data['items'])->filter(fn ($line) => empty($line['appointment_item_id']))
             ->pluck('service_id')->filter()->map(fn ($id) => (int) $id);
-        if ($submittedAdditionalIds->duplicates()->isNotEmpty()) {
-            throw ValidationException::withMessages(['items' => 'Cada servicio adicional debe aparecer una sola vez. Ajusta su cantidad en la misma línea.']);
-        }
         $services = Service::query()->whereKey($additionalIds->all())->orderBy('id')->lockForUpdate()->get()->keyBy('id');
         if ($services->count() !== $additionalIds->count() || $services->contains(fn (Service $service) => ! $service->is_active)) {
             throw ValidationException::withMessages(['items' => 'Uno de los servicios adicionales ya no está disponible.']);
         }
 
-        $canAssign = $user->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN);
+        $canAssign = $user->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN) || $user->can(Permissions::SALES_CHECKOUT_ANY);
         $performerIds = collect($data['items'])->pluck('performed_by')->map(fn ($id) => (int) $id)->unique()->sort()->values();
         $performers = User::query()->whereKey($performerIds->all())->orderBy('id')->lockForUpdate()->get()->keyBy('id');
         foreach ($performerIds as $id) {
@@ -220,36 +232,92 @@ class CheckoutAppointmentAction
             $quantity = (int) $line['quantity'];
             $performerId = (int) $line['performed_by'];
             $appointmentItem = ! empty($line['appointment_item_id']) ? $originalById->get((int) $line['appointment_item_id']) : null;
-            if (! $appointmentItem && empty($line['service_id'])) {
-                throw ValidationException::withMessages(['items' => 'Cada servicio adicional debe identificar un servicio vigente.']);
-            }
-            if (! $canAssign) {
-                $expectedPerformer = $appointmentItem?->assigned_to ?? $user->getKey();
-                if ($performerId !== $expectedPerformer) {
+
+            if ($appointmentItem) {
+                $this->validateReservedSnapshot($appointmentItem);
+                if (! $canAssign && $performerId !== $appointmentItem->assigned_to) {
                     throw new AuthorizationException('No tienes permiso para asignar servicios a otra persona.');
                 }
+
+                $unitPriceCents = Money::toCents($appointmentItem->unit_price);
+                $preparedLine = [
+                    'appointment_item_id' => $appointmentItem->getKey(),
+                    'service_id' => null,
+                    'loyalty_points' => (int) (Service::find($appointmentItem->service_id)?->loyalty_points ?? 0) * $quantity,
+                    'performed_by' => $performerId,
+                    'service_name' => $appointmentItem->service_name,
+                    'service_description' => $appointmentItem->service_description,
+                    'duration_minutes' => $appointmentItem->duration_minutes,
+                ];
+            } else {
+                if (empty($line['service_id'])) {
+                    throw ValidationException::withMessages(['items' => 'Cada servicio adicional debe identificar un servicio vigente.']);
+                }
+                if (! $canAssign && $performerId !== $user->getKey()) {
+                    throw new AuthorizationException('No tienes permiso para asignar servicios a otra persona.');
+                }
+
+                $service = $services->get((int) $line['service_id']);
+                if (! $service || ! $service->is_active) {
+                    throw ValidationException::withMessages(['items' => 'Uno de los servicios adicionales ya no está disponible.']);
+                }
+
+                $unitPriceCents = Money::toCents($service->price);
+                $preparedLine = [
+                    'appointment_item_id' => null,
+                    'service_id' => $service->getKey(),
+                    'performed_by' => $performerId,
+                    'service_name' => $service->name,
+                    'service_description' => $service->description,
+                    'duration_minutes' => $service->duration_minutes,
+                ];
             }
 
-            $service = $appointmentItem ? null : $services->get((int) $line['service_id']);
-            $unitPriceCents = Money::toCents($appointmentItem?->unit_price ?? $service->price);
             $lineTotalCents = $unitPriceCents * $quantity;
+            ItemDiscount::checkPrice($line, $unitPriceCents);
             if ($lineTotalCents > self::MAX_AMOUNT_CENTS) {
                 throw ValidationException::withMessages(['items' => 'Una línea excede el monto permitido.']);
             }
-            $prepared[] = [
-                'appointment_item_id' => $appointmentItem?->getKey(),
-                'service_id' => $appointmentItem ? null : $service->getKey(),
-                'performed_by' => $performerId,
-                'service_name' => $appointmentItem?->service_name ?? $service->name,
-                'service_description' => $appointmentItem?->service_description ?? $service->description,
-                'duration_minutes' => $appointmentItem?->duration_minutes ?? $service->duration_minutes,
+
+            $prepared[] = ItemDiscount::apply($user, [...$preparedLine,
                 'unit_price_cents' => $unitPriceCents,
                 'quantity' => $quantity,
                 'line_total_cents' => $lineTotalCents,
-            ];
+            ], $line, (float) ($data['discount_percent'] ?? 0) > 0);
         }
 
         return $prepared;
+    }
+
+    private function validateReservedSnapshot(AppointmentItem $item): void
+    {
+        if (trim((string) $item->service_name) === ''
+            || ! is_numeric((string) $item->unit_price)
+            || $item->duration_minutes < 1
+            || ! $item->assigned_to
+            || $item->quantity < 1) {
+            throw ValidationException::withMessages([
+                'items' => 'Un servicio reservado no conserva todos sus datos históricos. Corrige la cita antes de cobrar.',
+            ]);
+        }
+    }
+
+    private function assignChargePerformers(array $items, array $charges): array
+    {
+        $performerIds = collect($items)->pluck('performed_by')->unique()->values();
+        if ($performerIds->count() === 1) {
+            return array_map(fn (array $charge) => [...$charge, 'performed_by' => (int) $performerIds->first()], $charges);
+        }
+
+        foreach ($charges as $charge) {
+            if (! $charge['performed_by'] || ! $performerIds->contains((int) $charge['performed_by'])) {
+                throw ValidationException::withMessages([
+                    'additional_charges' => 'Selecciona para cada cargo una empleada participante en la cita.',
+                ]);
+            }
+        }
+
+        return $charges;
     }
 
     private function authorizeGlobal(User $user): void
@@ -265,6 +333,12 @@ class CheckoutAppointmentAction
 
     private function authorizeScope(User $user, Appointment $appointment): void
     {
+        if ($user->can(Permissions::SALES_CHECKOUT_ANY)) {
+            return;
+        }
+        if (! $user->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN) && $appointment->items->contains(fn ($item) => $item->assigned_to !== $user->id)) {
+            throw new AuthorizationException('No tienes permiso para cobrar servicios de otra persona.');
+        }
         if ($user->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL)) {
             return;
         }
@@ -281,6 +355,10 @@ class CheckoutAppointmentAction
             'service_id' => isset($item['service_id']) ? (int) $item['service_id'] : null,
             'quantity' => (int) $item['quantity'],
             'performed_by' => (int) $item['performed_by'],
+            'discount_type' => $item['discount_type'] ?? null,
+            'discount_value' => $item['discount_value'] ?? '0',
+            'discount_reason' => $item['discount_reason'] ?? null,
+            'expected_price' => $item['expected_price'] ?? null,
         ], array_values($data['items']));
         $removed = array_map('intval', $data['removed_appointment_item_ids']);
         sort($removed);
@@ -290,6 +368,8 @@ class CheckoutAppointmentAction
             'payment_method' => $data['payment_method'],
             'items' => $items,
             'removed_appointment_item_ids' => $removed,
+            'additional_charges' => $data['additional_charges'] ?? [],
+            'discount_percent' => $data['discount_percent'] ?? null,
         ], JSON_THROW_ON_ERROR));
     }
 
@@ -307,6 +387,18 @@ class CheckoutAppointmentAction
             throw ValidationException::withMessages(['checkout_token' => 'Esta confirmación ya fue utilizada con otra cita, selección o forma de pago.']);
         }
 
-        return $sale->loadMissing(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
+        return $sale->loadMissing(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'additionalCharges', 'payments']);
+    }
+
+    private function normalizeCharges(array $charges): array
+    {
+        return SaleAdditionalCharges::normalize($charges);
+    }
+
+    private function authorizeDiscount(User $user, int $discountCents): void
+    {
+        if ($discountCents > 0 && ! $user->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)) {
+            throw new AuthorizationException('No tienes permiso para aplicar descuentos.');
+        }
     }
 }

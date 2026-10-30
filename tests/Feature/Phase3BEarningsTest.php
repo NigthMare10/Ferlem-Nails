@@ -48,6 +48,12 @@ class Phase3BEarningsTest extends TestCase
     {
         foreach (['employee', 'administrator'] as $role) {
             $user = $this->user($role);
+            // Administrators now inherit expense reporting. Remove both report
+            // permissions to exercise the unauthorized-user contract.
+            $user->roles->each(function ($r) {
+                $r->revokePermissionTo(Permissions::REPORTS_SALES_VIEW);
+                $r->revokePermissionTo(Permissions::REPORTS_EXPENSES_VIEW);
+            });
 
             $this->actingAs($user)->get('/earnings')
                 ->assertForbidden()
@@ -342,8 +348,9 @@ class Phase3BEarningsTest extends TestCase
         $this->assertTrue(Role::findByName('owner')->hasPermissionTo(Permissions::REPORTS_SALES_VIEW));
         $this->assertFalse(Role::findByName('administrator')->hasPermissionTo(Permissions::REPORTS_SALES_VIEW));
         $this->assertFalse(Role::findByName('employee')->hasPermissionTo(Permissions::REPORTS_SALES_VIEW));
-        $this->assertSame([Permissions::REPORTS_SALES_VIEW], Permission::query()
+        $this->assertSame([Permissions::REPORTS_EXPENSES_VIEW, Permissions::REPORTS_SALES_VIEW], Permission::query()
             ->where('name', 'like', 'reports.%')
+            ->orderBy('name')
             ->pluck('name')
             ->all());
     }

@@ -274,7 +274,7 @@ class Phase4BAppointmentStatusTest extends TestCase
         $this->actingAs($owner)->get('/appointments?view=day&date=2026-07-21')
             ->assertInertia(fn ($page) => $page
                 ->where('appointments.0.id', $own->id)
-                ->where('appointments.0.can_reschedule', true)
+                ->where('appointments.0.can_reschedule', false)
                 ->where('appointments.0.can_change_status', true)
                 ->where('appointments.0.can_mark_no_show_now', true));
 

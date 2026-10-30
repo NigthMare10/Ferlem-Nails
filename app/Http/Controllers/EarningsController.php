@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Reports\BuildAppointmentProjectionAction;
+use App\Actions\Reports\BuildExpensesSummaryAction;
 use App\Actions\Reports\BuildSalesSummaryAction;
 use App\Http\Requests\SalesEarningsRequest;
 use App\Models\User;
@@ -17,17 +18,27 @@ class EarningsController extends Controller
         SalesEarningsRequest $request,
         BuildSalesSummaryAction $salesReport,
         BuildAppointmentProjectionAction $projectionReport,
+        BuildExpensesSummaryAction $expensesReport,
     ): Response {
         $filters = $request->validated();
         $mode = $filters['mode'];
         $canViewProjection = $request->user()->can(Permissions::APPOINTMENTS_VIEW_PROJECTION);
+        $canViewSales = $request->user()->can(Permissions::REPORTS_SALES_VIEW);
+        $canViewExpenses = $request->user()->can(Permissions::REPORTS_EXPENSES_VIEW);
         $payload = [
             'filters' => $filters,
             'canViewProjection' => $canViewProjection,
+            'canViewSales' => $canViewSales,
+            'canViewExpenses' => $canViewExpenses,
+            'canManageDailyClose' => $request->user()->can(Permissions::DAILY_CLOSE_SEND),
+            'canDownloadDailyClose' => $request->user()->can(Permissions::DAILY_CLOSE_VIEW),
         ];
 
-        if ($mode !== 'projection') {
+        if ($canViewSales && $mode !== 'projection') {
             $payload = [...$payload, ...$salesReport->execute($filters)];
+        }
+        if ($canViewExpenses && $mode !== 'projection') {
+            $payload = [...$payload, ...$expensesReport->execute($filters, $request->user(), false)];
         }
         if ($canViewProjection && $mode !== 'actual') {
             $payload = [...$payload, ...$projectionReport->execute($filters)];
@@ -46,12 +57,10 @@ class EarningsController extends Controller
                 $row = [
                     'id' => (int) $id,
                     'name' => $actual['name'] ?? $projected['name'],
-                    'sales_count' => $actual['sales_count'] ?? 0,
                     'services_count' => $actual['services_count'] ?? 0,
                     'total_sold' => $actual['total_sold'] ?? '0.00',
                     'card_fee_amount' => $actual['card_fee_amount'] ?? '0.00',
                     'net_amount' => $actual['net_amount'] ?? '0.00',
-                    'average_sale' => $actual['average_sale'] ?? '0.00',
                 ];
 
                 return $hasProjection ? [
@@ -68,13 +77,21 @@ class EarningsController extends Controller
             ->all();
         unset($payload['projection_employees']);
 
+        if (isset($payload['actual'], $payload['expense_actual'])) {
+            $paidExpenses = $payload['expense_actual']['paid_expenses'];
+            $payload['actual']['paid_expenses'] = $paidExpenses;
+            $payload['actual']['available_result'] = Money::fromSignedCents(
+                Money::toCents($payload['actual']['net_income']) - Money::toCents($paidExpenses),
+            );
+        }
+
         return Inertia::render('Earnings/Index', [
             ...$payload,
-            'employeeOptions' => User::query()
+            'employeeOptions' => ($canViewSales || $canViewProjection) ? User::query()
                 ->orderBy('name')
                 ->get(['id', 'name'])
                 ->map(fn (User $user) => ['id' => $user->id, 'name' => $user->name])
-                ->values(),
+                ->values() : [],
         ]);
     }
 }

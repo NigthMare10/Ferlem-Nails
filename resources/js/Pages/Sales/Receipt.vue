@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
+import LoyaltyAwardDialog from '../../Components/LoyaltyAwardDialog.vue';
+import { usePermissions } from '../../composables/usePermissions';
+const { can } = usePermissions();
 
 type ReceiptItem = {
     id: number;
@@ -10,6 +13,8 @@ type ReceiptItem = {
     unit_price: string;
     quantity: number;
     line_total: string;
+    item_discount_amount?: string;
+    item_discount_reason?: string;
     performed_by: { id: number; name: string } | null;
 };
 
@@ -20,6 +25,7 @@ const { sale } = defineProps<{
         sold_at: string;
         sold_at_display: string;
         subtotal: string;
+        discount_amount: string;
         total: string;
         total_services: number;
         payment_method: 'cash' | 'card' | 'transfer';
@@ -27,6 +33,7 @@ const { sale } = defineProps<{
         client: { name: string; phone: string | null } | null;
         sold_by: { id: number; name: string };
         items: ReceiptItem[];
+        additional_charges: Array<{ name: string; amount: string }>;
         payments: Array<{ id: number; type: 'deposit_applied' | 'final_payment'; type_label: string; method: 'cash' | 'card' | 'transfer'; method_label: string; amount: string; proof_url: string | null }>;
         status: 'completed' | 'canceled';
         is_canceled: boolean;
@@ -57,6 +64,7 @@ const printReceipt = () => window.print();
     <VApp>
         <VMain class="receipt-page">
             <div class="receipt-actions">
+                <LoyaltyAwardDialog v-if="can('loyalty.award') && !sale.is_canceled" :sale-id="sale.id" />
                 <VBtn variant="outlined" prepend-icon="mdi-plus" @click="router.visit('/sales/new')">Nueva venta</VBtn>
                 <VBtn color="primary" prepend-icon="mdi-printer-outline" @click="printReceipt">Imprimir</VBtn>
                 <VBtn v-if="sale.can_cancel" color="error" variant="tonal" prepend-icon="mdi-cancel" @click="cancelDialog = true">Anular venta</VBtn>
@@ -76,8 +84,6 @@ const printReceipt = () => window.print();
                     <p>{{ sale.cancellation.reason }}</p>
                 </section>
 
-                <div class="receipt-divider" />
-
                 <dl class="receipt-meta">
                     <div><dt>Número</dt><dd>{{ sale.sale_number }}</dd></div>
                     <div><dt>Fecha</dt><dd>{{ sale.sold_at_display }}</dd></div>
@@ -91,6 +97,7 @@ const printReceipt = () => window.print();
                 <section class="receipt-items">
                     <div v-for="item in sale.items" :key="item.id" class="receipt-item">
                         <div class="receipt-item__name">{{ item.service_name }}</div>
+                        <small v-if="Number(item.item_discount_amount)>0">Descuento del servicio: − {{ money(item.item_discount_amount!) }}</small>
                         <div class="receipt-item__line">
                             <span>{{ item.quantity }} × {{ money(item.unit_price) }}</span>
                             <strong>{{ money(item.line_total) }}</strong>
@@ -98,6 +105,14 @@ const printReceipt = () => window.print();
                         <div v-if="item.performed_by" class="receipt-item__performer">Realizado por {{ item.performed_by.name }}</div>
                     </div>
                 </section>
+
+                <template v-if="sale.additional_charges.length">
+                    <div class="receipt-divider" />
+                    <section class="receipt-items" aria-label="Cargos adicionales">
+                        <strong class="receipt-items__heading">Cargos adicionales</strong>
+                        <div v-for="charge in sale.additional_charges" :key="charge.name" class="receipt-item__line"><span>{{ charge.name }}</span><strong>{{ money(charge.amount) }}</strong></div>
+                    </section>
+                </template>
 
                 <template v-if="sale.payments.length">
                     <div class="receipt-divider" />
@@ -112,6 +127,8 @@ const printReceipt = () => window.print();
 
                 <dl class="receipt-totals">
                     <div><dt>Total de servicios</dt><dd>{{ sale.total_services }}</dd></div>
+                    <div><dt>Subtotal</dt><dd>{{ money(sale.subtotal) }}</dd></div>
+                    <div v-if="Number(sale.discount_amount) > 0"><dt>Descuento</dt><dd>− {{ money(sale.discount_amount) }}</dd></div>
                     <div class="receipt-total"><dt>Total</dt><dd>{{ money(sale.total) }}</dd></div>
                 </dl>
 

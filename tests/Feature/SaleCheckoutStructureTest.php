@@ -25,8 +25,9 @@ class SaleCheckoutStructureTest extends TestCase
         $this->assertStringContainsString('<SaleLineItem v-for="item in items"', $cart);
         $this->assertStringContainsString('<SalePaymentMethod', $cart);
         $this->assertStringContainsString('<SaleCheckoutSummary', $cart);
-        $this->assertStringContainsString('<SaleCheckoutSummary', $dialog);
-        $this->assertStringContainsString('<SalePaymentMethod', $dialog);
+        $this->assertStringContainsString('formatHnl(balanceCents ?? totalCents)', $dialog);
+        $this->assertStringContainsString('paymentMethodLabel()', $dialog);
+        $this->assertStringNotContainsString('v-model="form.payment_method"', $dialog);
         $this->assertStringContainsString('<SaleMobileCheckout', $page);
         $this->assertStringContainsString('v-if="showMobileCheckout"', $page);
         $this->assertStringContainsString('appointmentCart', $page);

@@ -16,7 +16,7 @@ const logout = () => router.post('/logout');
 <template>
     <VMenu location="bottom end">
         <template #activator="{ props: activatorProps }">
-            <VBtn v-bind="activatorProps" variant="text" class="text-none px-2" height="52">
+            <VBtn v-bind="activatorProps" variant="text" class="user-menu-trigger text-none px-2" height="52" :aria-label="`Abrir menú de ${user.name}`">
                 <VAvatar color="primary" size="36" class="mr-sm-3">{{ initials }}</VAvatar>
                 <span class="d-none d-sm-grid text-left">
                     <strong class="text-body-2">{{ user.name }}</strong>
@@ -25,10 +25,15 @@ const logout = () => router.post('/logout');
                 <VIcon icon="mdi-chevron-down" size="18" class="ml-1 d-none d-sm-block" />
             </VBtn>
         </template>
-        <VList min-width="250" class="pa-2">
+        <VList min-width="250" class="user-menu pa-2">
             <VListItem :title="user.name" :subtitle="user.email" class="mb-1" />
             <VDivider class="mb-1" />
             <VListItem prepend-icon="mdi-logout" title="Cerrar sesión" @click="logout" />
         </VList>
     </VMenu>
 </template>
+
+<style scoped>
+.user-menu-trigger { border-radius: var(--sl-radius-compact); }
+.user-menu { background: var(--sl-glass-strong); border: 1px solid var(--sl-glass-border); box-shadow: var(--sl-shadow-overlay); backdrop-filter: blur(18px); }
+</style>

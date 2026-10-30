@@ -20,16 +20,20 @@ use App\Support\SaleAccess;
 use App\Support\TransferProofStorage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\Permission\Models\Permission;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SalesController extends Controller
 {
+    private ?bool $discountPermissionExists = null;
+
     public function create(Request $request): Response
     {
         $services = Service::query()
@@ -53,7 +57,6 @@ class SalesController extends Controller
                     'appointment' => "Esta cita ya fue convertida en la venta {$appointment->sale->sale_number}.",
                 ]);
             }
-
             $deposit = $appointment->deposit?->status === AppointmentDeposit::STATUS_PENDING
                 ? $appointment->deposit
                 : null;
@@ -75,8 +78,9 @@ class SalesController extends Controller
                     'card_fee_amount' => $deposit->card_fee_amount,
                 ] : null,
                 'pending_balance' => Money::fromCents(max(0, Money::toCents($appointment->expected_total) - $depositCents)),
-                'can_assign' => $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN),
+                'can_assign' => $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN) || $request->user()->can(Permissions::SALES_CHECKOUT_ANY),
                 'can_resolve_deposit' => $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_RESOLVE_DEPOSIT),
+                'can_apply_discount' => $this->canApplyDiscount($request->user()),
                 'items' => $appointment->items->sortBy('position')->values()->map(fn ($item) => [
                     'appointment_item_id' => $item->id,
                     'service_id' => $item->service_id,
@@ -92,14 +96,18 @@ class SalesController extends Controller
             ];
         }
 
-        $assignees = $appointmentContext && $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN)
-            ? User::query()->where('is_active', true)->permission(Permissions::APPOINTMENTS_PERFORM)->orderBy('name')->get(['id', 'name'])
+        $canAssignPerformer = $request->user()->hasPermissionTo(Permissions::APPOINTMENTS_ASSIGN) || $request->user()->can(Permissions::SALES_CHECKOUT_ANY);
+        $assignees = ($appointmentContext || $canAssignPerformer) && $canAssignPerformer
+            ? User::query()->where('is_active', true)->permission(Permissions::APPOINTMENTS_PERFORM)->orderBy('display_order')->orderBy('name')->get(['id', 'name'])
             : collect();
 
         return Inertia::render('Sales/Create', [
             'services' => SaleServiceResource::collection($services)->resolve($request),
             'appointment' => $appointmentContext,
             'assignees' => $assignees->map->only(['id', 'name'])->values(),
+            'canAssignPerformer' => ! $appointmentContext && $canAssignPerformer,
+            'canApplyDiscount' => $this->canApplyDiscount($request->user()),
+            'canApplyItemDiscount' => $request->user()->can(Permissions::SALES_APPLY_ITEM_DISCOUNT),
         ]);
     }
 
@@ -113,6 +121,9 @@ class SalesController extends Controller
             $data['payment_method'],
             $data['payment_proof'] ?? null,
             $data['client_name'] ?? null,
+            $data['additional_charges'] ?? [],
+            null,
+            $data['discount_percent'] ?? null,
         );
 
         return to_route('sales.receipt', $sale, 303);
@@ -123,7 +134,7 @@ class SalesController extends Controller
         $user = $request->user();
         abort_unless($user->can(Permissions::SALES_REPRINT) && SaleAccess::canView($user, $sale), 403);
 
-        $sale->load(['soldBy:id,name', 'canceledBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
+        $sale->load(['soldBy:id,name', 'canceledBy:id,name', 'appointment', 'items.performedBy:id,name', 'additionalCharges', 'payments']);
 
         return Inertia::render('Sales/Receipt', [
             'sale' => (new SaleReceiptResource($sale))->resolve($request),
@@ -174,10 +185,31 @@ class SalesController extends Controller
             && $user->hasPermissionTo(Permissions::APPOINTMENTS_CONVERT_TO_SALE)
             && $user->hasPermissionTo(Permissions::SALES_ACCESS)
             && $user->hasPermissionTo(Permissions::SALES_CREATE)
-            && ($user->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL)
+            && ($user->can(Permissions::SALES_CHECKOUT_ANY) || $user->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_ALL)
                 || ($user->hasPermissionTo(Permissions::APPOINTMENTS_VIEW_OWN)
                     && $appointment->items->contains(fn ($item) => $item->assigned_to === $user->getKey())));
 
         abort_unless($canView, 403);
+    }
+
+    private function canApplyDiscount(User $user): bool
+    {
+        if ($this->discountPermissionExists === null) {
+            $this->discountPermissionExists = Permission::query()
+                ->where('name', Permissions::SALES_APPLY_FREQUENT_DISCOUNT)
+                ->where('guard_name', 'web')
+                ->exists();
+
+            if (! $this->discountPermissionExists) {
+                Log::warning('Discount permission is missing; discount controls were disabled.');
+            }
+        }
+
+        if (! $this->discountPermissionExists) {
+            return false;
+        }
+
+        return $user->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)
+            && $user->hasAnyRole(['owner', 'administrator']);
     }
 }

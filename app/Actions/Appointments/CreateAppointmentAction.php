@@ -8,6 +8,8 @@ use App\Models\AppointmentEvent;
 use App\Models\AppointmentItem;
 use App\Models\Service;
 use App\Models\User;
+use App\Support\BusinessHours;
+use App\Support\EmployeeAvailability;
 use App\Support\Permissions;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -55,32 +57,32 @@ class CreateAppointmentAction
             $totalCents = 0;
             $prepared = [];
 
-            foreach ($items as $position => $selected) {
+            foreach ($items as $selected) {
                 $service = $services->get((int) $selected['service_id']);
                 if (! $service || ! $service->is_active) {
                     throw ValidationException::withMessages(['items' => 'Uno de los servicios ya no está disponible.']);
                 }
 
                 $unitPriceCents = $this->decimalToCents($service->price);
-                $lineTotalCents = $unitPriceCents * (int) $selected['quantity'];
-                if ($lineTotalCents > self::MAX_AMOUNT_CENTS || $totalCents + $lineTotalCents > self::MAX_AMOUNT_CENTS) {
+                if ($unitPriceCents > self::MAX_AMOUNT_CENTS || $totalCents + ($unitPriceCents * (int) $selected['quantity']) > self::MAX_AMOUNT_CENTS) {
                     throw ValidationException::withMessages(['items' => 'El total estimado de la cita excede el monto permitido.']);
                 }
 
-                $segmentEnd = $segmentStart->addMinutes((int) $selected['duration_minutes'] * (int) $selected['quantity']);
-                $prepared[] = compact('service', 'selected', 'segmentStart', 'segmentEnd', 'position') + [
-                    'unit_price' => $this->centsToDecimal($unitPriceCents),
-                    'line_total' => $this->centsToDecimal($lineTotalCents),
-                ];
-                $totalCents += $lineTotalCents;
-                $segmentStart = $segmentEnd;
+                foreach (range(1, (int) $selected['quantity']) as $_) {
+                    $segmentEnd = $segmentStart->addMinutes((int) $selected['duration_minutes']);
+                    $prepared[] = compact('service', 'selected', 'segmentStart', 'segmentEnd') + [
+                        'unit_price' => $this->centsToDecimal($unitPriceCents),
+                        'line_total' => $this->centsToDecimal($unitPriceCents),
+                    ];
+                    $totalCents += $unitPriceCents;
+                    $segmentStart = $segmentEnd;
+                }
             }
 
             if (! $scheduledStart->isSameDay($segmentStart)) {
                 throw ValidationException::withMessages(['start_time' => 'La cita debe comenzar y terminar el mismo día.']);
             }
-            $close = CarbonImmutable::createFromFormat('!Y-m-d H:i', $scheduledStart->format('Y-m-d').' '.config('appointments.close_time'), self::TIMEZONE);
-            if ($segmentStart->greaterThan($close)) {
+            if (! BusinessHours::contains($scheduledStart, $segmentStart)) {
                 throw ValidationException::withMessages(['start_time' => 'La cita termina fuera del horario operativo.']);
             }
 
@@ -99,7 +101,7 @@ class CreateAppointmentAction
             $appointment->created_by = $user->getKey();
             $appointment->save();
 
-            foreach ($prepared as $entry) {
+            foreach ($prepared as $position => $entry) {
                 $service = $entry['service'];
                 $selected = $entry['selected'];
                 $item = new AppointmentItem;
@@ -108,13 +110,13 @@ class CreateAppointmentAction
                 $item->service_name = $service->name;
                 $item->service_description = $service->description;
                 $item->assigned_to = $selected['assigned_to'];
-                $item->position = $entry['position'] + 1;
+                $item->position = $position + 1;
                 $item->scheduled_start = $entry['segmentStart']->utc();
                 $item->scheduled_end = $entry['segmentEnd']->utc();
                 $item->default_duration_minutes = $service->duration_minutes;
                 $item->duration_minutes = $selected['duration_minutes'];
                 $item->unit_price = $entry['unit_price'];
-                $item->quantity = $selected['quantity'];
+                $item->quantity = 1;
                 $item->line_total = $entry['line_total'];
                 $item->save();
             }
@@ -150,6 +152,9 @@ class CreateAppointmentAction
     private function ensureNoConflicts(array $prepared, ?int $excludeAppointmentId = null): void
     {
         foreach ($prepared as $entry) {
+            if (EmployeeAvailability::hasBreak((int) $entry['selected']['assigned_to'], $entry['segmentStart'], $entry['segmentEnd'])) {
+                throw ValidationException::withMessages(['start_time' => 'El horario coincide con la comida de una persona asignada.']);
+            }
             $conflict = AppointmentItem::query()
                 ->where('assigned_to', $entry['selected']['assigned_to'])
                 ->where('scheduled_start', '<', $entry['segmentEnd']->utc())
@@ -190,9 +195,8 @@ class CreateAppointmentAction
         if ($scheduledStart->lessThan(CarbonImmutable::now(self::TIMEZONE))) {
             throw ValidationException::withMessages(['date' => 'No puedes crear una cita en el pasado.']);
         }
-        $open = CarbonImmutable::createFromFormat('!Y-m-d H:i', $scheduledStart->format('Y-m-d').' '.config('appointments.open_time'), self::TIMEZONE);
-        $close = CarbonImmutable::createFromFormat('!Y-m-d H:i', $scheduledStart->format('Y-m-d').' '.config('appointments.close_time'), self::TIMEZONE);
-        if ($scheduledStart->lessThan($open) || $scheduledStart->greaterThanOrEqualTo($close)) {
+        $bounds = BusinessHours::bounds($scheduledStart);
+        if ($bounds === null || $scheduledStart->lessThan($bounds[0]) || $scheduledStart->greaterThanOrEqualTo($bounds[1])) {
             throw ValidationException::withMessages(['start_time' => 'La hora de inicio está fuera del horario operativo.']);
         }
 

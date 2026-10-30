@@ -43,7 +43,7 @@ class InvoiceController extends Controller
         abort_unless(SaleAccess::canView($request->user(), $sale), 403);
         $sale->load([
             'soldBy:id,name', 'canceledBy:id,name', 'appointment:id',
-            'items.performedBy:id,name', 'payments',
+            'items.performedBy:id,name', 'additionalCharges', 'payments',
         ]);
 
         return Inertia::render('Invoices/Show', [

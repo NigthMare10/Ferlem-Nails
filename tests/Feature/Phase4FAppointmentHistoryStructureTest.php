@@ -49,9 +49,9 @@ class Phase4FAppointmentHistoryStructureTest extends TestCase
 
         $this->assertNotFalse($layout);
         $this->assertNotFalse($agenda);
-        $this->assertStringContainsString('title="Historial de citas"', $layout);
-        $this->assertStringContainsString("!currentUrl.startsWith('/appointments/history')", $layout);
-        $this->assertStringContainsString("currentUrl.startsWith('/appointments/history')", $layout);
+        $this->assertStringContainsString("title: 'Historial de citas'", $layout);
+        $this->assertStringContainsString("!currentUrl.value.startsWith('/appointments/history')", $layout);
+        $this->assertStringContainsString("currentUrl.value.startsWith('/appointments/history')", $layout);
         $this->assertStringContainsString('href="/appointments/history"', $agenda);
         $this->assertStringContainsString('Historial', $agenda);
     }

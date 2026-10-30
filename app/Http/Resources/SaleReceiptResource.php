@@ -19,6 +19,7 @@ class SaleReceiptResource extends JsonResource
                 ?->setTimezone('America/Tegucigalpa')
                 ->translatedFormat('d/m/Y, h:i a'),
             'subtotal' => $this->subtotal,
+            'discount_amount' => $this->discount_amount,
             'total' => $this->total,
             'total_services' => $this->total_services,
             'status' => $this->status,
@@ -50,10 +51,16 @@ class SaleReceiptResource extends JsonResource
                 'unit_price' => $item->unit_price,
                 'quantity' => $item->quantity,
                 'line_total' => $item->line_total,
+                'item_discount_amount' => $item->item_discount_amount,
+                'item_discount_reason' => $item->item_discount_reason,
                 'performed_by' => $item->performedBy ? [
                     'id' => $item->performedBy->id,
                     'name' => $item->performedBy->name,
                 ] : null,
+            ])->values(),
+            'additional_charges' => $this->additionalCharges->map(fn ($charge) => [
+                'name' => $charge->name ?: $charge->description ?: 'Cargo adicional',
+                'amount' => $charge->amount,
             ])->values(),
             'payments' => $this->payments->map(fn ($payment) => [
                 'id' => $payment->id,

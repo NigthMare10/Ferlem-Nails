@@ -2,10 +2,14 @@
 
 namespace App\Actions\Sales;
 
+use App\Actions\Loyalty\LoyaltyService;
 use App\Actions\Notifications\PublishInternalNotificationAction;
+use App\Models\Appointment;
 use App\Models\Sale;
+use App\Models\SaleAdditionalCharge;
 use App\Models\SaleItem;
 use App\Models\SalePayment;
+use App\Models\Service;
 use App\Models\User;
 use App\Support\Money;
 use App\Support\SaleFinancials;
@@ -22,17 +26,25 @@ class PersistCompletedSaleAction
         string $requestHash,
         ?int $appointmentId = null,
         ?string $clientName = null,
+        array $additionalCharges = [],
+        int $discountCents = 0,
+        string $discountPercent = '0.00',
     ): Sale {
-        $financials = SaleFinancials::summarize($lines, $payments);
+        $financials = SaleFinancials::summarize($lines, $payments, $additionalCharges, $discountCents);
         $summaryMethod = $payments[array_key_last($payments)]['method'];
         $hasCardPayment = collect($payments)->contains(fn (array $payment) => $payment['method'] === Sale::PAYMENT_METHOD_CARD);
 
         $sale = new Sale;
         $sale->appointment_id = $appointmentId;
+        $sale->customer_id = $appointmentId ? Appointment::whereKey($appointmentId)->value('customer_id') : null;
         $sale->client_name = $clientName;
         $sale->sold_by = $seller->getKey();
         $sale->sold_at = now('UTC');
-        $sale->subtotal = Money::fromCents($financials['total_cents']);
+        $sale->subtotal = Money::fromCents($financials['subtotal_cents']);
+        $sale->subtotal_before_discount = Money::fromCents($financials['subtotal_cents']);
+        $sale->is_frequent_client = $discountCents > 0;
+        $sale->discount_percent = $discountPercent;
+        $sale->discount_amount = Money::fromCents($financials['discount_cents']);
         $sale->total = Money::fromCents($financials['total_cents']);
         $sale->total_services = $financials['total_services'];
         $sale->status = Sale::STATUS_COMPLETED;
@@ -61,9 +73,25 @@ class PersistCompletedSaleAction
             $item->unit_price = Money::fromCents($line['unit_price_cents']);
             $item->quantity = $line['quantity'];
             $item->line_total = Money::fromCents($line['line_total_cents']);
+            $item->loyalty_points = $line['line_total_cents'] > 0 ? (int) ($line['loyalty_points'] ?? (Service::find($line['service_id'])?->loyalty_points ?? 0) * $line['quantity']) : 0;
+            $item->item_discount_amount = Money::fromCents($line['item_discount_cents'] ?? 0);
+            $item->item_discount_type = $line['discount_type'] ?? null;
+            $item->item_discount_value = $line['discount_value'] ?? '0.00';
+            $item->item_discount_reason = $line['discount_reason'] ?? null;
             $item->allocated_card_fee_amount = Money::fromCents($allocatedFeeCents);
-            $item->net_line_amount = Money::fromCents($line['line_total_cents'] - $allocatedFeeCents);
+            $item->net_line_amount = Money::fromCents($financials['line_final_cents'][$index] - $allocatedFeeCents);
             $item->save();
+        }
+
+        foreach ($additionalCharges as $charge) {
+            $additionalCharge = new SaleAdditionalCharge;
+            $additionalCharge->sale_id = $sale->getKey();
+            // The legacy column remains required; name is the authoritative snapshot.
+            $additionalCharge->description = $charge['name'];
+            $additionalCharge->name = $charge['name'];
+            $additionalCharge->amount = Money::fromCents($charge['amount_cents']);
+            $additionalCharge->performed_by = $charge['performed_by'];
+            $additionalCharge->save();
         }
 
         foreach ($payments as $paymentData) {
@@ -85,6 +113,7 @@ class PersistCompletedSaleAction
             $payment->save();
         }
 
+        app(LoyaltyService::class)->creditLinkedSale($seller, $sale);
         $fromAppointment = $appointmentId !== null;
         $this->publishNotification->execute(
             $seller,
@@ -109,7 +138,7 @@ class PersistCompletedSaleAction
             );
         }
 
-        return $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'payments']);
+        return $sale->load(['soldBy:id,name', 'appointment', 'items.performedBy:id,name', 'additionalCharges.performedBy:id,name', 'payments']);
     }
 
     private function notificationMessage(string $saleNumber, array $payments): string

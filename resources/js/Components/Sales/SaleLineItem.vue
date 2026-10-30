@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { decimalToCents, formatHnl } from '../../utils/money';
+import { discountedLineTotal } from '../../utils/discount';
+import ItemDiscountEditor from './ItemDiscountEditor.vue';
 
 defineProps<{
     itemKey: string | number;
@@ -9,6 +11,9 @@ defineProps<{
     durationMinutes?: number;
     reserved?: boolean;
     processing?: boolean;
+    discountType?: string | null;
+    discountValue?: string;
+    discountLine?: {discount_type?: 'percent' | 'fixed' | null; discount_value?: string; discount_reason?: string};
 }>();
 
 defineEmits<{
@@ -29,9 +34,11 @@ defineEmits<{
                         {{ formatHnl(decimalToCents(price)) }} cada uno<span v-if="durationMinutes"> · {{ durationMinutes }} min</span>
                     </div>
                 </div>
-                <strong class="text-no-wrap">{{ formatHnl(decimalToCents(price) * quantity) }}</strong>
+                <strong class="text-no-wrap">{{ formatHnl(discountedLineTotal({price,quantity,discount_type:discountType,discount_value:discountValue})) }}</strong>
             </div>
             <slot name="notice" />
+            <ItemDiscountEditor v-if="discountLine" :line="discountLine" :disabled="processing" />
+            <small v-if="discountType && Number(discountValue)>0" class="text-primary">Descuento individual aplicado: {{ discountType==='percent'?discountValue+' %':'L '+discountValue }}</small>
             <div class="sale-line-item__controls mt-3">
                 <div class="d-flex align-center ga-1">
                     <VBtn icon="mdi-minus" size="small" variant="outlined" :disabled="processing" :aria-label="`Disminuir ${name}`" @click="$emit('decrease')" />

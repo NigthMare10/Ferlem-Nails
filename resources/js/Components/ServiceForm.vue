@@ -6,13 +6,13 @@ import { useDisplay } from 'vuetify';
 const props = defineProps<{ modelValue: boolean; service?: any }>();
 const emit = defineEmits(['update:modelValue']);
 const { xs } = useDisplay();
-const form = useForm({ name: '', description: '', duration_minutes: 60, price: '0.00', is_active: true });
+const form = useForm({ name: '', description: '', duration_minutes: 60, price: '0.00', is_active: true, is_promotion: false, loyalty_points: 0 });
 
 watch(() => props.modelValue, open => {
     if (!open) return;
     form.defaults(props.service
-        ? { name: props.service.name, description: props.service.description ?? '', duration_minutes: props.service.duration_minutes, price: props.service.price, is_active: props.service.is_active }
-        : { name: '', description: '', duration_minutes: 60, price: '0.00', is_active: true })
+        ? { name: props.service.name, description: props.service.description ?? '', duration_minutes: props.service.duration_minutes, price: props.service.price, is_active: props.service.is_active, is_promotion: !!props.service.is_promotion, loyalty_points: props.service.loyalty_points ?? 0 }
+        : { name: '', description: '', duration_minutes: 60, price: '0.00', is_active: true, is_promotion: false, loyalty_points: 0 })
         .reset()
         .clearErrors();
 });
@@ -79,6 +79,8 @@ const save = () => {
                         </VCol>
                     </VRow>
                     <VSwitch v-model="form.is_active" label="Servicio activo" color="primary" inset hide-details />
+                    <VCheckbox v-model="form.is_promotion" label="Es promoción" :error-messages="form.errors.is_promotion" />
+                    <VTextField v-model.number="form.loyalty_points" label="Puntos de fidelidad por unidad" type="number" min="0" max="100000" :error-messages="form.errors.loyalty_points" />
                     <VCardActions class="px-0 pt-7 pb-0">
                         <VSpacer />
                         <VBtn variant="text" @click="$emit('update:modelValue', false)">Cancelar</VBtn>

@@ -10,11 +10,11 @@ class Service extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'description', 'duration_minutes', 'price', 'is_active'];
+    protected $fillable = ['name', 'description', 'duration_minutes', 'price', 'is_active', 'is_promotion', 'loyalty_points'];
 
     protected function casts(): array
     {
-        return ['price' => 'decimal:2', 'is_active' => 'boolean'];
+        return ['price' => 'decimal:2', 'is_active' => 'boolean', 'is_promotion' => 'boolean', 'loyalty_points' => 'integer'];
     }
 
     public function saleItems(): HasMany

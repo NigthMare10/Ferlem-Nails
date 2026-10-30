@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Support\ItemDiscount;
 use App\Support\Permissions;
+use App\Support\SaleAdditionalCharges;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\File;
@@ -27,11 +29,21 @@ class CheckoutAppointmentRequest extends FormRequest
                 $this->merge([$field => strtolower(trim($this->{$field}))]);
             }
         }
+
+        // Empty arrays are omitted by multipart FormData, but an empty removal
+        // list is a valid explicit confirmation that every reserved item remains.
+        if (! $this->has('removed_appointment_item_ids')) {
+            $this->merge(['removed_appointment_item_ids' => []]);
+        }
+        if (is_array($this->input('additional_charges'))) {
+            $this->merge(['additional_charges' => SaleAdditionalCharges::canonicalizeInput($this->input('additional_charges'))]);
+        }
     }
 
     public function rules(): array
     {
         return [
+            ...ItemDiscount::rules(),
             'checkout_token' => ['required', 'uuid'],
             'payment_method' => ['required', Rule::in(['cash', 'card', 'transfer'])],
             'payment_proof' => [
@@ -46,6 +58,12 @@ class CheckoutAppointmentRequest extends FormRequest
             'items.*.performed_by' => ['required', 'integer'],
             'removed_appointment_item_ids' => ['present', 'array'],
             'removed_appointment_item_ids.*' => ['integer', 'distinct'],
+            'additional_charges' => ['sometimes', 'array', 'max:20'],
+            'additional_charges.*.name' => ['required_with:additional_charges', 'string', 'max:120'],
+            'additional_charges.*.amount' => ['required_with:additional_charges', 'regex:/^(\d{1,10})(?:\.(\d{1,2}))?$/'],
+            'additional_charges.*.performed_by' => ['nullable', 'integer', 'exists:users,id'],
+            'is_frequent_client' => ['sometimes', 'boolean'],
+            'discount_percent' => [Rule::prohibitedIf(fn () => ! $this->user()?->hasPermissionTo(Permissions::SALES_APPLY_FREQUENT_DISCOUNT)), 'nullable', 'regex:/^(?:\d{1,2}|100)(?:\.\d{1,2})?$/'],
         ];
     }
 
@@ -65,6 +83,9 @@ class CheckoutAppointmentRequest extends FormRequest
             'items.*.quantity.max' => 'La cantidad máxima por línea es 50.',
             'items.*.performed_by.required' => 'Selecciona quién realizó cada servicio.',
             'removed_appointment_item_ids.present' => 'Confirma explícitamente cualquier servicio reservado que no se realizó.',
+            'additional_charges.*.name.required_with' => 'Cada cargo adicional debe incluir un nombre.',
+            'additional_charges.*.amount.required_with' => 'Cada cargo adicional debe incluir un monto.',
+            'additional_charges.*.amount.regex' => 'El monto de cada cargo adicional debe ser mayor que cero y tener máximo dos decimales.',
         ];
     }
 }

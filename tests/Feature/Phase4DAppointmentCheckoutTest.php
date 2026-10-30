@@ -74,7 +74,8 @@ class Phase4DAppointmentCheckoutTest extends TestCase
                 ->component('Sales/Create')
                 ->where('appointment.client_name', 'María López')
                 ->where('appointment.items.0.name', 'Snapshot reservado')
-                ->where('appointment.items.0.quantity', 2)
+                ->has('appointment.items', 2)
+                ->where('appointment.items.0.quantity', 1)
                 ->where('appointment.items.0.performed_by.id', $employee->id)
                 ->where('appointment.reserved_total', '246.90')
                 ->where('appointment.deposit.amount', '40.00')
@@ -172,7 +173,7 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->assertDatabaseCount('sales', 0);
     }
 
-    public function test_employee_preserves_shared_performers_and_additional_lines_are_forced_to_self(): void
+    public function test_shared_checkout_requires_explicit_permission_without_changing_employee_role(): void
     {
         $owner = $this->user('owner');
         $employee = $this->user('employee');
@@ -190,7 +191,10 @@ class Phase4DAppointmentCheckoutTest extends TestCase
 
         $payload['items'][2]['performed_by'] = $employee->id;
         $payload['checkout_token'] = (string) Str::uuid();
+        $this->post("/appointments/{$appointment->id}/checkout", $payload)->assertForbidden();
+        $employee->givePermissionTo(Permissions::SALES_CHECKOUT_ANY);
         $this->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
+        $this->assertTrue($employee->fresh()->hasRole('employee'));
         $this->assertSame([$employee->id, $other->id, $employee->id], Sale::query()->firstOrFail()->items->pluck('performed_by')->all());
     }
 

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Http\Resources\InternalNotificationResource;
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use App\Support\LandingDestination;
 use App\Support\Permissions;
 use Illuminate\Support\Facades\Gate;
@@ -15,24 +16,24 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
-    public function register(): void
-    {
-        //
-    }
+    public function register(): void {}
 
     /**
      * Bootstrap any application services.
      */
     public function boot(): void
     {
-        Gate::before(fn ($user) => $user->hasRole('owner') ? true : null);
+        Gate::before(fn ($user) => $user instanceof User && $user->is_active && $user->hasRole('owner') ? true : null);
 
         Inertia::share('auth', function () {
-            if (! auth()->check()) {
+            if (request()->is('clientes', 'clientes/*')) {
+                return null;
+            }
+            if (! auth('web')->check()) {
                 return null;
             }
 
-            $user = auth()->user();
+            $user = auth('web')->user();
             $landing = app(LandingDestination::class);
 
             $auth = [
@@ -44,6 +45,7 @@ class AppServiceProvider extends ServiceProvider
                     'sales' => $landing->canNavigateToSales($user),
                     'invoices' => $landing->canNavigateToInvoices($user),
                     'appointments' => $landing->canNavigateToAppointments($user),
+                    'expenses' => $landing->canNavigateToExpenses($user),
                     'earnings' => $landing->canNavigateToEarnings($user),
                 ],
             ];

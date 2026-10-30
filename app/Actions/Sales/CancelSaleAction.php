@@ -2,6 +2,7 @@
 
 namespace App\Actions\Sales;
 
+use App\Actions\Loyalty\LoyaltyService;
 use App\Actions\Notifications\PublishInternalNotificationAction;
 use App\Models\Appointment;
 use App\Models\AppointmentEvent;
@@ -42,6 +43,7 @@ class CancelSaleAction
             $locked->canceled_by = $user->getKey();
             $locked->cancellation_reason = $reason;
             $locked->save();
+            app(LoyaltyService::class)->reverseSale($locked, $user);
 
             if ($appointment) {
                 $event = new AppointmentEvent;

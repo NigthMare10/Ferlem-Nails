@@ -32,3 +32,6 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/storage/app/qa.sqlite*
+/playwright-report/
+/test-results/

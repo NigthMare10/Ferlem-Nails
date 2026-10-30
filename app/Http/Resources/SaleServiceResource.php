@@ -15,6 +15,8 @@ class SaleServiceResource extends JsonResource
             'description' => $this->description,
             'duration_minutes' => $this->duration_minutes,
             'price' => $this->price,
+            'is_promotion' => (bool) $this->is_promotion,
+            'loyalty_points' => (int) $this->loyalty_points,
         ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Models\User;
 use App\Support\LandingDestination;
+use App\Support\LoginThrottle;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -20,14 +21,19 @@ class AuthController extends Controller
     public function store(LoginRequest $request, LandingDestination $landing): RedirectResponse
     {
         $credentials = $request->validated();
-        if (! Auth::attempt(['email' => $credentials['email'], 'password' => $credentials['password'], 'is_active' => true], $request->boolean('remember'))) {
+        $key = LoginThrottle::key($request, 'web');
+        LoginThrottle::check($key);
+        if (! Auth::guard('web')->attempt(['email' => $credentials['email'], 'password' => $credentials['password'], 'is_active' => true], $request->boolean('remember'))) {
+            LoginThrottle::failed($key);
+
             return back()->withErrors(['email' => 'Las credenciales no son válidas o la cuenta está desactivada.']);
         }
+        LoginThrottle::clear($key);
         $request->session()->regenerate();
-        User::whereKey(Auth::id())->update(['last_login_at' => now()]);
+        User::whereKey(Auth::guard('web')->id())->update(['last_login_at' => now()]);
         $request->session()->forget('url.intended');
 
-        $destination = $landing->for($request->user());
+        $destination = $landing->for($request->user('web'));
         abort_if($destination === null, 403);
 
         return redirect()->to($destination);
@@ -35,7 +41,7 @@ class AuthController extends Controller
 
     public function destroy(): RedirectResponse
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
         request()->session()->invalidate();
         request()->session()->regenerateToken();
 

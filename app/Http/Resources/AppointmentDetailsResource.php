@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Actions\Appointments\CreateAppointmentAction;
+use App\Support\BusinessHours;
 use App\Support\Money;
 use App\Support\Permissions;
 use Carbon\CarbonImmutable;
@@ -42,6 +43,10 @@ class AppointmentDetailsResource extends JsonResource
         return [
             ...$base,
             'date' => CarbonImmutable::parse($base['visible_start'])->setTimezone(CreateAppointmentAction::TIMEZONE)->format('Y-m-d'),
+            'outside_business_hours' => ! BusinessHours::contains(
+                $this->scheduled_start->setTimezone(CreateAppointmentAction::TIMEZONE),
+                $this->scheduled_end->setTimezone(CreateAppointmentAction::TIMEZONE),
+            ),
             'created_by' => $this->when($viewAll, [
                 'id' => $this->createdBy->id,
                 'name' => $this->createdBy->name,
@@ -59,7 +64,7 @@ class AppointmentDetailsResource extends JsonResource
             'status_changed_by' => $terminalBy ? [
                 'id' => $terminalBy->id,
                 'name' => $terminalBy->name,
-            ] : null,
+            ] : ($this->status === 'no_show' && $this->no_show_reason === 'Marcada automáticamente al vencer el tiempo disponible para cobrar.' ? ['name' => 'Sistema'] : null),
             'completed_at' => $this->completed_at?->toIso8601String(),
             'completed_at_display' => $this->completed_at ? $this->displayDateTime($this->completed_at) : null,
             'linked_sale' => $this->sale ? [
@@ -115,10 +120,10 @@ class AppointmentDetailsResource extends JsonResource
                     default => $event->type,
                 },
                 'changes' => $this->eventChanges($event->previous_values ?? [], $event->new_values ?? [], $viewAll, $visibleItemIds, $canViewFinancials),
-                'performed_by' => $this->when($viewAll || in_array($event->type, ['canceled', 'no_show', 'sale_canceled'], true) || ($canViewFinancials && str_starts_with($event->type, 'deposit_')), [
+                'performed_by' => $this->when($viewAll || in_array($event->type, ['canceled', 'no_show', 'sale_canceled'], true) || ($canViewFinancials && str_starts_with($event->type, 'deposit_')), $event->performedBy ? [
                     'id' => $event->performedBy->id,
                     'name' => $event->performedBy->name,
-                ]),
+                ] : ['name' => 'Sistema']),
                 'occurred_at' => $event->occurred_at->toIso8601String(),
                 'occurred_at_display' => $event->occurred_at
                     ->setTimezone(CreateAppointmentAction::TIMEZONE)

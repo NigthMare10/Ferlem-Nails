@@ -27,8 +27,13 @@ class Sale extends Model
     {
         return [
             'sold_at' => 'immutable_datetime',
+            'customer_id' => 'integer',
             'canceled_at' => 'immutable_datetime',
             'subtotal' => 'decimal:2',
+            'subtotal_before_discount' => 'decimal:2',
+            'is_frequent_client' => 'boolean',
+            'discount_percent' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'total' => 'decimal:2',
             'total_services' => 'integer',
             'card_fee_rate' => 'decimal:2',
@@ -40,6 +45,11 @@ class Sale extends Model
     protected static function booted(): void
     {
         static::updating(function (Sale $sale) {
+            if ($sale->getOriginal('customer_id') === null && $sale->customer_id !== null
+                && $sale->getOriginal('status') === self::STATUS_COMPLETED
+                && array_diff(array_keys($sale->getDirty()), ['customer_id', 'updated_at']) === []) {
+                return;
+            }
             if ($sale->isDirty('sale_number') && $sale->getOriginal('sale_number') !== null) {
                 throw new LogicException('El número de venta es inmutable.');
             }
@@ -82,5 +92,10 @@ class Sale extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(SalePayment::class)->orderBy('id');
+    }
+
+    public function additionalCharges(): HasMany
+    {
+        return $this->hasMany(SaleAdditionalCharge::class)->orderBy('id');
     }
 }

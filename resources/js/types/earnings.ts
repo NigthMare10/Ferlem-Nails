@@ -37,8 +37,12 @@ export type ActualResults = {
     average_sale: string;
     canceled_sales_count: number;
     canceled_amount: string;
+    paid_expenses?: string;
+    available_result?: string;
 };
 
+export type ExpenseActual = { paid_expenses: string; expenses_count: number };
+export type ExpensePaymentDistribution = { method: 'cash' | 'card' | 'transfer'; method_label: string; expenses_count: number; total: string };
 export type AppointmentProjection = {
     appointments_count: number;
     services_count: number;
@@ -47,9 +51,13 @@ export type AppointmentProjection = {
     pending_balance: string;
 };
 
-export type EmployeeSummary = EarningsSummary & {
+export type EmployeeSummary = {
     id: number;
     name: string;
+    services_count: number;
+    total_sold: string;
+    card_fee_amount: string;
+    net_amount: string;
     projected_appointments_count?: number;
     projected_services_count?: number;
     projected_income?: string;

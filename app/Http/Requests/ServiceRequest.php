@@ -15,6 +15,8 @@ class ServiceRequest extends FormRequest
     {
         return ['name' => ['required', 'string', 'max:120'], 'description' => ['nullable', 'string', 'max:2000'],
             'duration_minutes' => ['required', 'integer', 'min:1', 'max:1440'], 'price' => ['required', 'numeric', 'decimal:0,2', 'min:0', 'max:9999999999.99'],
-            'is_active' => ['required', 'boolean']];
+            'is_active' => ['required', 'boolean'],
+            'is_promotion' => ['sometimes', 'boolean'],
+            'loyalty_points' => ['sometimes', 'integer', 'min:0', 'max:100000']];
     }
 }

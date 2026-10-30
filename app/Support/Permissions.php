@@ -4,11 +4,29 @@ namespace App\Support;
 
 final class Permissions
 {
+    public const SALES_CHECKOUT_ANY = 'sales.checkout_any';
+
+    public const SALES_APPLY_ITEM_DISCOUNT = 'sales.apply_item_discount';
+
+    public const APPOINTMENTS_EDIT_SERVICES = 'appointments.edit_services';
+
+    public const APPOINTMENTS_UPDATE_ANY = 'appointments.update_any';
+
+    public const LOYALTY_AWARD = 'loyalty.award';
+
+    public const LOYALTY_REDEEM = 'loyalty.redeem';
+
+    public const LOYALTY_MANAGE = 'loyalty.manage';
+
+    public const LOYALTY_ADJUST = 'loyalty.adjust';
+
     public const NOTIFICATIONS_ACCESS = 'notifications.access';
 
     public const SALES_ACCESS = 'sales.access';
 
     public const SALES_CREATE = 'sales.create';
+
+    public const SALES_APPLY_FREQUENT_DISCOUNT = 'sales.apply_frequent_discount';
 
     public const SALES_VIEW_OWN = 'sales.view_own';
 
@@ -23,6 +41,32 @@ final class Permissions
     public const SALES_UPLOAD_TRANSFER_PROOF = 'sales.upload_transfer_proof';
 
     public const REPORTS_SALES_VIEW = 'reports.sales.view';
+
+    public const REPORTS_EXPENSES_VIEW = 'reports.expenses.view';
+
+    public const EXPENSES_ACCESS = 'expenses.access';
+
+    public const EXPENSES_VIEW = 'expenses.view';
+
+    public const EXPENSES_CREATE = 'expenses.create';
+
+    public const EXPENSES_UPDATE = 'expenses.update';
+
+    public const EXPENSES_CANCEL = 'expenses.cancel';
+
+    public const EXPENSES_VIEW_ATTACHMENT = 'expenses.view_attachment';
+
+    public const EXPENSES_MANAGE_CATEGORIES = 'expenses.manage_categories';
+
+    public const PAYROLL_VIEW = 'payroll.view';
+
+    public const PAYROLL_CONFIGURE = 'payroll.configure';
+
+    public const PAYROLL_GENERATE = 'payroll.generate';
+
+    public const PAYROLL_MARK_PAID = 'payroll.mark_paid';
+
+    public const PAYROLL_CANCEL_OBLIGATION = 'payroll.cancel_obligation';
 
     public const APPOINTMENTS_VIEW_PROJECTION = 'appointments.view_projection';
 
@@ -52,6 +96,14 @@ final class Permissions
 
     public const SETTINGS_ACCESS = 'settings.access';
 
+    public const SETTINGS_BUSINESS_HOURS_MANAGE = 'settings.business_hours.manage';
+
+    public const DAILY_CLOSE_VIEW = 'daily_close.view';
+
+    public const DAILY_CLOSE_MANAGE = 'daily_close.manage';
+
+    public const DAILY_CLOSE_SEND = 'daily_close.send';
+
     public const USERS_VIEW = 'users.view';
 
     public const USERS_CREATE = 'users.create';
@@ -76,17 +128,27 @@ final class Permissions
 
     public static function all(): array
     {
-        return [self::NOTIFICATIONS_ACCESS,
-            self::SALES_ACCESS, self::SALES_CREATE, self::SALES_VIEW_OWN, self::SALES_VIEW_ALL,
+        return [self::SALES_CHECKOUT_ANY, self::SALES_APPLY_ITEM_DISCOUNT,
+            self::APPOINTMENTS_EDIT_SERVICES, self::APPOINTMENTS_UPDATE_ANY,
+            self::LOYALTY_AWARD, self::LOYALTY_REDEEM, self::LOYALTY_MANAGE, self::LOYALTY_ADJUST,
+            self::NOTIFICATIONS_ACCESS,
+            self::SALES_ACCESS, self::SALES_CREATE, self::SALES_APPLY_FREQUENT_DISCOUNT, self::SALES_VIEW_OWN, self::SALES_VIEW_ALL,
             self::SALES_REPRINT, self::SALES_CANCEL, self::SALES_VIEW_TRANSFER_PROOF,
             self::SALES_UPLOAD_TRANSFER_PROOF,
-            self::REPORTS_SALES_VIEW, self::APPOINTMENTS_VIEW_PROJECTION,
+            self::REPORTS_SALES_VIEW, self::REPORTS_EXPENSES_VIEW,
+            self::EXPENSES_ACCESS, self::EXPENSES_VIEW, self::EXPENSES_CREATE,
+            self::EXPENSES_UPDATE, self::EXPENSES_CANCEL, self::EXPENSES_VIEW_ATTACHMENT,
+            self::EXPENSES_MANAGE_CATEGORIES,
+            self::PAYROLL_VIEW, self::PAYROLL_CONFIGURE, self::PAYROLL_GENERATE,
+            self::PAYROLL_MARK_PAID, self::PAYROLL_CANCEL_OBLIGATION, self::APPOINTMENTS_VIEW_PROJECTION,
             self::APPOINTMENTS_ACCESS, self::APPOINTMENTS_VIEW_OWN, self::APPOINTMENTS_VIEW_ALL,
             self::APPOINTMENTS_CREATE, self::APPOINTMENTS_PERFORM, self::APPOINTMENTS_UPDATE,
             self::APPOINTMENTS_ASSIGN, self::APPOINTMENTS_CANCEL, self::APPOINTMENTS_MARK_NO_SHOW,
             self::APPOINTMENTS_MANAGE_DEPOSIT, self::APPOINTMENTS_RESOLVE_DEPOSIT,
             self::APPOINTMENTS_CONVERT_TO_SALE,
-            self::SETTINGS_ACCESS, self::USERS_VIEW, self::USERS_CREATE, self::USERS_UPDATE,
+            self::SETTINGS_ACCESS, self::SETTINGS_BUSINESS_HOURS_MANAGE,
+            self::DAILY_CLOSE_VIEW, self::DAILY_CLOSE_MANAGE, self::DAILY_CLOSE_SEND,
+            self::USERS_VIEW, self::USERS_CREATE, self::USERS_UPDATE,
             self::USERS_ASSIGN_ROLE, self::USERS_TOGGLE_STATUS, self::USERS_RESET_PASSWORD,
             self::SERVICES_VIEW, self::SERVICES_CREATE, self::SERVICES_UPDATE, self::SERVICES_DELETE,
             self::SERVICES_TOGGLE_STATUS];

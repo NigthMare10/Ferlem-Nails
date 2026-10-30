@@ -50,12 +50,13 @@ class NotificationController extends Controller
 
     public function readAll(Request $request): JsonResponse
     {
-        $updated = $this->owned($request->user())->whereNull('read_at')->update(['read_at' => now('UTC')]);
+        $readAt = now('UTC');
+        $updated = $this->owned($request->user())->whereNull('read_at')->update(['read_at' => $readAt]);
 
         return response()->json(['data' => [
             'updated_count' => $updated,
             'unread_count' => $this->owned($request->user())->whereNull('read_at')->count(),
-            'as_of' => now('UTC')->toIso8601String(),
+            'as_of' => $readAt->toIso8601String(),
         ]]);
     }
 

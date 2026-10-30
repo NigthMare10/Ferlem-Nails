@@ -2,11 +2,18 @@
 
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BusinessHourController;
 use App\Http\Controllers\CashController;
 use App\Http\Controllers\ConfigurationController;
+use App\Http\Controllers\DailyCloseController;
 use App\Http\Controllers\EarningsController;
+use App\Http\Controllers\EditAppointmentController;
+use App\Http\Controllers\EmployeeOptionsController;
+use App\Http\Controllers\ExpenseCategoryController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\LoyaltyController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ServiceController;
@@ -15,12 +22,27 @@ use App\Http\Middleware\AuthorizeAppointmentDepositResolution;
 use App\Support\Permissions;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('guest')->group(function () {
+Route::middleware('guest:web')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
     Route::post('/login', [AuthController::class, 'store'])->name('login.store');
 });
 
-Route::middleware(['auth', 'active'])->group(function () {
+require __DIR__.'/customer.php';
+
+Route::middleware(['auth:web', 'active'])->group(function () {
+    Route::get('/configuration/loyalty/rewards', [LoyaltyController::class, 'index']);
+    Route::get('/configuration/loyalty/customers', [\App\Http\Controllers\LoyaltyCustomerController::class,'index']);
+    Route::get('/configuration/loyalty/customers/{customer}', [\App\Http\Controllers\LoyaltyCustomerController::class,'show']);
+    Route::post('/configuration/loyalty/customers/{customer}/rewards/{reward}/reserve', [\App\Http\Controllers\LoyaltyCustomerController::class,'reserve']);
+    Route::post('/configuration/loyalty/rewards', [LoyaltyController::class, 'reward']);
+    Route::put('/configuration/loyalty/rewards/{reward}', [LoyaltyController::class, 'reward']);
+    Route::put('/configuration/loyalty/settings', [LoyaltyController::class, 'settings']);
+    Route::post('/loyalty/qr/resolve', [LoyaltyController::class, 'resolve'])->middleware('throttle:20,1');
+    Route::post('/sales/{sale}/loyalty-awards', [LoyaltyController::class, 'award'])->middleware('throttle:20,1');
+    Route::post('/appointments/{appointment}/customer', [LoyaltyController::class, 'linkAppointment'])->middleware('throttle:20,1');
+    Route::post('/loyalty/customers/{customer}/adjustments', [LoyaltyController::class, 'adjust']);
+    Route::post('/loyalty/redemptions/{redemption}/confirm', [LoyaltyController::class, 'confirm']);
+    Route::post('/loyalty/redemptions/{redemption}/cancel', [LoyaltyController::class, 'cancel']);
     Route::get('/', HomeController::class)->name('home');
     Route::middleware('permission:'.Permissions::NOTIFICATIONS_ACCESS)->group(function () {
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -64,9 +86,55 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/sales/{sale}/cancel', [SalesController::class, 'cancel'])
         ->middleware('permission:'.Permissions::SALES_CANCEL)
         ->name('sales.cancel');
+    Route::middleware([
+        'permission:'.Permissions::EXPENSES_ACCESS,
+        'permission:'.Permissions::EXPENSES_VIEW,
+    ])->group(function () {
+        Route::get('/expenses', [ExpenseController::class, 'index'])->name('expenses.index');
+        Route::get('/expenses/categories', [ExpenseCategoryController::class, 'index'])
+            ->middleware('permission:'.Permissions::EXPENSES_MANAGE_CATEGORIES)
+            ->name('expenses.categories.index');
+        Route::post('/expenses/categories', [ExpenseCategoryController::class, 'store'])
+            ->middleware('permission:'.Permissions::EXPENSES_MANAGE_CATEGORIES)
+            ->name('expenses.categories.store');
+        Route::put('/expenses/categories/{expenseCategory}', [ExpenseCategoryController::class, 'update'])
+            ->middleware('permission:'.Permissions::EXPENSES_MANAGE_CATEGORIES)
+            ->name('expenses.categories.update');
+        Route::patch('/expenses/categories/{expenseCategory}/status', [ExpenseCategoryController::class, 'status'])
+            ->middleware('permission:'.Permissions::EXPENSES_MANAGE_CATEGORIES)
+            ->name('expenses.categories.status');
+        Route::post('/expenses', [ExpenseController::class, 'store'])
+            ->middleware('permission:'.Permissions::EXPENSES_CREATE)
+            ->name('expenses.store');
+        Route::get('/expenses/{expense}', [ExpenseController::class, 'show'])->middleware('expense.visible')->name('expenses.show');
+        Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])
+            ->middleware(['expense.visible', 'permission:'.Permissions::EXPENSES_UPDATE])
+            ->name('expenses.update');
+        Route::post('/expenses/{expense}/cancel', [ExpenseController::class, 'cancel'])
+            ->middleware(['expense.visible', 'permission:'.Permissions::EXPENSES_CANCEL])
+            ->name('expenses.cancel');
+        Route::get('/expenses/{expense}/attachment', [ExpenseController::class, 'attachment'])
+            ->middleware(['expense.visible', 'permission:'.Permissions::EXPENSES_VIEW_ATTACHMENT])
+            ->name('expenses.attachment');
+    });
     Route::get('/earnings', EarningsController::class)
-        ->middleware('permission:'.Permissions::REPORTS_SALES_VIEW)
+        ->middleware('permission:'.Permissions::REPORTS_SALES_VIEW.'|'.Permissions::REPORTS_EXPENSES_VIEW)
         ->name('earnings.index');
+    Route::get('/daily-close/download', [DailyCloseController::class, 'generateDownload'])
+        ->middleware('permission:'.Permissions::DAILY_CLOSE_VIEW)
+        ->name('daily-close.generate-download');
+    Route::post('/daily-close/send', [DailyCloseController::class, 'send'])
+        ->middleware(['permission:'.Permissions::DAILY_CLOSE_SEND, 'throttle:3,10'])
+        ->name('daily-close.send');
+    Route::get('/daily-close/reports/{dailyCloseReport}/download', [DailyCloseController::class, 'download'])
+        ->middleware('permission:'.Permissions::DAILY_CLOSE_VIEW)
+        ->name('daily-close.reports.download');
+    Route::post('/daily-close/reports/{dailyCloseReport}/retry', [DailyCloseController::class, 'retry'])
+        ->middleware(['permission:'.Permissions::DAILY_CLOSE_SEND, 'throttle:3,10'])
+        ->name('daily-close.reports.retry');
+    Route::get('/payroll', fn () => redirect()->route('expenses.index'))
+        ->middleware(['permission:'.Permissions::PAYROLL_VIEW, 'permission:'.Permissions::EXPENSES_ACCESS])
+        ->name('payroll.index');
     Route::get('/appointments', [AppointmentController::class, 'index'])
         ->middleware('permission:'.Permissions::APPOINTMENTS_ACCESS)
         ->name('appointments.index');
@@ -85,6 +153,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/appointments/{appointment}', [AppointmentController::class, 'show'])
         ->middleware('permission:'.Permissions::APPOINTMENTS_ACCESS)
         ->name('appointments.show');
+    Route::get('/appointments/{appointment}/edit', EditAppointmentController::class)->middleware('permission:'.Permissions::APPOINTMENTS_ACCESS);
     Route::put('/appointments/{appointment}', [AppointmentController::class, 'update'])
         ->middleware([
             'permission:'.Permissions::APPOINTMENTS_ACCESS,
@@ -133,12 +202,23 @@ Route::middleware(['auth', 'active'])->group(function () {
         ->name('appointments.no-show');
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::prefix('configuration')->name('configuration.')->middleware('permission:'.Permissions::SETTINGS_ACCESS)->group(function () {
+        Route::get('/users/{user}/permissions', [EmployeeOptionsController::class, 'show']);
+        Route::put('/users/{user}/permissions', [EmployeeOptionsController::class, 'permissions']);
+        Route::get('/users/{user}/breaks', [EmployeeOptionsController::class, 'show']);
+        Route::put('/users/{user}/breaks', [EmployeeOptionsController::class, 'breaks']);
         Route::get('/', ConfigurationController::class)->name('index');
+        Route::get('/business-hours', [BusinessHourController::class, 'index'])->middleware('permission:'.Permissions::SETTINGS_BUSINESS_HOURS_MANAGE)->name('business-hours.index');
+        Route::put('/business-hours', [BusinessHourController::class, 'update'])->middleware('permission:'.Permissions::SETTINGS_BUSINESS_HOURS_MANAGE)->name('business-hours.update');
+        Route::get('/daily-close', [DailyCloseController::class, 'index'])->middleware('permission:'.Permissions::DAILY_CLOSE_VIEW)->name('daily-close.index');
+        Route::put('/daily-close', [DailyCloseController::class, 'update'])->middleware('permission:'.Permissions::DAILY_CLOSE_MANAGE)->name('daily-close.update');
+        Route::post('/daily-close/test', [DailyCloseController::class, 'test'])->middleware(['permission:'.Permissions::DAILY_CLOSE_SEND, 'throttle:3,10'])->name('daily-close.test');
         Route::get('/users', [UserController::class, 'index'])->middleware('permission:'.Permissions::USERS_VIEW)->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->middleware('permission:'.Permissions::USERS_CREATE)->name('users.store');
         Route::put('/users/{user}', [UserController::class, 'update'])->middleware('permission:'.Permissions::USERS_UPDATE)->name('users.update');
         Route::patch('/users/{user}/status', [UserController::class, 'status'])->middleware('permission:'.Permissions::USERS_TOGGLE_STATUS)->name('users.status');
         Route::patch('/users/{user}/password', [UserController::class, 'password'])->middleware('permission:'.Permissions::USERS_RESET_PASSWORD)->name('users.password');
+        Route::get('/users/{user}/compensation', [UserController::class, 'compensation'])->middleware('permission:'.Permissions::PAYROLL_CONFIGURE)->name('users.compensation');
+        Route::post('/users/{user}/compensation', [UserController::class, 'storeCompensation'])->middleware('permission:'.Permissions::PAYROLL_CONFIGURE)->name('users.compensation.store');
         Route::get('/services', [ServiceController::class, 'index'])->middleware('permission:'.Permissions::SERVICES_VIEW)->name('services.index');
         Route::post('/services', [ServiceController::class, 'store'])->middleware('permission:'.Permissions::SERVICES_CREATE)->name('services.store');
         Route::put('/services/{service}', [ServiceController::class, 'update'])->middleware('permission:'.Permissions::SERVICES_UPDATE)->name('services.update');

@@ -7,6 +7,8 @@ use App\Models\Appointment;
 use App\Models\AppointmentEvent;
 use App\Models\AppointmentItem;
 use App\Models\User;
+use App\Support\BusinessHours;
+use App\Support\EmployeeAvailability;
 use App\Support\Permissions;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -45,6 +47,10 @@ class ApplyAppointmentChangesAction
                 $locked->notes = $data['notes'] ?? null;
                 $locked->save();
             } else {
+                if (! $locked->scheduled_start->setTimezone(CreateAppointmentAction::TIMEZONE)
+                    ->greaterThan(CarbonImmutable::now(CreateAppointmentAction::TIMEZONE))) {
+                    throw ValidationException::withMessages(['appointment' => 'No puedes reprogramar una cita que ya comenzó.']);
+                }
                 $assignments = collect($data['assignments'] ?? [])->keyBy('appointment_item_id');
                 $knownIds = $locked->items->pluck('id')->all();
                 if ($assignments->keys()->diff($knownIds)->isNotEmpty()) {
@@ -78,11 +84,13 @@ class ApplyAppointmentChangesAction
                 if (! $appointmentStart->isSameDay($segmentStart)) {
                     throw ValidationException::withMessages(['start_time' => 'La cita debe comenzar y terminar el mismo día.']);
                 }
-                $close = CarbonImmutable::createFromFormat('!Y-m-d H:i', $appointmentStart->format('Y-m-d').' '.config('appointments.close_time'), CreateAppointmentAction::TIMEZONE);
-                if ($segmentStart->greaterThan($close)) {
+                if (! BusinessHours::contains($appointmentStart, $segmentStart)) {
                     throw ValidationException::withMessages(['start_time' => 'La cita termina fuera del horario operativo.']);
                 }
                 foreach ($segments as $segment) {
+                    if (EmployeeAvailability::hasBreak($segment['assigned_to'], $segment['segmentStart'], $segment['segmentEnd'])) {
+                        throw ValidationException::withMessages(['start_time' => 'El horario coincide con la comida de una persona asignada.']);
+                    }
                     $conflict = AppointmentItem::query()->where('assigned_to', $segment['assigned_to'])->where('scheduled_start', '<', $segment['segmentEnd']->utc())->where('scheduled_end', '>', $segment['segmentStart']->utc())->whereHas('appointment', fn ($query) => $query->where('status', Appointment::STATUS_SCHEDULED)->where('appointments.id', '!=', $locked->getKey()))->exists();
                     if ($conflict) {
                         throw ValidationException::withMessages(['start_time' => 'Una persona seleccionada ya tiene un servicio en ese horario.']);
@@ -148,9 +156,8 @@ class ApplyAppointmentChangesAction
         if ($start->lessThan(CarbonImmutable::now(CreateAppointmentAction::TIMEZONE))) {
             throw ValidationException::withMessages(['date' => 'No puedes reprogramar una cita en el pasado.']);
         }
-        $open = CarbonImmutable::createFromFormat('!Y-m-d H:i', $start->format('Y-m-d').' '.config('appointments.open_time'), CreateAppointmentAction::TIMEZONE);
-        $close = CarbonImmutable::createFromFormat('!Y-m-d H:i', $start->format('Y-m-d').' '.config('appointments.close_time'), CreateAppointmentAction::TIMEZONE);
-        if ($start->lessThan($open) || $start->greaterThanOrEqualTo($close)) {
+        $bounds = BusinessHours::bounds($start);
+        if ($bounds === null || $start->lessThan($bounds[0]) || $start->greaterThanOrEqualTo($bounds[1])) {
             throw ValidationException::withMessages(['start_time' => 'La hora de inicio está fuera del horario operativo.']);
         }
 
