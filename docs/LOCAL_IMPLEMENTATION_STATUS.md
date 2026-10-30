@@ -1,6 +1,6 @@
 # Local implementation and validation
 
-Production is read-only during this work. No deployment is authorized.
+Initial implementation was local-only. The follow-up request explicitly authorizes push to `main` and deployment after validation; see the release notes below for the actual outcome.
 
 ## Baseline
 

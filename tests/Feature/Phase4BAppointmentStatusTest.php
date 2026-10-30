@@ -269,7 +269,7 @@ class Phase4BAppointmentStatusTest extends TestCase
         $other = $this->user('employee');
         $own = $this->appointment($owner, [$employee], '10:00');
         $this->appointment($owner, [$employee, $other], '12:00');
-        Carbon::setTestNow('2026-07-21 19:00:00 UTC');
+        Carbon::setTestNow('2026-07-21 16:30:00 UTC');
 
         $this->actingAs($owner)->get('/appointments?view=day&date=2026-07-21')
             ->assertInertia(fn ($page) => $page

@@ -14,6 +14,7 @@ return new class extends Migration
             Permission::findOrCreate($name, 'web');
         }
         Role::where('name', 'owner')->where('guard_name', 'web')->first()?->givePermissionTo(Permissions::all());
+        Role::where('name', 'administrator')->where('guard_name', 'web')->first()?->givePermissionTo([Permissions::LOYALTY_MANAGE, Permissions::LOYALTY_REDEEM, Permissions::LOYALTY_AWARD]);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 

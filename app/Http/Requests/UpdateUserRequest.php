@@ -14,7 +14,7 @@ class UpdateUserRequest extends FormRequest
 
     public function rules(): array
     {
-        $employmentRequired = $this->boolean('has_employment_profile') || $this->filled('monthly_salary');
+        $employmentRequired = $this->input('role') === 'employee' || $this->boolean('has_employment_profile');
 
         return ['name' => ['required', 'string', 'max:120'], 'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($this->route('user'))],
             'role' => ['nullable', Rule::in(['owner', 'administrator', 'employee'])],

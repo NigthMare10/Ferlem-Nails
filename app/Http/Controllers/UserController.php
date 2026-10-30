@@ -196,7 +196,7 @@ class UserController extends Controller
 
     private function employmentData(array $data, bool $creating, ?User $user = null): ?array
     {
-        if (empty($data['monthly_salary']) && ! ($data['has_employment_profile'] ?? false)) {
+        if (($data['role'] ?? null) !== 'employee' && ! ($data['has_employment_profile'] ?? false)) {
             return null;
         }
 

@@ -43,7 +43,7 @@ class InternalNotificationTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_notification_access_is_available_to_staff_roles_but_recipients_remain_scoped(): void
+    public function test_permission_is_assigned_to_each_seeded_role(): void
     {
         $this->assertTrue(Role::findByName('owner')->hasPermissionTo(Permissions::NOTIFICATIONS_ACCESS));
         $this->assertTrue(Role::findByName('administrator')->hasPermissionTo(Permissions::NOTIFICATIONS_ACCESS));
@@ -77,13 +77,13 @@ class InternalNotificationTest extends TestCase
     {
         $owner = $this->user('owner');
         $administrator = $this->user('administrator');
+        $unauthorized = User::factory()->create(['is_active' => true]);
         $employee = $this->user('employee');
         $this->publish($employee, 'test.created', 'fact:ownership');
         $ownerNotification = $owner->internalNotifications()->firstOrFail();
 
         $this->get('/notifications')->assertRedirect(route('login'));
-        $this->actingAs($employee)->get('/notifications')->assertInertia(fn (Assert $page) => $page->has('notifications.data', 0));
-        $this->patchJson("/notifications/{$ownerNotification->id}/read")->assertNotFound();
+        $this->actingAs($unauthorized)->getJson('/notifications')->assertForbidden();
         $this->actingAs($administrator)
             ->patchJson("/notifications/{$ownerNotification->id}/read")
             ->assertNotFound();
@@ -96,13 +96,17 @@ class InternalNotificationTest extends TestCase
                 ->where('notifications.data.0.type', 'test.created'));
     }
 
-    public function test_individual_and_bulk_read_are_idempotent_and_only_change_owned_rows(): void
+    public function test_individual_idor_is_rejected_and_bulk_read_only_changes_authenticated_users_notifications(): void
     {
         $owner = $this->user('owner');
         $administrator = $this->user('administrator');
         $this->publish($owner, 'test.first', 'fact:first');
         $this->publish($owner, 'test.second', 'fact:second');
         $first = $owner->internalNotifications()->oldest()->firstOrFail();
+
+        $this->actingAs($administrator)->patchJson("/notifications/{$first->id}/read")
+            ->assertNotFound();
+        $this->assertNull($first->fresh()->read_at);
 
         $this->actingAs($owner)->patchJson("/notifications/{$first->id}/read")
             ->assertOk()
@@ -113,12 +117,17 @@ class InternalNotificationTest extends TestCase
             ->assertJsonPath('data.changed', false);
         $this->assertSame(1, $owner->internalNotifications()->whereNull('read_at')->count());
 
-        $this->patchJson('/notifications/read-all')->assertOk()->assertJsonPath('data.unread_count', 0);
+        $this->patchJson('/notifications/read-all')
+            ->assertOk()
+            ->assertJsonPath('data.updated_count', 1)
+            ->assertJsonPath('data.unread_count', 0)
+            ->assertJsonPath('data.as_of', '2026-07-20T14:00:00+00:00');
         $this->assertSame(0, $owner->internalNotifications()->whereNull('read_at')->count());
         $this->assertSame(2, $administrator->internalNotifications()->whereNull('read_at')->count());
+        $this->assertTrue($administrator->internalNotifications()->get()->every(fn ($notification) => $notification->read_at === null));
     }
 
-    public function test_inertia_shares_counts_and_recent_only_with_authorized_users(): void
+    public function test_inertia_shares_counts_and_recent_with_authorized_roles(): void
     {
         $owner = $this->user('owner');
         $employee = $this->user('employee');
@@ -128,7 +137,8 @@ class InternalNotificationTest extends TestCase
             ->where('auth.notifications.unread_count', 1)
             ->where('auth.notifications.recent.0.type', 'test.shared'));
         $this->actingAs($employee)->get('/sales/new')->assertInertia(fn (Assert $page) => $page
-            ->where('auth.notifications.unread_count', 0)->has('auth.notifications.recent', 0));
+            ->where('auth.notifications.unread_count', 0)
+            ->has('auth.notifications.recent', 0));
     }
 
     public function test_duplicate_fact_is_ignored_and_outer_rollback_removes_publication(): void
@@ -244,6 +254,9 @@ class InternalNotificationTest extends TestCase
         $this->actingAs($owner)->post('/configuration/users', [
             'name' => 'Nueva', 'email' => 'nueva@example.com', 'password' => 'password123',
             'password_confirmation' => 'password123', 'role' => 'employee', 'is_active' => true,
+            'has_employment_profile' => true, 'monthly_salary' => '15000.00',
+            'contract_start_date' => '2026-07-01', 'is_indefinite' => true,
+            'default_payment_method' => 'transfer', 'auto_generate_payroll_expense' => true,
         ])->assertSessionHas('success');
         $createdUser = User::query()->where('email', 'nueva@example.com')->firstOrFail();
         $this->patch("/configuration/users/{$createdUser->id}/status", ['is_active' => false])->assertSessionHas('success');

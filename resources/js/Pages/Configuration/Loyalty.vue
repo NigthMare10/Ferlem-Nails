@@ -239,11 +239,11 @@ function filter(status: string, page = 1) {
     margin: 24px 0 12px;
 }
 .reward-cost small {
-    font-size: 14px;
+    font-size: var(--sl-body-size, 1rem);
     font-weight: 400;
 }
 h2 {
-    font-size: 22px;
+    font-size: var(--sl-section-title-size, 1.5rem);
     margin-bottom: 12px;
 }
 @media (max-width: 600px) {

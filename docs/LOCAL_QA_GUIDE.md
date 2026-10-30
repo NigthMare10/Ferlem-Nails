@@ -45,7 +45,7 @@ Informes de navegador: `playwright-report/index.html`. Capturas y trazas: `test-
 3. **Empleados:** Usuarios → menú de la persona → «Permisos, orden y comida». Menor orden aparece primero; los empates se ordenan por nombre. Los permisos heredados se ven marcados y no pueden quitarse en este formulario.
 4. **Delegación:** habilitar «Cobrar servicios de cualquier empleado». Entrar con la empleada y comprobar que puede elegir quién atendió sin recibir acceso a reportes o nómina. Para consultar agenda ajena debe recibir también el permiso de ver todas las citas; no se concede implícitamente.
 5. **Comidas:** configurar días recurrentes o excepciones por fecha. La agenda muestra el bloqueo. Crear, editar o reprogramar dentro de comida debe fallar. Una cita que termina exactamente al iniciar comida es válida.
-6. **Editar cita:** la cita ficticia «Cita QA editable» está el 7 de enero de 2030. «Editar servicios» permite quitar/agregar servicios, cambiar personal autorizado, cantidad y duración. Después de guardar se vuelve a la agenda de ese día.
+6. **Editar cita:** la cita ficticia «Cita QA editable» está el 7 de enero de 2030. «Editar servicios» abre una modal sobre la agenda para quitar/agregar servicios, cambiar personal autorizado, cantidad y duración. Después de guardar se cierra la modal y se actualiza el día.
 7. **Concurrencia:** abrir una cita en dos pestañas, modificar en una y guardar la otra. La segunda debe pedir recargar sin sobrescribir la primera.
 8. **Clientas:** usar otro navegador o ventana privada para comprobar aislamiento de sesiones. Registrar una cuenta, verificar correo, configurar foto/perfil y consultar únicamente sus citas y movimientos.
 9. **QR antes de cobrar:** «Vincular clienta» en la agenda asocia la cita al perfil verificado; no entrega puntos anticipados. Se acreditan al completar y cobrar.
@@ -67,7 +67,7 @@ Informes de navegador: `playwright-report/index.html`. Capturas y trazas: `test-
 ## Mapa del código
 
 - Permisos, orden y comida: `EmployeeOptionsController`, `EmployeeAvailability`, `employee_breaks`, `security_audits`.
-- Edición segura: `EditAppointmentServicesAction`, `AppointmentRevision`, `Appointments/Edit.vue`.
+- Edición segura: `EditAppointmentServicesAction`, `AppointmentRevision`, `AppointmentServicesDialog.vue`.
 - Cálculos: `ItemDiscount`, `SaleFinancials`, `PersistCompletedSaleAction`.
 - Clientas: `routes/customer.php`, `CustomerAccess`, controladores `Customer/`, `CustomerLayout.vue`.
 - Fidelidad: `LoyaltyService`, `LoyaltyController`, `loyalty_entries`, `loyalty_rewards`, `loyalty_redemptions`, `customer_qr_tokens`.

@@ -9,9 +9,11 @@ use App\Models\LoyaltyEntry;
 use App\Models\LoyaltyRedemption;
 use App\Models\LoyaltyReward;
 use App\Models\Sale;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class LoyaltyController extends Controller
@@ -19,15 +21,19 @@ class LoyaltyController extends Controller
     public function index(Request $request)
     {
         abort_unless($request->user('web')->can('loyalty.manage'), 403);
-        LoyaltyRedemption::where('status','reserved')->where('expires_at','<=',now())->orderBy('id')->chunkById(100,function($rows){foreach($rows as $r) app(LoyaltyService::class)->release($r,'expired');});
+        LoyaltyRedemption::where('status', 'reserved')->where('expires_at', '<=', now())->orderBy('id')->chunkById(100, function ($rows) {
+            foreach ($rows as $r) {
+                app(LoyaltyService::class)->release($r, 'expired');
+            }
+        });
 
         return Inertia::render('Configuration/Loyalty', [
             'rewards' => LoyaltyReward::orderBy('points_cost')->get(),
             'levels' => json_decode(DB::table('loyalty_settings')->where('id', 1)->value('levels'), true),
             'customers' => Customer::query()->when($request->search, fn ($q, $term) => $q->where('name', 'like', '%'.$term.'%'))->select('id', 'name', 'email')->paginate(20),
-            'redemptions' => LoyaltyRedemption::with('customer:id,name')->when(in_array($request->query('status'),['reserved','confirmed','cancelled','expired'],true),fn($q)=>$q->where('status',$request->query('status')))->latest('id')->paginate(20,['*'],'canjes')->withQueryString(),
-            'status' => $request->query('status',''),
-            'services' => \App\Models\Service::orderBy('name')->get(['id','name','is_active']),
+            'redemptions' => LoyaltyRedemption::with('customer:id,name')->when(in_array($request->query('status'), ['reserved', 'confirmed', 'cancelled', 'expired'], true), fn ($q) => $q->where('status', $request->query('status')))->latest('id')->paginate(20, ['*'], 'canjes')->withQueryString(),
+            'status' => $request->query('status', ''),
+            'services' => Service::orderBy('name')->get(['id', 'name', 'is_active']),
         ]);
     }
 
@@ -35,8 +41,12 @@ class LoyaltyController extends Controller
     {
         abort_unless($request->user('web')->can('loyalty.manage'), 403);
         $data = $request->validate(['name' => ['required', 'string', 'max:120'], 'description' => ['nullable', 'string', 'max:2000'], 'points_cost' => ['required', 'integer', 'min:1', 'max:1000000'], 'benefit_type' => ['required', Rule::in(['gift', 'service', 'discount'])], 'service_id' => ['nullable', 'required_if:benefit_type,service', 'exists:services,id'], 'discount_percent' => ['nullable', 'required_if:benefit_type,discount', 'numeric', 'gt:0', 'max:100'], 'stock' => ['nullable', 'integer', 'min:0'], 'per_customer_limit' => ['required', 'integer', 'min:1', 'max:1000'], 'birthday_only' => ['boolean'], 'is_active' => ['required', 'boolean'], 'starts_on' => ['nullable', 'date_format:Y-m-d'], 'ends_on' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:starts_on']]);
-        if ($data['benefit_type']!=='service') $data['service_id']=null;
-        if ($data['benefit_type']!=='discount') $data['discount_percent']=null;
+        if ($data['benefit_type'] !== 'service') {
+            $data['service_id'] = null;
+        }
+        if ($data['benefit_type'] !== 'discount') {
+            $data['discount_percent'] = null;
+        }
         DB::transaction(function () use ($request, $reward, $data) {
             $before = $reward?->toArray();
             if ($reward) {
@@ -93,7 +103,9 @@ class LoyaltyController extends Controller
             if ($locked->status === 'confirmed') {
                 return;
             }
-            if ($locked->status !== 'reserved' || !$locked->expires_at->isFuture() || !$customer->is_active || !$customer->hasVerifiedEmail() || $loyalty->balance($customer)<0) throw \Illuminate\Validation\ValidationException::withMessages(['redemption'=>'El canje ya no está pendiente, venció o la cuenta no es elegible. Recarga el historial.']);
+            if ($locked->status !== 'reserved' || ! $locked->expires_at->isFuture() || ! $customer->is_active || ! $customer->hasVerifiedEmail() || $loyalty->balance($customer) < 0) {
+                throw ValidationException::withMessages(['redemption' => 'El canje ya no está pendiente, venció o la cuenta no es elegible. Recarga el historial.']);
+            }
             $locked->update(['status' => 'confirmed', 'confirmed_by' => $request->user('web')->id]);
             $this->audit($request, 'redemption.confirmed', 'redemption', $locked->id, null, $locked->toArray());
         });
@@ -124,9 +136,9 @@ class LoyaltyController extends Controller
     public function cancel(Request $request, LoyaltyRedemption $redemption, LoyaltyService $loyalty)
     {
         abort_unless($request->user('web')->can('loyalty.redeem'), 403);
-        DB::transaction(function()use($redemption,$loyalty,$request){
+        DB::transaction(function () use ($redemption, $loyalty, $request) {
             $loyalty->release($redemption);
-            $this->audit($request,'redemption.cancelled','redemption',$redemption->id,null,$redemption->fresh()->toArray());
+            $this->audit($request, 'redemption.cancelled', 'redemption', $redemption->id, null, $redemption->fresh()->toArray());
         });
 
         return back()->with('success', 'Reserva liberada si estaba pendiente.');

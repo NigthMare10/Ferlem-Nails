@@ -228,7 +228,7 @@ function paginate(key: string, page: number) {
 }
 .metrics strong {
     display: block;
-    font-size: 28px;
+    font-size: var(--sl-metric-size);
 }
 .reward-list {
     display: grid;
@@ -241,8 +241,17 @@ function paginate(key: string, page: number) {
 }
 @media (max-width: 600px) {
     .metrics {
-        grid-template-columns: 1fr;
-        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+    }
+    .metrics section {
+        padding: 12px 8px;
+    }
+    .metrics span {
+        font-size: var(--sl-label-size);
+    }
+    .metrics strong {
+        font-size: var(--sl-metric-size);
     }
 }
 </style>

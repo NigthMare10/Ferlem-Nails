@@ -8,7 +8,7 @@ const emit = defineEmits(['update:modelValue']);
 const { xs } = useDisplay();
 const roleNames: Record<string, string> = { owner: 'Propietario', administrator: 'Administrador', employee: 'Empleado' };
 const roleItems = computed(() => props.roles
-    .filter(role => props.canAssignOwner || role !== 'owner')
+    .filter(role => (props.canAssignOwner || role !== 'owner') && (props.canConfigurePayroll || role !== 'employee' || props.user?.role === 'employee'))
     .map(role => ({ title: roleNames[role] ?? role, value: role })));
 const form = useForm({
     name: '', email: '', password: '', password_confirmation: '', role: 'employee', is_active: true,

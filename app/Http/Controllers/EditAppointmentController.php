@@ -8,7 +8,6 @@ use App\Models\Service;
 use App\Models\User;
 use App\Support\AppointmentRevision;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 
 class EditAppointmentController extends Controller
 {
@@ -26,7 +25,10 @@ class EditAppointmentController extends Controller
             'services' => Service::where('is_active', true)->orderBy('name')->get(['id', 'name', 'price', 'duration_minutes']),
             'assignees' => User::where('is_active', true)->permission('appointments.perform')->when(! $actor->can('appointments.assign'), fn ($q) => $q->whereKey($actor->id))->orderBy('display_order')->orderBy('name')->get(['id', 'name']),
         ];
-        if ($request->expectsJson()) return response()->json($data)->header('Cache-Control', 'private, no-store');
-        return redirect()->route('appointments.index', ['view'=>'day', 'date'=>$data['appointment']['date'], 'month'=>substr($data['appointment']['date'],0,7), 'edit'=>$appointment->id]);
+        if ($request->expectsJson()) {
+            return response()->json($data)->header('Cache-Control', 'private, no-store');
+        }
+
+        return redirect()->route('appointments.index', ['view' => 'day', 'date' => $data['appointment']['date'], 'month' => substr($data['appointment']['date'], 0, 7), 'edit' => $appointment->id]);
     }
 }

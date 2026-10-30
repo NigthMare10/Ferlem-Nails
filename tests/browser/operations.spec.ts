@@ -91,12 +91,14 @@ test('sale checkout and QR award update only the identified customer', async ({ 
     await login(page);
     await page.goto('/sales/new');
     await page.getByRole('button', { name: 'Agregar Esmalte en gel', exact: true }).click();
-    await page.getByRole('button', { name: 'Descuentos individuales por servicio' }).click();
+    if (info.project.name === 'mobile') await page.getByTestId('sale-mobile-summary').click();
     await selectOption(page, 'Descuento de este servicio', 'Porcentaje');
     await page.getByLabel('Porcentaje', { exact: true }).fill('10');
     await page.getByLabel('Motivo obligatorio', { exact: true }).fill('Descuento de QA local');
-    if (info.project.name === 'mobile') await page.getByTestId('sale-mobile-checkout-button').click();
-    else await page.getByRole('button', { name: /^Cobrar / }).click();
+    if (info.project.name === 'mobile') {
+        await page.getByRole('button', { name: 'Cerrar resumen' }).click();
+        await page.getByTestId('sale-mobile-checkout-button').click();
+    } else await page.getByRole('button', { name: /^Cobrar / }).click();
     await page.getByRole('button', { name: 'Confirmar y generar recibo' }).click();
     await expect(page).toHaveURL(/\/sales\/\d+\/receipt/);
     await expect(page.getByText('L 315.00', { exact: true }).first()).toBeVisible();
@@ -163,13 +165,67 @@ test('appointment services can be edited with AM PM controls', async ({ page }, 
         await card.getByRole('button', { name: 'Más acciones', exact: true }).click();
         await page.locator('.v-overlay--active .v-list').getByText('Editar servicios', { exact: true }).click();
     } else await card.getByRole('button', { name: 'Editar servicios', exact: true }).click();
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await expect(page).not.toHaveURL(/\/edit$/);
     await expect(page.getByRole('combobox', { name: 'Hora de inicio · AM/PM' })).toHaveValue('AM');
     while ((await page.getByRole('button', { name: 'Quitar servicio', exact: true }).count()) > 1)
         await page.getByRole('button', { name: 'Quitar servicio', exact: true }).last().click();
     await selectOption(page, 'Agregar servicio', 'Pedicura');
     await page.getByRole('button', { name: 'Guardar cambios', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page).toHaveURL(/\/appointments\?/);
     await expect(page.getByText('Cita QA editable', { exact: true })).toBeVisible();
+});
+
+test('additional charge fields never overlap in the checkout panel', async ({ page }, info) => {
+    await login(page);
+    await page.goto('/sales/new');
+    await page.getByRole('button', { name: 'Agregar Esmalte en gel', exact: true }).click();
+    if (info.project.name === 'mobile') await page.getByTestId('sale-mobile-summary').click();
+    await page.getByRole('checkbox', { name: 'Agregar cargo adicional', exact: true }).check();
+    await page.getByLabel('Nombre del cargo', { exact: true }).fill('Diseño extra');
+    await page.getByLabel('Total', { exact: true }).fill('50');
+    const boxes = await page.locator('.sale-checkout-adjustments__charge .v-input').evaluateAll((els) =>
+        els.map((e) => {
+            const r = e.getBoundingClientRect();
+            return { x: r.x, y: r.y, w: r.width, h: r.height };
+        }),
+    );
+    for (let i = 0; i < boxes.length; i++) {
+        expect(boxes[i].w).toBeGreaterThan(140);
+        for (let j = i + 1; j < boxes.length; j++)
+            expect(
+                boxes[i].y + boxes[i].h <= boxes[j].y ||
+                    boxes[j].y + boxes[j].h <= boxes[i].y ||
+                    boxes[i].x + boxes[i].w <= boxes[j].x ||
+                    boxes[j].x + boxes[j].w <= boxes[i].x,
+            ).toBeTruthy();
+    }
+    await page.screenshot({ path: `test-results/charge-fields-${info.project.name}.png`, fullPage: true });
+});
+
+test('admin creates reward and reserves and delivers it from customer profile', async ({ page }, info) => {
+    await login(page);
+    await page.goto('/configuration/loyalty/rewards');
+    await page.getByRole('button', { name: 'Nueva recompensa', exact: true }).click();
+    const name = `Regalo QA ${info.project.name} ${Date.now()}`;
+    await page.getByRole('dialog').getByLabel('Nombre', { exact: true }).fill(name);
+    await page.getByLabel('Costo en puntos', { exact: true }).fill('1');
+    await page.getByRole('button', { name: 'Guardar recompensa', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.goto('/configuration/loyalty/customers?search=clienta%40lemus.test');
+    await page.getByRole('link').filter({ hasText: 'Sofía Ramírez' }).click();
+    await page.getByRole('tab', { name: 'Canjear recompensa', exact: true }).click();
+    const reward = page.locator('.v-card').filter({ has: page.getByRole('heading', { name, exact: true }) });
+    await reward.getByRole('button', { name: 'Reservar para clienta', exact: true }).click();
+    await page.getByRole('button', { name: 'Confirmar reserva', exact: true }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    const row = page.locator('.redemption-row').filter({ hasText: name });
+    await expect(row).toContainText('Pendiente de entrega');
+    await row.getByRole('button', { name: 'Confirmar entrega', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Confirmar', exact: true }).click();
+    await expect(row).toContainText('Entregada');
+    await page.screenshot({ path: `test-results/loyalty-profile-${info.project.name}.png`, fullPage: true });
 });
 
 test('time labels cover noon and midnight without changing stored values', () => {

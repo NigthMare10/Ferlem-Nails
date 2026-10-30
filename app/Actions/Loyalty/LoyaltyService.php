@@ -87,7 +87,10 @@ class LoyaltyService
 
     public function reserve(Customer $customer, LoyaltyReward $reward, string $token, ?User $actor = null): LoyaltyRedemption
     {
-        if ($actor) abort_unless($actor->is_active && $actor->can('loyalty.manage') && $actor->can('loyalty.redeem'),403);
+        if ($actor) {
+            abort_unless($actor->is_active && $actor->can('loyalty.manage') && $actor->can('loyalty.redeem'), 403);
+        }
+
         return DB::transaction(function () use ($customer, $reward, $token, $actor) {
             $customer = Customer::whereKey($customer->id)->lockForUpdate()->firstOrFail();
             abort_unless($customer->is_active && $customer->hasVerifiedEmail(), 403);
@@ -111,10 +114,9 @@ class LoyaltyService
             }
             $redemption = LoyaltyRedemption::create(['customer_id' => $customer->id, 'loyalty_reward_id' => $reward->id, 'operation_token' => $token, 'points_cost' => $reward->points_cost, 'status' => 'reserved', 'expires_at' => now()->addHours(24), 'reward_snapshot' => $reward->only('name', 'description', 'benefit_type', 'service_id', 'discount_percent')]);
             if ($actor) {
-                $redemption->update(['reserved_by'=>$actor->id]);
-                DB::table('security_audits')->insert(['actor_id'=>$actor->id,'action'=>'redemption.reserved','subject_type'=>'redemption','subject_id'=>$redemption->id,'after'=>json_encode(['customer_id'=>$customer->id,'reward_id'=>$reward->id,'points'=>$reward->points_cost]),'created_at'=>now(),'updated_at'=>now()]);
+                $redemption->update(['reserved_by' => $actor->id]);
+                DB::table('security_audits')->insert(['actor_id' => $actor->id, 'action' => 'redemption.reserved', 'subject_type' => 'redemption', 'subject_id' => $redemption->id, 'after' => json_encode(['customer_id' => $customer->id, 'reward_id' => $reward->id, 'points' => $reward->points_cost]), 'created_at' => now(), 'updated_at' => now()]);
             }
-            if ($actor) $redemption->setRelation('reservedBy', $actor);
             LoyaltyEntry::create(['source_key' => 'redemption:'.$redemption->id, 'customer_id' => $customer->id, 'redemption_id' => $redemption->id, 'type' => 'redeem', 'points' => -$reward->points_cost, 'note' => $reward->name]);
             if ($reward->stock !== null) {
                 $reward->decrement('stock');

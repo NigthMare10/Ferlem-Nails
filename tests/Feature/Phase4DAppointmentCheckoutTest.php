@@ -76,6 +76,7 @@ class Phase4DAppointmentCheckoutTest extends TestCase
                 ->where('appointment.items.0.name', 'Snapshot reservado')
                 ->has('appointment.items', 2)
                 ->where('appointment.items.0.quantity', 1)
+                ->where('appointment.items.1.quantity', 1)
                 ->where('appointment.items.0.performed_by.id', $employee->id)
                 ->where('appointment.reserved_total', '246.90')
                 ->where('appointment.deposit.amount', '40.00')
@@ -127,6 +128,99 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
     }
 
+    public function test_multipart_checkout_accepts_an_empty_reserved_item_removal_list_and_redirects_to_the_receipt(): void
+    {
+        $employee = $this->user('employee');
+        $appointment = $this->appointment($employee, [$this->line($this->service('Manicura'), $employee)]);
+        $payload = $this->checkoutPayload($appointment, method: 'card');
+        unset($payload['removed_appointment_item_ids']);
+
+        $response = $this->actingAs($employee)
+            ->post("/appointments/{$appointment->id}/checkout", $payload)
+            ->assertStatus(303);
+
+        $sale = Sale::query()->sole();
+        $response->assertRedirect(route('sales.receipt', $sale));
+        $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
+        $this->assertSame(1, $sale->items()->count());
+        $this->assertSame('card', $sale->payments()->sole()->method);
+    }
+
+    public function test_appointment_checkout_persists_named_additional_charge_and_exposes_it_in_receipt(): void
+    {
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $appointment = $this->appointment($owner, [$this->line($this->service('Manicura', '100.00'), $employee)]);
+        $payload = $this->checkoutPayload($appointment);
+        $payload['additional_charges'] = [['name' => 'Diseño', 'amount' => '100.00']];
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
+
+        $sale = Sale::query()->with('additionalCharges')->sole();
+        $this->assertSame('200.00', $sale->total);
+        $this->assertSame(1, $sale->total_services);
+        $this->assertSame('Diseño', $sale->additionalCharges->sole()->name);
+        $this->assertSame($employee->id, $sale->additionalCharges->sole()->performed_by);
+        $this->get(route('sales.receipt', $sale))->assertInertia(fn (Assert $page) => $page
+            ->where('sale.additional_charges.0.name', 'Diseño')
+            ->where('sale.additional_charges.0.amount', '100.00'));
+    }
+
+    public function test_sale_from_shared_appointment_requires_charge_assignment_to_a_participant(): void
+    {
+        $owner = $this->user('owner');
+        $first = $this->user('employee');
+        $second = $this->user('employee');
+        $outsider = $this->user('employee');
+        $appointment = $this->appointment($owner, [
+            $this->line($this->service('Manicura', '100.00'), $first),
+            $this->line($this->service('Pedicura', '100.00'), $second),
+        ]);
+        $payload = $this->checkoutPayload($appointment);
+        $payload['additional_charges'] = [['name' => 'Diseño', 'amount' => '30.00', 'performed_by' => $outsider->id]];
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $payload)
+            ->assertSessionHasErrors('additional_charges');
+
+        $payload['checkout_token'] = (string) Str::uuid();
+        $payload['additional_charges'][0]['performed_by'] = $second->id;
+        $this->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
+        $this->assertSame($second->id, Sale::query()->sole()->additionalCharges()->sole()->performed_by);
+    }
+
+    public function test_confirmation_button_wires_to_the_shared_submit_handler_and_keeps_errors_visible(): void
+    {
+        $page = file_get_contents(resource_path('js/Pages/Sales/Create.vue'));
+        $dialog = file_get_contents(resource_path('js/Components/Sales/ConfirmSaleDialog.vue'));
+
+        $this->assertNotFalse($page);
+        $this->assertNotFalse($dialog);
+        $this->assertStringContainsString('@confirm="submit"', $page);
+        $this->assertStringContainsString('appointment_id: props.appointment?.id', $page);
+        $this->assertStringContainsString('errors.appointment', $page);
+        $this->assertStringContainsString('errors.removed_appointment_item_ids', $page);
+        $this->assertStringContainsString('type="button"', $dialog);
+        $this->assertStringContainsString('@click="emit(\'confirm\')"', $dialog);
+        $this->assertStringContainsString(':disabled="processing"', $dialog);
+    }
+
+    public function test_normal_sale_checkout_still_creates_one_sale_and_redirects_to_the_receipt(): void
+    {
+        $employee = $this->user('employee');
+        $service = $this->service('Pedicura', '250.00');
+        $token = (string) Str::uuid();
+
+        $response = $this->actingAs($employee)->post('/sales', [
+            'checkout_token' => $token,
+            'payment_method' => 'transfer',
+            'items' => [['service_id' => $service->id, 'quantity' => 1]],
+        ])->assertStatus(303);
+
+        $sale = Sale::query()->sole();
+        $response->assertRedirect(route('sales.receipt', $sale));
+        $this->assertSame('transfer', $sale->payments()->sole()->method);
+    }
+
     public function test_reserved_snapshots_repeated_lines_additions_quantity_and_confirmed_removal_are_preserved(): void
     {
         $owner = $this->user('owner');
@@ -154,8 +248,98 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->assertSame('90.00', $sale->total);
         $this->assertSame(5, $sale->total_services);
         $this->assertSame(['Servicio repetido', 'Servicio repetido', 'Adicional'], $sale->items->pluck('service_name')->all());
+        $this->assertSame(['Descripción de Servicio repetido', 'Descripción de Servicio repetido', 'Descripción de Adicional'], $sale->items->pluck('service_description')->all());
         $this->assertSame(['40.00', '20.00', '30.00'], $sale->items->pluck('line_total')->all());
         $this->assertSame([null, null, $additional->id], $sale->items->pluck('service_id')->all());
+    }
+
+    public function test_reserved_item_without_service_relation_uses_nullable_description_snapshot_and_catalog_for_addition(): void
+    {
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $reservedService = $this->service('Nombre original', '100.00');
+        $appointment = $this->appointment($owner, [$this->line($reservedService, $employee)]);
+        $reservedItem = $appointment->items()->sole();
+        $reservedItem->service_name = 'Snapshot reservado';
+        $reservedItem->service_description = null;
+        $reservedItem->duration_minutes = 45;
+        $reservedItem->unit_price = '780.00';
+        $reservedItem->line_total = '780.00';
+        $reservedItem->save();
+        $reservedService->delete();
+        $this->assertNull($reservedItem->fresh()->service_id);
+
+        $additional = $this->service('Catálogo actual', '25.00');
+        $payload = $this->checkoutPayload($appointment);
+        $payload['items'][] = [
+            'appointment_item_id' => null,
+            'service_id' => $additional->id,
+            'quantity' => 2,
+            'performed_by' => $employee->id,
+        ];
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
+        $this->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
+
+        $sale = Sale::query()->with(['items', 'payments'])->sole();
+        $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
+        $this->assertSame(1, $sale->payments->count());
+        $this->assertSame(2, $sale->items->count());
+        $this->assertSame('Snapshot reservado', $sale->items[0]->service_name);
+        $this->assertNull($sale->items[0]->service_description);
+        $this->assertSame('780.00', $sale->items[0]->unit_price);
+        $this->assertSame(45, $sale->items[0]->duration_minutes);
+        $this->assertNull($sale->items[0]->service_id);
+        $this->assertSame($reservedItem->id, $sale->items[0]->appointment_item_id);
+        $this->assertSame('Catálogo actual', $sale->items[1]->service_name);
+        $this->assertSame('Descripción de Catálogo actual', $sale->items[1]->service_description);
+        $this->assertSame('25.00', $sale->items[1]->unit_price);
+        $this->assertSame($additional->id, $sale->items[1]->service_id);
+        $this->assertDatabaseCount('sales', 1);
+
+        $this->get(route('sales.receipt', $sale))->assertInertia(fn (Assert $page) => $page
+            ->where('sale.items.0.service_name', 'Snapshot reservado')
+            ->where('sale.items.0.service_description', null)
+            ->where('sale.items.0.unit_price', '780.00')
+            ->where('sale.items.1.service_name', 'Catálogo actual'));
+    }
+
+    public function test_inactive_reserved_service_keeps_appointment_snapshots(): void
+    {
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $service = $this->service('Reservado', '150.00');
+        $appointment = $this->appointment($owner, [$this->line($service, $employee)]);
+        $service->update([
+            'name' => 'Nombre nuevo',
+            'description' => 'Descripción nueva',
+            'price' => '999.00',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $this->checkoutPayload($appointment))->assertStatus(303);
+
+        $item = SaleItem::query()->sole();
+        $this->assertSame('Reservado', $item->service_name);
+        $this->assertSame('Descripción de Reservado', $item->service_description);
+        $this->assertSame('150.00', $item->unit_price);
+        $this->assertSame(Appointment::STATUS_COMPLETED, $appointment->fresh()->status);
+    }
+
+    public function test_missing_required_reserved_snapshot_blocks_checkout_without_partial_sale(): void
+    {
+        $owner = $this->user('owner');
+        $employee = $this->user('employee');
+        $appointment = $this->appointment($owner, [$this->line($this->service('Reservado'), $employee)]);
+        DB::table('appointment_items')->where('appointment_id', $appointment->id)->update(['service_name' => '']);
+
+        $this->actingAs($owner)->post("/appointments/{$appointment->id}/checkout", $this->checkoutPayload($appointment))
+            ->assertSessionHasErrors(['items' => 'Un servicio reservado no conserva todos sus datos históricos. Corrige la cita antes de cobrar.']);
+
+        $this->assertSame(Appointment::STATUS_SCHEDULED, $appointment->fresh()->status);
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('sale_items', 0);
+        $this->assertDatabaseCount('sale_payments', 0);
     }
 
     public function test_reserved_line_cannot_disappear_without_explicit_confirmation(): void
@@ -173,7 +357,7 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->assertDatabaseCount('sales', 0);
     }
 
-    public function test_shared_checkout_requires_explicit_permission_without_changing_employee_role(): void
+    public function test_employee_preserves_shared_performers_and_additional_lines_are_forced_to_self(): void
     {
         $owner = $this->user('owner');
         $employee = $this->user('employee');
@@ -194,7 +378,6 @@ class Phase4DAppointmentCheckoutTest extends TestCase
         $this->post("/appointments/{$appointment->id}/checkout", $payload)->assertForbidden();
         $employee->givePermissionTo(Permissions::SALES_CHECKOUT_ANY);
         $this->post("/appointments/{$appointment->id}/checkout", $payload)->assertStatus(303);
-        $this->assertTrue($employee->fresh()->hasRole('employee'));
         $this->assertSame([$employee->id, $other->id, $employee->id], Sale::query()->firstOrFail()->items->pluck('performed_by')->all());
     }
 
@@ -567,6 +750,7 @@ class Phase4DAppointmentCheckoutTest extends TestCase
     {
         return [
             'checkout_token' => $token ?? (string) Str::uuid(),
+            'appointment_id' => $appointment->id,
             'payment_method' => $method,
             'items' => $appointment->items()->orderBy('position')->get()->map(fn ($item) => [
                 'appointment_item_id' => $item->id,

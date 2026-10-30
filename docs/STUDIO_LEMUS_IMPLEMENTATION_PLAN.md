@@ -8,6 +8,76 @@ Este documento define el orden operativo y los limites de las fases 2A a 2I, y r
 
 El modulo de Agenda y Citas se gobierna mediante `docs/STUDIO_LEMUS_APPOINTMENTS_PLAN.md`. Ese plan separado no modifica los estados, dependencias o aprobaciones de las fases actuales de este documento.
 
+El futuro modulo de Gastos y Nomina se disena en `docs/STUDIO_LEMUS_EXPENSES_PLAN.md`. Ese plan separado no modifica los estados, dependencias o aprobaciones vigentes de este documento.
+
+## Ganancias, Configuración y cierre diario por correo (2026-07-28)
+
+**Estado:** Implementado / En validación manual. **Despliegue:** No realizado.
+
+- Ganancias conserva `BuildSalesSummaryAction`, `BuildExpensesSummaryAction`, `BuildAppointmentProjectionAction`, filtros, periodo Honduras, anulaciones y privacidad. La interfaz ahora usa KPI con contexto, distribuciones compactas, rendimiento, participación, proyección, gastos y estados responsive. No se agregaron comisiones laborales porque no existe una fórmula aprobada en el dominio.
+- La consulta lenta de Ganancias dejó de materializar IDs sin límite: resultados diarios y métodos de pago usan `lazyById` en lotes de 500; las líneas solo se cargan para informes por empleado. La regresión automatizada cubre 1,005 ventas y evita el límite de variables SQLite.
+- Notificaciones expone `Marcar todo como leído` sobre el endpoint autenticado existente. Una sola actualización afecta solo al usuario actual; contador y filas cambian sin recarga, con carga, error recuperable, navegación segura y reinicio de estado al cambiar de sesión.
+- Configuración usa navegación interna para Usuarios y permisos, Servicios, Horario y Cierre diario. La sección persiste activación, `21:00`, `America/Tegucigalpa`, servidor SMTP, remitente, destinatarios, último estado/error, descarga e historial. La contraseña SMTP queda cifrada y nunca vuelve al frontend.
+- `daily_close_settings`, `daily_close_setting_events` y `daily_close_reports` separan configuración, auditoría e intentos. La clave idempotente de cierres programados combina trigger, fecha y destinatario; manual/prueba son solicitudes explícitas nuevas.
+- El PDF usa Dompdf, logo exclusivo optimizado, encabezado repetido, pie paginado, consultas selectivas y un máximo documentado de 250 filas por tabla de detalle; los agregados siempre incluyen todo el día. Se guarda exclusivamente en `storage/app/private/daily-closures` y se sirve con autorización, `nosniff` y `private, no-store`.
+- Cada destinatario tiene un historial independiente, pero todos reutilizan un único PDF por lote. El Mailable incluye un resumen financiero breve, adjunta el archivo privado por ruta y no expone destinatarios entre sí.
+- `studio:dispatch-daily-close-email` corre cada minuto y procesa el correo síncronamente, sin worker. `studio:send-daily-close-email --date=YYYY-MM-DD` permite operación manual y `--force` solo para un reenvío explícito.
+- Permisos nuevos: `daily_close.view`, `daily_close.manage`, `daily_close.send`, exclusivos de owner por defecto. Prueba y envío manual usan rate limit; cambios de configuración e identidad del solicitante quedan auditados.
+- En hosting compartido solo se ejecuta cada minuto `schedule:run`; el cierre no requiere worker permanente.
+- Pruebas cubren SMTP cifrado/oculto, destinatarios, PDF privado y adjunto, scheduler, idempotencia, comando manual, fallos sanitizados y ausencia de referencias funcionales a la integración retirada.
+
+## Horario de atención de Agenda (2026-07-28)
+
+- Se agregó la configuración persistida `business_hours` para los siete días ISO, sin afectar ventas, facturas, gastos ni nómina.
+- Owner y administrator reciben `settings.business_hours.manage`; employee queda excluido. La disponibilidad de Agenda ahora lee el horario diario persistido y mantiene configurable solo `APPOINTMENTS_SLOT_MINUTES`.
+- Las citas existentes permanecen intactas si se reduce o cierra un día; su detalle muestra una advertencia cuando quedan fuera del horario actual. La validación manual pendiente cubre guardar horas distintas por día, días cerrados, permisos y nueva cita/reprogramación en desktop y móvil.
+
+## Modulo Gastos - Fases 6A y 6B (2026-07-27)
+
+**Estado:** En pruebas / No. **Despliegue:** No realizado; pendiente de validacion manual.
+
+- Se implemento `/expenses` como modulo separado con categorias configurables, registro/edicion/anulacion auditados, filtros, paginacion, detalle y comprobantes privados. No se implemento nomina.
+- Las migraciones aditivas crean `expense_categories`, `expenses` y `expense_events`; los numeros `GA-000001` son unicos e inmutables y ningun registro financiero usa borrado fisico.
+- Owner recibe todos los permisos de Gastos; administrator recibe operacion y reporte salvo categorias; employee no recibe acceso por defecto.
+- Ganancias conserva sus resultados de ventas e incorpora Gastos pagados y Resultado disponible, con categorias, dias y metodos de gasto separados. Empleado/metodo de cobro siguen siendo filtros de ventas y no ocultan gastos generales.
+- Validacion PHP 8.3: 295 pruebas/2,821 aserciones, Pint, typecheck, build y `git diff --check` correctos. No se uso `migrate:fresh`, no se desplego y no se uso Git para versionar.
+- La fuente completa de decisiones, formulas, rutas, riesgos y pruebas manuales es `docs/STUDIO_LEMUS_EXPENSES_PLAN.md`. Los estados previos 2A-5A no cambian.
+
+## Nomina - Avance 6C (2026-07-27)
+
+**Estado:** En pruebas / No.
+
+- Los gastos de nomina se identifican por su relación autoritativa con `payroll_obligations.expense_id`, no por categoría. El scope centralizado exige `payroll.view` además de los permisos de Gastos para listado, detalle, adjunto, edición, anulación y resumen.
+- La migración aditiva `2026_07_27_110300_create_payroll_events_table.php` registra perfiles creados/cerrados y obligaciones generadas/pagadas/canceladas como eventos append-only con actor, instante UTC, valores mínimos y nota.
+- La autorizacion directa usa `EnsureExpenseIsVisible` antes de los Form Requests. Corrige el falso fallo `Call to a member function all() on array`, causado por una redireccion de validacion 302 cuyo contexto de prueba Laravel 13 trataba como `MessageBag` en `TestResponseAssert.php:81` aunque era array.
+- Contrato final: web normal 403 con pagina espanola; Inertia 403 con `Errors/Forbidden` y `X-Inertia`; JSON/fetch 403 JSON. El polling de notificaciones conserva JSON y `/notifications` conserva navegacion Inertia.
+- Verificacion PHP 8.3: PayrollAuditPrivacyTest 6/62, suite 301/2,883, Pint, typecheck, build y diff correctos. No se implementaron plantillas, notificacion de generacion, resumen por empleado ni nomina legal.
+
+## Gastos y Nomina - Cierre 6D/6E (2026-07-27)
+
+**Estado:** 6C, 6D y 6E En pruebas / No. **Despliegue:** No realizado.
+
+- Plantillas persistidas con CRUD autorizado, activacion/desactivacion, auditoria append-only y seeder idempotente de Uber, Almuerzo y Compra de materiales. El formulario solo precarga valores editables y nunca confirma automaticamente.
+- Generar una obligacion publica notificacion interna post-commit con dedupe por ID y `payroll.view`; dry-run, obligacion existente y rollback no publican.
+- Ganancias entrega Nomina pagada por empleado solo a usuarios salariales, usando gasto `recorded` y obligacion `paid`; pending/vencida se mantienen fuera del Resultado disponible.
+- Migracion nueva: `2026_07_27_110400_create_expense_template_events_table.php`. Rutas CRUD bajo `/expenses/templates`; permiso existente `expenses.manage_templates` permanece exclusivo de owner por defecto.
+- Verificacion PHP 8.3: migracion, seed y 65 rutas correctos; ExpenseTemplate 4/41, Payroll 9/125, Earnings 29/414, Notification 17/148 y suite 308/2,987. Pint, typecheck, build y diff correctos.
+- No se agregaron impuestos, deducciones, IHSS, RAP, prestaciones, horas extra, vacaciones, bonificaciones o recurrencia.
+
+## Reestructuracion financiera automatica (2026-07-27)
+
+**Estado:** En pruebas / No. **Despliegue:** No realizado.
+
+- Usuarios integra Informacion laboral en Crear/Editar: salario, contrato, pagos 15/fin de mes, metodo y automatizacion. Employee es obligatorio; owner/administrator pueden permanecer sin perfil. Cada cambio salarial crea historia y toda alta es transaccional.
+- Migraciones aditivas: `2026_07_27_120000_add_contract_and_automation_to_compensation_profiles.php` y `2026_07_27_120100_add_processing_errors_to_payroll_obligations.php`. Backfill conservador, sin modificar perfiles, gastos, salarios o ventas historicas.
+- `studio:process-payroll` procesa diariamente cuotas vencidas, recupera atrasos, respeta fin contractual, evita duplicados y crea el gasto real Nomina con metodo habitual. Un fallo conserva incidencia y auditoria sin gasto parcial.
+- `/expenses` contiene Todos/Nomina, resumen y obligaciones; `/payroll` solo redirige. Se retiro la entrada principal, la pagina independiente y el pago manual visible.
+- Plantillas rapidas quedaron legacy: tablas y tres filas conservadas, pero sin permiso, seeder, rutas, controlador, pagina o selector.
+- Ganancias no recibe props ni bloques salariales; Nomina participa como cualquier categoria recorded en gastos y resultado disponible.
+- Comando demo protegido para local/testing creo 1 employee, 20 ventas reales distribuidas en dos meses y cuatro gastos salariales mediante el procesador. Distribucion: 7 efectivo, 7 tarjeta y 6 transferencia. Credencial temporal no persistida en codigo/documentos.
+- Verificacion: migracion y seed correctos; 59 rutas; suite 312/2,993; Pint, typecheck, build y diff correctos. Datos locales finales: 33 ventas, 5 gastos, 4 obligaciones demo paid, 8 eventos salariales y 16 notificaciones para los destinatarios autorizados.
+- No se uso `migrate:fresh`, no se desplego y no se ejecuto `git add`, commit o push.
+
 ## Integración actual de Agenda y Citas (2026-07-24)
 
 - Gobierno y estados: `docs/STUDIO_LEMUS_APPOINTMENTS_PLAN.md` sigue siendo la fuente oficial. 4A está `Aprobada / Sí`; 4B, 4C, 4D, 4E y 4F están `En pruebas / No`. Esta integración no cambia estados, dependencias ni aprobaciones POS: 3A conserva `Aprobada / Sí`; 3B y 3B.1 conservan `En pruebas / No`; 3C-3E conservan `Pendiente / No`.
@@ -143,7 +213,7 @@ Cambio aprobado por el usuario el 2026-07-19. El roadmap 2B-2I se conserva como 
 - Navegacion: owner conserva Inicio, Nueva venta y Configuracion autorizada; employee inicia en `/sales/new` y solo ve Nueva venta; administrator inicia en Nueva venta cuando tiene permisos y usa su primera seccion de Configuracion si se retiran. `/cash` solo redirige a `/sales/new` para usuarios autorizados y no consulta ni modifica Caja.
 - Interfaz: `Sales/Create` incluye buscador, cards de servicios activos, carrito con multiples lineas, controles tactiles 1-50, total de servicios, total HNL, resumen sticky desktop, barra/bottom sheet movil y dialogo de confirmacion persistente durante proceso. No solicita cliente, impuestos, descuentos ni metodo de pago.
 - Recibo: vista Inertia independiente, basada exclusivamente en snapshots de `SaleItem`, con marca, numero, fecha/hora Honduras, vendedor, lineas, cantidades, precios, total de servicios, total, agradecimiento, botones Imprimir/Nueva venta y CSS `@page`/`@media print` para 80 mm. No usa PDF ni contiene datos fiscales inventados.
-- Permisos creados: `sales.access`, `sales.create`, `sales.view_own` y `sales.reprint`; owner, administrator y employee reciben los cuatro. Los permisos futuros `sales.view_all`, `sales.cancel`, `sales.apply_discount`, `reports.*` y `expenses.*` no se crearon. Seeders repetidos no duplican registros.
+- Permisos creados: `sales.access`, `sales.create`, `sales.view_own` y `sales.reprint`; owner, administrator y employee reciben los cuatro. Los permisos futuros `sales.view_all`, `sales.cancel`, `sales.apply_frequent_discount`, `reports.*` y `expenses.*` no se crearon. Seeders repetidos no duplican registros.
 - Retiro de Caja: se eliminaron la ruta POST de apertura, acción, excepción, Form Request, Resource, página, diálogo y prueba de concurrencia operativa. Quedan como legado sin uso `2026_07_19_120000_create_cash_sessions_table.php`, la tabla con su fila preexistente, `CashSession.php`, relaciones históricas de `User` y `CashController@index` exclusivamente como redirección. Los tres permisos `cash.*` permanecen como filas históricas en MySQL, pero ningún rol los tiene asignados y no autorizan rutas o navegación.
 - Pruebas: `php artisan test` directo fallo por `could not find driver`: 1 prueba paso y 58 terminaron con error SQLite. Cargando temporalmente `pdo_sqlite` y `sqlite3`, 59 pruebas y 279 aserciones pasaron. El INI temporal se elimino. La cobertura incluye permisos, landing, catalogo activo, validacion, consolidacion, calculo decimal, manipulacion, snapshots, rollback, idempotencia, recibos propios/ajenos, ausencia de Caja y seeders.
 - Build: `npm run build` correcto, 1,187 modulos transformados. Permanece la advertencia no bloqueante por chunks mayores de 500 kB.
@@ -422,7 +492,7 @@ Contenido minimo: marca, numero, fecha/hora, usuario que cobro, servicios, canti
 - Solo pueden venderse servicios activos.
 - Backend vuelve a consultar servicio, estado y precio dentro de la transaccion; ignora precios calculados por el navegador.
 - `sale_items` copia nombre, descripcion y precio unitario. Cambios o eliminaciones posteriores no alteran la venta.
-- MVP permite descuento fijo en HNL a nivel de venta solo con `sales.apply_discount`, con motivo obligatorio. Debe ser mayor que cero y menor que el subtotal. No hay descuento porcentual ni por linea.
+- MVP permite descuento fijo en HNL a nivel de venta solo con `sales.apply_frequent_discount`, con motivo obligatorio. Debe ser mayor que cero y menor que el subtotal. No hay descuento porcentual ni por linea.
 - Employee no recibe descuento por defecto.
 - No se permite cambiar precio unitario, conceptos manuales, servicios no configurados ni cortesias en el MVP. `sales.override_price` queda reservado y no se crea hasta aprobar esa funcionalidad.
 - Cantidad es entero positivo con limite operativo validado. El backend recalcula subtotal, descuento y total.
@@ -452,7 +522,7 @@ Recomendacion: cierre ciego. Primero se solicita efectivo contado; despues de co
 6. Modificar cantidad con controles tactiles y limites.
 7. Retirar servicios.
 8. Mostrar subtotal preliminar.
-9. Mostrar descuento solo con `sales.apply_discount`; exigir motivo.
+9. Mostrar descuento solo con `sales.apply_frequent_discount`; exigir motivo.
 10. Mostrar total preliminar.
 11. Abrir `PaymentDialog` sin perder carrito.
 12. Seleccionar efectivo, tarjeta o transferencia.
@@ -685,7 +755,7 @@ Leyenda: `Si` recomendado por defecto; `No` no asignar; `Opcional` asignacion di
 | `sales.view_detail` | Si | Si | Si | Requiere ademas alcance own/all |
 | `sales.reprint` | Si | Si | Si | Requiere ademas alcance de venta |
 | `sales.cancel` | Si | Si | No | Anular con motivo; nunca borrar |
-| `sales.apply_discount` | Si | Si | No | Descuento fijo y motivo |
+| `sales.apply_frequent_discount` | Si | Si | No | Descuento fijo y motivo |
 | `sales.override_price` | Si | No | No | Reservado; no crear en MVP |
 | `reports.sales.view` | Si | No | No | Ingresos brutos de ventas; asignable posteriormente a administrator |
 | `reports.cash.view` | Si | Si | No | Cierres/diferencias |
@@ -940,7 +1010,7 @@ Cobertura acumulativa obligatoria:
 
 **Migraciones conceptuales:** tablas `sales`, `sale_items`, `payments` con FKs, indices, unicos, decimales y sin soft deletes. Agregar `discount_reason` y `checkout_token` segun modelo conceptual.
 
-**Permisos:** crear `sales.view_detail`, `sales.reprint`, `sales.apply_discount`. Asignar detalle/reimpresion a los tres roles segun scope futuro; descuento a owner/admin, no employee. No crear `sales.override_price`.
+**Permisos:** crear `sales.view_detail`, `sales.reprint`, `sales.apply_frequent_discount`. Asignar detalle/reimpresion a los tres roles segun scope futuro; descuento a owner/admin, no employee. No crear `sales.override_price`.
 
 **Pruebas automaticas:** transaccion/rollback; montos y precios manipulados; inactivo/cambio de precio; caja cerrada; efectivo insuficiente/cambio; referencias; descuento autorizado/no autorizado; doble envio/token; dos usuarios; numero unico; snapshots; receipt autorizado; sesion expirada donde sea automatizable; unit tests de calculos; suite/build.
 

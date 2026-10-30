@@ -50,14 +50,15 @@ class ConfigurationAuthorizationTest extends TestCase
 
     public function test_owner_can_create_users(): void
     {
-        $this->actingAs($this->user('owner'))->post('/configuration/users', ['name' => 'Nueva', 'email' => 'nueva@example.com', 'password' => 'password123', 'password_confirmation' => 'password123', 'role' => 'employee', 'is_active' => true])->assertSessionHas('success');
+        $this->actingAs($this->user('owner'))->post('/configuration/users', [...$this->employeeData(), 'name' => 'Nueva', 'email' => 'nueva@example.com'])->assertSessionHas('success');
         $this->assertDatabaseHas('users', ['email' => 'nueva@example.com']);
     }
 
     public function test_administrator_can_create_normal_users_but_not_owners(): void
     {
         $admin = $this->user('administrator');
-        $this->actingAs($admin)->post('/configuration/users', ['name' => 'Normal', 'email' => 'normal@example.com', 'password' => 'password123', 'password_confirmation' => 'password123', 'role' => 'employee', 'is_active' => true])->assertSessionHas('success');
+        $this->actingAs($admin)->post('/configuration/users', ['name' => 'Normal', 'email' => 'normal@example.com', 'password' => 'password123', 'password_confirmation' => 'password123', 'role' => 'administrator', 'is_active' => true])->assertSessionHas('success');
+        $this->actingAs($admin)->post('/configuration/users', [...$this->employeeData(), 'name' => 'Empleada', 'email' => 'employee@example.com'])->assertForbidden();
         $this->actingAs($admin)->post('/configuration/users', ['name' => 'Owner', 'email' => 'owner@example.com', 'password' => 'password123', 'password_confirmation' => 'password123', 'role' => 'owner', 'is_active' => true])->assertForbidden();
     }
 
@@ -108,5 +109,16 @@ class ConfigurationAuthorizationTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->assertDatabaseCount('roles', 3);
         $this->assertDatabaseCount('permissions', count(Permissions::all()));
+    }
+
+    private function employeeData(): array
+    {
+        return [
+            'password' => 'password123', 'password_confirmation' => 'password123',
+            'role' => 'employee', 'is_active' => true, 'has_employment_profile' => true,
+            'monthly_salary' => '15000.00', 'contract_start_date' => '2026-07-01',
+            'is_indefinite' => true, 'contract_end_date' => null,
+            'default_payment_method' => 'transfer', 'auto_generate_payroll_expense' => true,
+        ];
     }
 }
