@@ -3,6 +3,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\deploy-hostinger-release.ps1 
 
 # Despliegue en Hostinger
 
+> Para la publicación de fidelidad/caja se utilizó el flujo revisado documentado en `docs/LOYALTY_CHECKOUT_RELEASE.md`: `scripts/build-reviewed-release.ps1` y `scripts/publish-reviewed-release.py`. No empaquete el `vendor` de desarrollo ni los cachés o SQLite locales con el constructor histórico. El dominio vigente es `steelblue-opossum-594306.hostingersite.com`; no reutilice rutas del dominio antiguo.
+
 Esta guia despliega Studio Lemus (Laravel 13, PHP 8.3 y MySQL) sin instalar Node.js en Hostinger. Los assets se compilan localmente y se publica `public/build` junto con el codigo.
 
 > La estabilizacion A-D agrega una migracion aditiva de anulacion de ventas. Antes de cualquier despliegue aprobado, respalde MySQL, confirme PHP CLI 8.3, ejecute `php artisan migrate --force` una sola vez y reconcilie que ventas, lineas, pagos, citas y adelantos existentes no cambiaron de cantidad. Nunca use `migrate:fresh` ni `migrate:rollback` a ciegas cuando existan ventas anuladas.

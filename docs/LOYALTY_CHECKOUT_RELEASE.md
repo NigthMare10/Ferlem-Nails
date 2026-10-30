@@ -17,7 +17,7 @@ Se revisaron `DESIGN.md` y las referencias Operate/Harden de Impeccable incluida
 
 La integración incluye los cambios remotos de `main`, no sustituye la rama por la copia local antigua. Se conservan los tests adicionales de gastos, nómina, cierre diario y ajustes de ventas.
 
-- PHP: **382 pruebas, 3,578 assertions**, sin fallos ni errores.
+- PHP: **383 pruebas, 3,582 assertions**, sin fallos ni errores.
 - Navegador: **20 pruebas** Chromium escritorio/móvil, incluidos cargos sin superposición, descuento, modal y reserva/entrega administrativa.
 - TypeScript/build y auditorías Composer/npm comprobados.
 - Cámara física, Safari y contención MySQL real no se simulan como aprobados.
@@ -29,3 +29,13 @@ El flujo aprobado usa `build-reviewed-release.ps1` y `publish-reviewed-release.p
 `deploy-reviewed-release.sh` crea y verifica respaldos privados de MySQL y archivos/storage antes de migrar. Conserva `.env`, APP_KEY, archivos privados y datos del negocio. Compara conteos existentes antes/después y realiza smoke tests públicos. No ejecuta seeders de demostración ni `migrate:fresh`.
 
 El resultado efectivo y la ruta del respaldo se registran al terminar la publicación; este documento por sí solo no certifica un deploy.
+
+## Resultado de publicación
+
+Publicación verificada en `https://steelblue-opossum-594306.hostingersite.com`: login administrativo y de clientas, registro y salud HTTP 200; 132 assets HTTP 200; rutas protegidas HTTP 302 al login y `.env` HTTP 403. Revisión móvil de las páginas públicas sin errores JavaScript ni desbordamiento horizontal. No se crearon cuentas de prueba en producción.
+
+Los conteos existentes antes/después coinciden: 4 usuarios, 30 servicios, 309 ventas, 421 líneas, 311 pagos, 326 citas, 432 segmentos, 2 adelantos, 0 gastos y 0 obligaciones de nómina.
+
+Respaldo de la primera publicación completa: `/home/u357586881/lemus-releases/release-20261030052157/backup`. Incluye dump comprimido, archivos/storage y hashes verificados; no está en el directorio público.
+
+Hostinger no dispone del comando `crontab` en esta cuenta SSH. Para ejecución desatendida debe configurarse en hPanel `php /home/u357586881/domains/steelblue-opossum-594306.hostingersite.com/studio-lemus/artisan loyalty:expire` cada cinco minutos. Como respaldo funcional, consultar el portal o intentar una nueva reserva libera los vencimientos globales: otra clienta no queda sin stock por una reserva ya vencida.

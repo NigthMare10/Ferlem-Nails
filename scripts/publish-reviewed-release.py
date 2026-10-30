@@ -39,7 +39,7 @@ def run(command):
     channel = transport.open_session()
     channel.exec_command(command)
     for line in channel.makefile():
-        print(line.decode().rstrip(), flush=True)
+        print((line.decode() if isinstance(line, bytes) else line).rstrip(), flush=True)
     errors = channel.makefile_stderr().read().decode()
     if errors:
         print(errors, flush=True)

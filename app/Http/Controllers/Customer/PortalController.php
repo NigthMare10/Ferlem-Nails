@@ -21,6 +21,7 @@ class PortalController extends Controller
     public function index(Request $request, LoyaltyService $loyalty)
     {
         $customer = auth('customer')->user();
+        $loyalty->expireDue();
         DB::transaction(function () use ($customer, $loyalty) {
             Customer::whereKey($customer->id)->lockForUpdate()->firstOrFail();
             $loyalty->expire($customer);

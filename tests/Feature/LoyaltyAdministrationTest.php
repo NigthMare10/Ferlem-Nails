@@ -17,6 +17,23 @@ class LoyaltyAdministrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_expired_stock_from_another_customer_is_released_on_next_reservation(): void
+    {
+        $this->seed(DatabaseSeeder::class);
+        $u = $this->owner();
+        $a = $this->customer();
+        $b = $this->customer();
+        $r = LoyaltyReward::create(['name' => 'Limited', 'points_cost' => 50, 'stock' => 1, 'per_customer_limit' => 1, 'is_active' => true]);
+        $service = app(LoyaltyService::class);
+        $first = $service->reserve($a, $r, (string) Str::uuid(), $u);
+        $first->update(['expires_at' => now()->subMinute()]);
+        $second = $service->reserve($b, $r, (string) Str::uuid(), $u);
+        $this->assertSame('expired', $first->fresh()->status);
+        $this->assertSame('reserved', $second->status);
+        $this->assertSame(200, (int) $a->entries()->sum('points'));
+        $this->assertSame(0, $r->fresh()->stock);
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -89,6 +106,6 @@ class LoyaltyAdministrationTest extends TestCase
         $this->post("/loyalty/redemptions/$b->id/cancel");
         $this->post("/loyalty/redemptions/$b->id/cancel");
         $this->assertSame(1, $r->fresh()->stock);
-        $this->assertSame(150,(int) $c->entries()->sum('points'));
+        $this->assertSame(150, (int) $c->entries()->sum('points'));
     }
 }

@@ -85,11 +85,22 @@ class LoyaltyService
         }
     }
 
+    public function expireDue(): void
+    {
+        LoyaltyRedemption::where('status', 'reserved')->where('expires_at', '<=', now())->orderBy('id')->chunkById(100, function ($rows) {
+            foreach ($rows as $redemption) {
+                $this->release($redemption, 'expired');
+            }
+        });
+    }
+
     public function reserve(Customer $customer, LoyaltyReward $reward, string $token, ?User $actor = null): LoyaltyRedemption
     {
         if ($actor) {
             abort_unless($actor->is_active && $actor->can('loyalty.manage') && $actor->can('loyalty.redeem'), 403);
         }
+
+        $this->expireDue();
 
         return DB::transaction(function () use ($customer, $reward, $token, $actor) {
             $customer = Customer::whereKey($customer->id)->lockForUpdate()->firstOrFail();
