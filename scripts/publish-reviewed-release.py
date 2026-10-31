@@ -22,7 +22,7 @@ with zipfile.ZipFile(args.archive) as archive:
     for name in names:
         if name.startswith('/') or '..' in name.split('/'):
             raise RuntimeError('Unsafe archive entry')
-        if name.startswith(('storage/', 'tests/', 'node_modules/')) or name.endswith(('.sqlite', '.sql')) or '/.env' in '/'+name or name.startswith('bootstrap/cache/') and name.endswith('.php') or name.endswith('LocalQaSeeder.php'):
+        if name.startswith(('storage/', 'tests/', 'node_modules/')) or name.endswith(('.sqlite', '.sql')) or '/.env' in '/'+name or name.startswith('bootstrap/cache/') and name.endswith('.php') or name.lower().endswith('qaseeder.php'):
             raise RuntimeError('Non-production content: '+name)
     if 'vendor/phpunit/phpunit/phpunit' in names:
         raise RuntimeError('Development dependencies in release')

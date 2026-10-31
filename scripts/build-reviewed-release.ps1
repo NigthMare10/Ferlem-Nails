@@ -13,8 +13,14 @@ foreach ($directory in @('app','config','resources','routes')) { Copy-Item (Join
 New-Item -ItemType Directory -Path "$stage/bootstrap/cache","$stage/database/migrations","$stage/database/seeders","$stage/database/factories","$stage/public" | Out-Null
 Get-ChildItem "$root/bootstrap" -File | Copy-Item -Destination "$stage/bootstrap"
 Get-ChildItem "$root/database/migrations" -File -Filter '*.php' | Copy-Item -Destination "$stage/database/migrations"
-Get-ChildItem "$root/database/seeders" -File -Filter '*.php' | Where-Object Name -ne 'LocalQaSeeder.php' | Copy-Item -Destination "$stage/database/seeders"
+Get-ChildItem "$root/database/seeders" -File -Filter '*.php' | Where-Object Name -notmatch 'QaSeeder\.php$' | Copy-Item -Destination "$stage/database/seeders"
 Copy-Item "$root/public/build" "$stage/public" -Recurse
+foreach ($directory in @('fonts','images')) {
+    if (Test-Path "$root/public/$directory/stitch") {
+        New-Item -ItemType Directory -Path "$stage/public/$directory" | Out-Null
+        Copy-Item "$root/public/$directory/stitch" "$stage/public/$directory" -Recurse
+    }
+}
 foreach ($file in @('index.php','.htaccess','favicon.ico','robots.txt')) { Copy-Item "$root/public/$file" "$stage/public" }
 foreach ($file in @('artisan','composer.json','composer.lock')) { Copy-Item "$root/$file" $stage }
 composer install --working-dir=$stage --no-dev --no-scripts --prefer-dist --optimize-autoloader --no-interaction

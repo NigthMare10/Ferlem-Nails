@@ -32,7 +32,7 @@ const fields = computed(() => [
               },
           ]
         : []),
-]);
+].filter(field => props.mode !== 'forgot' || field.name === 'email'));
 function submit() {
     const endpoint =
         props.mode === 'register'
@@ -71,7 +71,9 @@ function submit() {
                             ? 'Accede a tu espacio exclusivo'
                             : kind === 'register'
                               ? 'Únete a nuestro atelier exclusivo'
-                              : 'Ingresa tus datos para restablecer el acceso a tu cuenta.'
+                              : props.mode === 'forgot'
+                                ? 'Ingresa tu correo y te enviaremos un enlace seguro para restablecer tu contraseña.'
+                                : 'Elige tu nueva contraseña usando el enlace que recibiste por correo.'
                     }}
                 </p>
             </div>
@@ -137,7 +139,7 @@ function submit() {
                         :disabled="form.processing"
                     >
                         <span>{{
-                            form.processing ? 'Procesando…' : kind === 'login' ? 'Iniciar sesión' : kind === 'register' ? 'Crear cuenta' : 'Cambiar contraseña'
+                            form.processing ? 'Procesando…' : kind === 'login' ? 'Iniciar sesión' : kind === 'register' ? 'Crear cuenta' : props.mode === 'forgot' ? 'Enviar enlace de recuperación' : 'Cambiar contraseña'
                         }}</span
                         ><span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                     </button>

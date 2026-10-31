@@ -63,14 +63,10 @@ class AuthController extends Controller
 
     public function forgot(Request $request)
     {
-        $data = $request->validate(['email' => ['required', 'email'], 'password' => ['required', 'confirmed', PasswordRule::min(10)->letters()->numbers()]]);
-        $customer = Customer::where('email', strtolower(trim($data['email'])))->where('is_active', true)->first();
-        if (! $customer) {
-            throw ValidationException::withMessages(['email' => 'No se encontró una cuenta activa con ese correo.']);
-        }
-        $customer->forceFill(['password' => $data['password'], 'remember_token' => Str::random(60)])->save();
+        $data = $request->validate(['email' => ['required', 'email']]);
+        Password::broker('customers')->sendResetLink(['email' => strtolower(trim($data['email'])), 'is_active' => true]);
 
-        return redirect('/clientes/login')->with('success', 'Contraseña actualizada.');
+        return back()->with('success', 'Si existe una cuenta activa con ese correo, recibirás un enlace para restablecer tu contraseña.');
     }
 
     public function reset(Request $request)

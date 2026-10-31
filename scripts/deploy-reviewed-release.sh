@@ -8,6 +8,7 @@ case "$STAGE" in /home/u357586881/lemus-releases/release-*) ;; *) echo 'Invalid 
 BACKUP="$STAGE/backup"
 RELEASE="$STAGE/source"
 PATHS='app bootstrap config database resources routes vendor public artisan composer.json composer.lock'
+ASSET_PATHS='build fonts/stitch images/stitch'
 published=0
 maintenance=0
 finish() {
@@ -20,10 +21,12 @@ finish() {
                 mv "$BACKUP/live/$path" "$APP/$path"
             fi
         done
-        if [ -d "$BACKUP/public-build" ]; then
-            [ ! -d "$PUBLIC/build" ] || mv "$PUBLIC/build" "$STAGE/failed-public-build"
-            mv "$BACKUP/public-build" "$PUBLIC/build"
-        fi
+        for asset in $ASSET_PATHS; do
+            if [ -f "$BACKUP/asset-started-${asset//\//-}" ]; then
+                [ ! -e "$PUBLIC/$asset" ] || mv "$PUBLIC/$asset" "$STAGE/failed-public-${asset//\//-}"
+                [ ! -e "$BACKUP/public-assets/$asset" ] || mv "$BACKUP/public-assets/$asset" "$PUBLIC/$asset"
+            fi
+        done
         (cd "$APP" && php artisan config:clear && php artisan route:clear) || true
     fi
     if [ "$maintenance" -eq 1 ]; then (cd "$APP" && php artisan up) || true; fi
@@ -65,13 +68,18 @@ php artisan permission:cache-reset
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-php "$STAGE/metadata.php" "$APP" counts > "$BACKUP/after-counts.json"
+php "$STAGE/metadata.php" "$APP" counts "$BACKUP/before-counts.json" > "$BACKUP/after-counts.json"
 cmp "$BACKUP/before-counts.json" "$BACKUP/after-counts.json"
 echo 'Existing business row counts unchanged.'
-[ ! -d "$PUBLIC/build" ] || mv "$PUBLIC/build" "$BACKUP/public-build"
-cp -a "$APP/public/build" "$PUBLIC/build"
-find "$PUBLIC/build" -type d -exec chmod 755 {} \;
-find "$PUBLIC/build" -type f -exec chmod 644 {} \;
+for asset in $ASSET_PATHS; do
+    test -d "$APP/public/$asset"
+    mkdir -p "$(dirname "$BACKUP/public-assets/$asset")" "$(dirname "$PUBLIC/$asset")"
+    touch "$BACKUP/asset-started-${asset//\//-}"
+    [ ! -e "$PUBLIC/$asset" ] || mv "$PUBLIC/$asset" "$BACKUP/public-assets/$asset"
+    cp -a "$APP/public/$asset" "$PUBLIC/$asset"
+    find "$PUBLIC/$asset" -type d -exec chmod 755 {} \;
+    find "$PUBLIC/$asset" -type f -exec chmod 644 {} \;
+done
 chmod 600 "$APP/.env"
 php artisan up
 maintenance=0
