@@ -74,6 +74,7 @@ echo 'Existing business row counts unchanged.'
 for asset in $ASSET_PATHS; do
     test -d "$APP/public/$asset"
     mkdir -p "$(dirname "$BACKUP/public-assets/$asset")" "$(dirname "$PUBLIC/$asset")"
+    chmod 755 "$(dirname "$PUBLIC/$asset")"
     touch "$BACKUP/asset-started-${asset//\//-}"
     [ ! -e "$PUBLIC/$asset" ] || mv "$PUBLIC/$asset" "$BACKUP/public-assets/$asset"
     cp -a "$APP/public/$asset" "$PUBLIC/$asset"
@@ -83,7 +84,7 @@ done
 chmod 600 "$APP/.env"
 php artisan up
 maintenance=0
-for route in login clientes/login clientes/registro up; do
+for route in login clientes/login clientes/registro up fonts/stitch/font-0.woff2 images/stitch/home-0.webp; do
     code=$(curl -sS --max-time 30 -o "$STAGE/smoke-${route//\//-}.html" -w '%{http_code}' "https://steelblue-opossum-594306.hostingersite.com/$route")
     test "$code" = 200
     echo "Smoke /$route: $code"

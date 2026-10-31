@@ -17,3 +17,13 @@ Validación local:
 Se utilizan `scripts/build-reviewed-release.ps1` y `scripts/publish-reviewed-release.py`, con verificación de la clave del servidor y respaldo privado previo. No se copian datos de la otra PC ni se ejecutan seeders o el comando de reconfiguración de niveles en producción.
 
 El cron de hPanel sigue siendo necesario para ejecución desatendida; esta publicación no configura hPanel ni acredita pruebas físicas de cámara/Safari o entrega de correo real.
+
+## Resultado en Hostinger
+
+- Publicación SSH completada con las migraciones `000600`, `000700` y `000800`.
+- Respaldo privado verificado: `/home/u357586881/lemus-releases/release-20261031235219/backup`.
+- Los conteos de las tablas operativas, clientas y fidelidad existentes coinciden antes/después.
+- 151 assets compilados, fuentes e imágenes: HTTP 200.
+- Login, registro, recuperación y salud: HTTP 200. Las rutas administrativas sin sesión redirigen al login; `.env` devuelve 403.
+- Revisión pública a 390px sin errores JavaScript, HTTP de assets ni desbordamiento horizontal. La recuperación solo solicita correo; no muestra campos de contraseña antes de verificar el enlace.
+- Se detectó y corrigió un permiso 700 heredado de la máscara privada en las carpetas padre públicas `fonts` e `images`; ahora son 755. El script incluye la corrección y smoke tests de fuente/imagen para futuras publicaciones.
