@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Studio Lemus - Recompensas</title>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Fonts: Syne & Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Syne:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration Injection -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "primary-container": "#8a3b6e",
+            "on-secondary": "#332d40",
+            "on-surface": "#f5daf6",
+            "surface-container-lowest": "#17081b",
+            "on-tertiary-fixed": "#1b1b21",
+            "primary": "#ffaedc",
+            "on-tertiary": "#303036",
+            "on-background": "#f5daf6",
+            "on-surface-variant": "#d6c1ca",
+            "tertiary-fixed": "#e4e1e9",
+            "surface-tint": "#ffaedc",
+            "surface-container-highest": "#402f44",
+            "on-secondary-fixed": "#1e192a",
+            "secondary": "#ccc2db",
+            "outline": "#9e8c94",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "surface": "#1d0e21",
+            "inverse-primary": "#924275",
+            "primary-fixed-dim": "#ffaedc",
+            "secondary-fixed": "#e8def7",
+            "on-primary": "#5a1144",
+            "on-tertiary-container": "#d0cdd5",
+            "error-container": "#93000a",
+            "tertiary-fixed-dim": "#c8c5cd",
+            "surface-dim": "#1d0e21",
+            "on-primary-fixed": "#3c002c",
+            "tertiary-container": "#58575e",
+            "surface-container-high": "#352438",
+            "primary-fixed": "#ffd8eb",
+            "on-tertiary-fixed-variant": "#47464c",
+            "tertiary": "#c8c5cd",
+            "error": "#ffb4ab",
+            "surface-variant": "#402f44",
+            "surface-container": "#2a1a2d",
+            "secondary-fixed-dim": "#ccc2db",
+            "secondary-container": "#4c465a",
+            "outline-variant": "#52434a",
+            "on-secondary-fixed-variant": "#4a4457",
+            "on-primary-container": "#ffbae0",
+            "background": "#1d0e21",
+            "inverse-on-surface": "#3c2a3f",
+            "on-secondary-container": "#bdb4cc",
+            "surface-container-low": "#251629",
+            "on-primary-fixed-variant": "#762a5c",
+            "inverse-surface": "#f5daf6",
+            "surface-bright": "#453348"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "3rem",
+            "gutter-mobile": "1rem",
+            "gutter": "1.5rem",
+            "space-md": "1.25rem",
+            "space-xs": "0.375rem",
+            "space-lg": "2rem",
+            "space-sm": "0.75rem",
+            "space-xl": "3.5rem",
+            "margin-mobile": "1.25rem"
+          },
+          "fontFamily": {
+            "body-md": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "headline-xl-mobile": ["Syne"],
+            "headline-lg": ["Syne"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "headline-md": ["Syne"],
+            "headline-xl": ["Syne"],
+            "body-xl": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "display-lg": ["Syne"],
+            "display-lg-mobile": ["Syne"],
+            "body-lg": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0.01em", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "headline-xl-mobile": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-xl": ["18px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "display-lg": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "display-lg-mobile": ["38px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Custom liquid glass highlights and optical glow */
+    .liquid-glass-card {
+      background: rgba(45, 18, 54, 0.52);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow: 0 20px 48px -12px rgba(18, 5, 22, 0.8), 0 0 32px -8px rgba(138, 59, 110, 0.22), inset 0 1px 1px 0 rgba(255, 255, 255, 0.16);
+    }
+    .liquid-glass-card-interactive {
+      background: rgba(65, 26, 78, 0.55);
+      backdrop-filter: blur(32px);
+      -webkit-backdrop-filter: blur(32px);
+      box-shadow: 0 16px 40px -10px rgba(18, 5, 22, 0.85), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    .liquid-glass-nav {
+      background: rgba(37, 22, 41, 0.82);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      box-shadow: 0 -8px 32px rgba(29, 14, 33, 0.65), inset 0 1px 0 0 rgba(243, 240, 248, 0.12);
+    }
+    .specular-rim {
+      border: 1px solid rgba(243, 240, 248, 0.16);
+    }
+    .specular-rim-active {
+      border: 1px solid rgba(255, 174, 220, 0.35);
+    }
+    /* Hide scrollbar for tab pills */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface antialiased min-h-screen selection:bg-primary-container selection:text-on-primary-container font-body-md text-body-md overflow-x-hidden">
+<!-- Atmospheric Glow Backdrop Spheres -->
+<div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+<div class="absolute -top-32 -left-20 w-96 h-96 rounded-full bg-primary-container/25 blur-[120px]"></div>
+<div class="absolute top-1/3 -right-28 w-80 h-80 rounded-full bg-primary/10 blur-[130px]"></div>
+<div class="absolute bottom-24 left-1/4 w-88 h-88 rounded-full bg-primary-container/20 blur-[110px]"></div>
+</div>
+<!-- Mobile Shell Container -->
+<div class="relative z-10 max-w-md mx-auto min-h-screen flex flex-col pb-28">
+<!-- TOP APP BAR (Shared Component Anchor) -->
+<header class="bg-surface/70 dark:bg-surface/70 backdrop-blur-xl docked full-width top-0 sticky z-40 shadow-sm border-b border-outline-variant/30">
+<div class="flex justify-between items-center w-full px-5 py-3.5 max-w-md mx-auto">
+<!-- Leading: Client Profile Avatar in Frosted Ring -->
+<div class="flex items-center gap-3">
+<div class="relative w-9 h-9 rounded-full p-[1.5px] bg-gradient-to-tr from-primary/50 via-outline-variant to-secondary/30 shadow-inner">
+<div class="w-full h-full rounded-full overflow-hidden bg-surface-container-high border border-outline-variant/40 flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="Close up portrait photograph of an elegant atelier client with polished pearlescent skin and subtle chic jewelry, captured in soft muted editorial lighting against a deep plum and mauve backdrop in modern luxury beauty studio style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKuwNBERVHIVaF0DLBzhyAj-oAjVbqyJqiZn25pRnsKo22q7d6LX1dMq0BFFfMkoos40RLyiEmNcQA-LVnvwZm2wDdlBg7SldbNqhglmHanf3vxWkkEZ8_KmzBTRPnlmRbIvcKIdiHabxKeA1K9V4nsIDYZUL5DVftkgL0hOl80tTEjm00nvC-sXmAIuVqJzpATOMalwVxSBcKcD-YIVvukZBVQ9uVNJ9yEC0jrD2Agnx7-NQAovIeTs06AN29ikWHAcvw3BZlj8T8"/>
+</div>
+<span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-primary border-2 border-surface"></span>
+</div>
+<div>
+<span class="block text-label-sm font-label-sm text-on-surface-variant tracking-wider">ATELIER PRIVÉ</span>
+<span class="text-headline-md font-headline-md tracking-tight text-on-surface">Studio Lemus</span>
+</div>
+</div>
+<!-- Trailing: Notifications Bell Icon -->
+<button aria-label="Notificaciones" class="relative w-9 h-9 rounded-full flex items-center justify-center bg-surface-container/60 hover:text-primary active:scale-95 transition-transform duration-150 specular-rim text-on-surface-variant" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+<span class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+</button>
+</div>
+</header>
+<!-- MAIN CANVAS -->
+<main class="flex-1 px-5 pt-4 space-y-6">
+<!-- CABECERA: SALDO CANJEABLE HERO CARD -->
+<section class="liquid-glass-card specular-rim rounded-lg p-5 relative overflow-hidden">
+<!-- Inner Specular Arc Gradient -->
+<div class="absolute -right-10 -top-10 w-44 h-44 rounded-full bg-gradient-to-br from-primary/20 via-primary-container/10 to-transparent blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between relative z-10 mb-3">
+<div>
+<p class="text-label-sm font-label-sm text-secondary tracking-widest">MI PRIVILEGIO LEMUS</p>
+<h1 class="text-headline-xl-mobile font-headline-xl-mobile text-on-surface font-semibold tracking-tight mt-0.5">Saldo Canjeable</h1>
+</div>
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/40 border border-primary/30 backdrop-blur-md">
+<span class="material-symbols-outlined text-primary text-[14px]" data-icon="sparkles" data-weight="fill" style="font-variation-settings: 'FILL' 1;">arrow_back_ios_new</span>
+<span class="text-label-sm font-label-sm text-primary tracking-wide">Disponibles para canje</span>
+</div>
+</div>
+<!-- Big Balance Value -->
+<div class="flex items-baseline gap-2 relative z-10 my-1">
+<span class="text-display-lg-mobile font-display-lg-mobile text-on-surface font-bold tracking-tight">2,450</span>
+<span class="text-label-lg font-label-lg text-primary tracking-wider font-semibold">PTS ACUMULADOS</span>
+</div>
+<!-- Micro-Explicación de Condiciones -->
+<div class="mt-4 pt-3.5 border-t border-outline-variant/30 flex items-start gap-2.5 relative z-10">
+<span class="material-symbols-outlined text-secondary text-[18px] shrink-0 mt-0.5" data-icon="info">info</span>
+<p class="text-label-md font-label-md text-on-surface-variant leading-relaxed">
+            Las reservas tienen vigencia de 24 horas y el personal confirma la entrega física en tu visita al atelier.
+          </p>
+</div>
+</section>
+<!-- MIS CANJES ACTIVOS -->
+<section class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-3.5 rounded-full bg-primary"></span>
+<h2 class="text-label-lg font-label-lg text-on-surface font-semibold tracking-wide">Mis Canjes Activos</h2>
+</div>
+<span class="text-label-sm font-label-sm text-primary tracking-wider bg-surface-container px-2 py-0.5 rounded-full">1 ACTIVO</span>
+</div>
+<!-- Reserved Active Exchange Card -->
+<div class="liquid-glass-card-interactive specular-rim rounded-lg p-4 relative overflow-hidden border-l-4 border-l-primary">
+<div class="flex gap-3.5">
+<!-- Product Miniature -->
+<div class="w-20 h-20 rounded-DEFAULT overflow-hidden shrink-0 bg-surface-container-high border border-outline-variant/40 relative">
+<img class="w-full h-full object-cover" data-alt="Minimalist high end cosmetic glass dropper bottle containing golden botanical cuticle oil resting on smooth reflective dark plum stone with delicate lavender highlights and high gloss specular luster in an avant-garde luxury beauty aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqUYIdU7ys59R4kPw0G2HOaZSzDebn2BXEj9pykC7ktwXSDu3e8w7iGEXHWRQ-eVFJf-YmNx6gNeVWaXYSKTf8snstBY8GMhJQDRVQWCPCR76Aniq9Og8aP8l_vrIK5Y_THAL0UgmCeaJV0IfbZn6G0swU2DHm43nTECA6Vj_wuLToJMrIxAyUbJedwavUu22h1JCeYWprzecV14_bOlDIcc5GqpC1TH_xVduO3jVE9QwfJPTfIphCXCLvWn3kETvqoG7bDcOtL5ef"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/70 via-transparent to-transparent"></div>
+</div>
+<!-- Content Details -->
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-1">
+<span class="text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-primary-container/50 text-on-primary-container border border-primary/20">
+                    Reservado - Pendiente de entrega
+                  </span>
+</div>
+<h3 class="text-body-lg font-body-lg font-semibold text-on-surface mt-1 tracking-tight">Aceite Nutritivo Elixir Lemus</h3>
+<span class="text-label-md font-label-md text-primary font-medium">1,200 pts canjeados</span>
+</div>
+</div>
+</div>
+<!-- Countdown Strip -->
+<div class="mt-3.5 pt-3 border-t border-outline-variant/25 flex items-center justify-between bg-surface-container-low/40 -mx-4 -mb-4 px-4 py-2.5">
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="material-symbols-outlined text-[16px] text-primary" data-icon="schedule">schedule</span>
+<span class="text-label-sm font-label-sm font-medium">Vence en: <strong class="text-on-surface font-semibold">18h 42m</strong> (Válido hasta hoy 20:00h)</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[18px]" data-icon="qr_code_2">qr_code_2</span>
+</div>
+<!-- Micro note -->
+<p class="mt-3 text-label-sm font-label-sm text-on-surface-variant flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-outline" data-icon="verified_user">verified_user</span>
+            Presenta tu código QR o indícalo a tu especialista al llegar a tu cita para validar la entrega.
+          </p>
+</div>
+</section>
+<!-- CATÁLOGO DE RECOMPENSAS -->
+<section class="space-y-4">
+<div class="flex items-center justify-between pt-2">
+<div class="flex items-center gap-2">
+<span class="w-1.5 h-3.5 rounded-full bg-secondary"></span>
+<h2 class="text-headline-md font-headline-md text-on-surface tracking-tight">Catálogo de Recompensas</h2>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant tracking-wider">4 DISPONIBLES</span>
+</div>
+<!-- Filter Pill Chips -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 -mx-5 px-5">
+<!-- Active Filter Pill -->
+<button class="shrink-0 px-4 py-1.5 rounded-full bg-primary-container text-on-primary-container font-label-md text-label-md font-semibold specular-rim-active shadow-sm flex items-center gap-1" type="button">
+<span>Todas</span>
+</button>
+<!-- Inactive Filter Pills -->
+<button class="shrink-0 px-4 py-1.5 rounded-full bg-surface-container/60 hover:bg-surface-variant/40 text-on-surface-variant specular-rim font-label-md text-label-md hover:text-primary transition-colors duration-200" type="button">
+<span>Cuidados &amp; Spa</span>
+</button>
+<button class="shrink-0 px-4 py-1.5 rounded-full bg-surface-container/60 hover:bg-surface-variant/40 text-on-surface-variant specular-rim font-label-md text-label-md hover:text-primary transition-colors duration-200" type="button">
+<span>Acabados &amp; Nail Art</span>
+</button>
+<button class="shrink-0 px-4 py-1.5 rounded-full bg-surface-container/60 hover:bg-surface-variant/40 text-on-surface-variant specular-rim font-label-md text-label-md hover:text-primary transition-colors duration-200" type="button">
+<span>Productos Cabina</span>
+</button>
+</div>
+<!-- REWARD CARDS BENTO / STACK LIST -->
+<div class="space-y-4">
+<!-- CASO 1: Desbloqueada (2,100 pts) -->
+<article class="liquid-glass-card specular-rim rounded-lg p-4 transition-all duration-300 hover:border-primary/40 relative overflow-hidden group">
+<div class="flex gap-4">
+<!-- Visual Swatch / Photo -->
+<div class="w-24 h-28 rounded-DEFAULT overflow-hidden shrink-0 relative bg-surface-container-high border border-outline-variant/40">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Editorial macro photograph of manicured hands undergoing a luxury botanical rose and essential oil treatment in a dark plum serene spa atelier, fine water droplets glistening with pearlescent reflections under soft studio light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7D42H9CMvi5SYWGZlVjNOFDKmoeywo4eRamRSGBHaOPuGk5px00qU2wNxG4NtWPFwVsqzrN1SU0hpfzqg-y3DekWNbET-EIanLyfJ4nhsQWgxudq07ZPz012igc3PVtXGCqmFkKguocrYKOldZPnNCOhtjv93i2VqygaaW4yLuRauVPlk69j8Zl7hsbzs2a54gg8TgFb2SHR_3h2x-GBlSDM8VbBwD_CwwPfXYm-nlTXHLSdnPZczHfXksslNGeNHn8ziq_r4Sb56"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-transparent"></div>
+</div>
+<!-- Content and CTA -->
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-label-sm font-label-sm text-secondary tracking-widest uppercase">Cuidados &amp; Spa</span>
+<span class="inline-flex items-center gap-1 text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+<span class="material-symbols-outlined text-[12px]" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                      Listo para canjear
+                    </span>
+</div>
+<h3 class="text-body-lg font-body-lg font-semibold text-on-surface tracking-tight leading-snug">
+                    Spa de Cutículas &amp; Hidratación Esencial
+                  </h3>
+</div>
+<div class="mt-2 flex items-baseline justify-between">
+<div class="flex items-baseline gap-1">
+<span class="text-headline-md font-headline-md text-primary font-bold">2,100</span>
+<span class="text-label-sm font-label-sm text-secondary">pts</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant font-medium">Te quedan 350 pts</span>
+</div>
+</div>
+</div>
+<!-- Active Button -->
+<button class="mt-3.5 w-full py-2.5 px-4 rounded-full bg-gradient-to-r from-primary-container via-[#9e447e] to-primary text-on-surface font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(138,59,110,0.45)] hover:opacity-95 active:scale-[0.98] transition-all duration-150 specular-rim" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="lock_open">lock_open</span>
+<span>Reservar recompensa (24h)</span>
+</button>
+</article>
+<!-- CASO 2: Desbloqueada (1,800 pts) -->
+<article class="liquid-glass-card specular-rim rounded-lg p-4 transition-all duration-300 hover:border-primary/40 relative overflow-hidden group">
+<div class="flex gap-4">
+<!-- Visual Swatch / Photo -->
+<div class="w-24 h-28 rounded-DEFAULT overflow-hidden shrink-0 relative bg-surface-container-high border border-outline-variant/40">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Extreme close-up shot of almond-shaped designer nails with an iridescent aurora chrome shimmer glaze reflecting soft violet and mother-of-pearl undertones against a dark plum backdrop with high-gloss liquid glass highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZxEaISCmbcxyHt26Zdr5fiKhJdiFnoulKDZbwBqKw9xukAlXZ7UrriP7exPgdXr2C_iGRvomrMHbhJhMWz3JsnKkCY6VnUvyqfRFWdadUIsFbwi1t9rAZcefSfUMMEUHkQCMwgDA_xz07ESBWwagAGHt0tCUcC39CKORapl5QxentlTPDm4fUQ8rs9z_hprvJQIiMFV3yWK1oDsZw8iYvbf1IrP9SVXel-VgS8xjYb00STmny0uA3mZL2tFE7Dnt8YhJ5iO6tN7lY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-lowest/80 via-transparent to-transparent"></div>
+</div>
+<!-- Content and CTA -->
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-label-sm font-label-sm text-secondary tracking-widest uppercase">Acabados &amp; Nail Art</span>
+<span class="inline-flex items-center gap-1 text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
+<span class="material-symbols-outlined text-[12px]" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                      Listo para canjear
+                    </span>
+</div>
+<h3 class="text-body-lg font-body-lg font-semibold text-on-surface tracking-tight leading-snug">
+                    Esmaltado Semipermanente Acabado Aurora
+                  </h3>
+</div>
+<div class="mt-2 flex items-baseline justify-between">
+<div class="flex items-baseline gap-1">
+<span class="text-headline-md font-headline-md text-primary font-bold">1,800</span>
+<span class="text-label-sm font-label-sm text-secondary">pts</span>
+</div>
+<span class="text-label-sm font-label-sm text-on-surface-variant font-medium">Te quedan 650 pts</span>
+</div>
+</div>
+</div>
+<!-- Active Button -->
+<button class="mt-3.5 w-full py-2.5 px-4 rounded-full bg-gradient-to-r from-primary-container via-[#9e447e] to-primary text-on-surface font-label-lg text-label-lg font-semibold flex items-center justify-center gap-2 shadow-[0_4px_20px_rgba(138,59,110,0.45)] hover:opacity-95 active:scale-[0.98] transition-all duration-150 specular-rim" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="lock_open">lock_open</span>
+<span>Reservar recompensa (24h)</span>
+</button>
+</article>
+<!-- CASO 3: Faltan puntos - Bloqueada (2,800 pts) -->
+<article class="liquid-glass-card specular-rim rounded-lg p-4 opacity-90 relative overflow-hidden">
+<div class="flex gap-4">
+<!-- Visual Swatch / Photo -->
+<div class="w-24 h-28 rounded-DEFAULT overflow-hidden shrink-0 relative bg-surface-container-high border border-outline-variant/40 grayscale-[25%]">
+<img class="w-full h-full object-cover" data-alt="Artisanal glass dropper and frosted cosmetic jars containing botanical nail strengthening serum arranged elegantly over dark mineral stones with lavender undertones and delicate liquid refraction." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD32I7a1uc-vNik7xTFGok_V5lsjUesGGr-EQ95jrE-eiwRYnZqlmhj3z4rPKZTgTohdBSFc90pMxJqEeluVKKT3fyAkG9hGVnVv53DCdyzoQ82EKJIJSI-fP6dZYAqaK8Ezq7BRDVgRevpQpkfz7etgIsv_2ZJCLPuoip0NmnfDNmt5u97HennEP7m2omlVtViitt6VsxJBQnvznnu6dE5PKGsk99ZZMBN5OEznLksTqZYTB-ugOWPnoF5CCiRn8i_fr4nMUQHIRHK"/>
+<div class="absolute inset-0 bg-surface-container-lowest/50 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[22px]" data-icon="lock">lock</span>
+</div>
+</div>
+<!-- Content and Progress -->
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-label-sm font-label-sm text-outline tracking-widest uppercase">Productos Cabina</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
+                      Bloqueada
+                    </span>
+</div>
+<h3 class="text-body-lg font-body-lg font-semibold text-on-surface tracking-tight leading-snug">
+                    Set de Cuidado Botánico &amp; Sérum Fortalecedor
+                  </h3>
+</div>
+<div class="mt-2">
+<div class="flex items-baseline justify-between mb-1.5">
+<div class="flex items-baseline gap-1">
+<span class="text-headline-md font-headline-md text-on-surface-variant font-bold">2,800</span>
+<span class="text-label-sm font-label-sm text-outline">pts</span>
+</div>
+<span class="text-label-sm font-label-sm text-primary font-semibold">2,450 / 2,800 pts (87%)</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="h-full rounded-full bg-gradient-to-r from-primary-container to-primary" style="width: 87.5%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Disabled Button with Explicit Message -->
+<button class="mt-3.5 w-full py-2.5 px-4 rounded-full bg-surface-container/60 border border-outline-variant/30 text-on-surface-variant/80 font-label-md text-label-md font-medium flex items-center justify-center gap-2 cursor-not-allowed" disabled="" type="button">
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="lock">lock</span>
+<span>No disponible: Te faltan 350 pts para desbloquear</span>
+</button>
+</article>
+<!-- CASO 4: Faltan puntos - Bloqueada (3,500 pts) -->
+<article class="liquid-glass-card specular-rim rounded-lg p-4 opacity-80 relative overflow-hidden">
+<div class="flex gap-4">
+<!-- Visual Swatch / Photo -->
+<div class="w-24 h-28 rounded-DEFAULT overflow-hidden shrink-0 relative bg-surface-container-high border border-outline-variant/40 grayscale-[40%]">
+<img class="w-full h-full object-cover" data-alt="Avant-garde sculpted couture nails with organic 3D gel droplets and chrome mirror accents, captured with dramatic sculptural high fashion lighting in deep velvet plum atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnLH0ZX49KlNKoFD9gZrjrwiRt3cwlK1AHKFnKZJE2l02IdWrL9NfEChG509vl0U5M_CFS-jAYoRtMdVQzCm65J_0IfNKYgNho2koGgXKe7eBcJ_RMSRzRDcBNqr-w1ksO_ez4zp3xUHqlsU_opQClqF_ZNsu4wqeREeCuGMBvtDVxTN7v28EYEnmaTyEdmIMrk7BfXiss7AhxFZp8wtomCxMS27jYVrZTuNeJ9BuupMpbusUsC-upSuVlWhnfMJXAISecwcZFS2TT"/>
+<div class="absolute inset-0 bg-surface-container-lowest/60 flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant text-[22px]" data-icon="lock">lock</span>
+</div>
+</div>
+<!-- Content and Progress -->
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between gap-1 mb-1">
+<span class="text-label-sm font-label-sm text-outline tracking-widest uppercase">Acabados &amp; Nail Art</span>
+<span class="text-label-sm font-label-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
+                      Bloqueada
+                    </span>
+</div>
+<h3 class="text-body-lg font-body-lg font-semibold text-on-surface tracking-tight leading-snug">
+                    Manicura Esculpida &amp; Nail Art Couture
+                  </h3>
+</div>
+<div class="mt-2">
+<div class="flex items-baseline justify-between mb-1.5">
+<div class="flex items-baseline gap-1">
+<span class="text-headline-md font-headline-md text-on-surface-variant font-bold">3,500</span>
+<span class="text-label-sm font-label-sm text-outline">pts</span>
+</div>
+<span class="text-label-sm font-label-sm text-primary font-semibold">2,450 / 3,500 pts (70%)</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="h-full rounded-full bg-gradient-to-r from-primary-container to-primary" style="width: 70%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Disabled Button with Explicit Message -->
+<button class="mt-3.5 w-full py-2.5 px-4 rounded-full bg-surface-container/60 border border-outline-variant/30 text-on-surface-variant/80 font-label-md text-label-md font-medium flex items-center justify-center gap-2 cursor-not-allowed" disabled="" type="button">
+<span class="material-symbols-outlined text-[16px] text-outline" data-icon="lock">lock</span>
+<span>No disponible: Te faltan 1,050 pts</span>
+</button>
+</article>
+</div>
+</section>
+</main>
+<!-- BOTTOM NAVIGATION BAR (Shared Component Anchor) -->
+<!-- Destination count: 3 | Active destination: Recompensas -->
+<nav class="liquid-glass-nav fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 pb-6 max-w-md mx-auto rounded-t-2xl border-t border-outline-variant/30">
+<!-- Destino 1: Inicio (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-3 py-1.5 transition-all duration-200 hover:text-primary active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="sparkles">arrow_back_ios_new</span>
+<span class="text-label-sm font-label-sm mt-0.5">Inicio</span>
+</a>
+<!-- Destino 2: Recompensas (ACTIVE) -->
+<a class="flex flex-col items-center justify-center bg-primary-container/40 dark:bg-primary-container/40 text-on-primary-container dark:text-on-primary-container rounded-full px-4 py-1.5 transition-all duration-300 specular-rim-active active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px] text-primary" data-icon="workspace_premium" data-weight="fill" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span class="text-label-sm font-label-sm font-semibold text-primary mt-0.5">Recompensas</span>
+</a>
+<!-- Destino 3: Mi perfil (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-3 py-1.5 transition-all duration-200 hover:text-primary active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="person">person</span>
+<span class="text-label-sm font-label-sm mt-0.5">Mi perfil</span>
+</a>
+</nav>
+</div>
+</body></html>

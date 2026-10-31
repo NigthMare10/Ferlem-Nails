@@ -1,0 +1,90 @@
+﻿[
+    {
+        "slug":  "03-selector-servicios",
+        "source":  "projects/15003048259766237811/files/9313feb8fd97408c93e44423fbb65866"
+    },
+    {
+        "slug":  "04-pausar-premio",
+        "source":  "projects/15003048259766237811/files/463c66408b4644b1b96a1331b33869ba"
+    },
+    {
+        "slug":  "06-detalle-canje",
+        "source":  "projects/15003048259766237811/files/4f43aee9cb664bb0809e37ee227adf46"
+    },
+    {
+        "slug":  "07-confirmar-entrega",
+        "source":  "projects/15003048259766237811/files/a4b49189d33d4c739b2df2ca15f27f3f"
+    },
+    {
+        "slug":  "08-cancelar-reserva",
+        "source":  "projects/15003048259766237811/files/6669e532bd2645b1a3f2f4102ec6200b"
+    },
+    {
+        "slug":  "09-canje-vencido",
+        "source":  "projects/15003048259766237811/files/1493d7be7a4145ec87bed2ec45390ecb"
+    },
+    {
+        "slug":  "11-editar-nivel",
+        "source":  "projects/15003048259766237811/files/3786f5e92d764d6d9ffdd3669ca91008"
+    },
+    {
+        "slug":  "12-confirmar-niveles",
+        "source":  "projects/15003048259766237811/files/ad0c9c8321324ca8a883df695d8a90a5"
+    },
+    {
+        "slug":  "14-destinatarias",
+        "source":  "projects/15003048259766237811/files/6da0861fcd5b439d8d1ce3fda9279c06"
+    },
+    {
+        "slug":  "15-regalar-puntos",
+        "source":  "projects/15003048259766237811/files/dd5e1f13c8644776bd439194decb3e11"
+    },
+    {
+        "slug":  "16-regalar-servicio",
+        "source":  "projects/15003048259766237811/files/57f24a86c2884f96af77f66875b3237e"
+    },
+    {
+        "slug":  "17-confirmar-regalo",
+        "source":  "projects/15003048259766237811/files/b8da35c8502b4268a68e0c242d80d1e0"
+    },
+    {
+        "slug":  "18-resultado-lote",
+        "source":  "projects/15003048259766237811/files/af3dc212536344f0a489b26d58750990"
+    },
+    {
+        "slug":  "19-detalle-regalo",
+        "source":  "projects/15003048259766237811/files/9f2df04c3ff24e478cdecbaaf468accc"
+    },
+    {
+        "slug":  "20-entregar-regalo",
+        "source":  "projects/15003048259766237811/files/a5a458741e6943039f34ba59dfaa1931"
+    },
+    {
+        "slug":  "21-cancelar-regalo",
+        "source":  "projects/15003048259766237811/files/49848dc752104060b618bb393fb9f38a"
+    },
+    {
+        "slug":  "22-sin-premios",
+        "source":  "projects/15003048259766237811/files/1e80226eeb86470aaa80f25223b92be7"
+    },
+    {
+        "slug":  "23-editar-premio",
+        "source":  "projects/15003048259766237811/files/bc2da243f8a44af7946782cd4bb3ba0e"
+    },
+    {
+        "slug":  "24-descartar",
+        "source":  "projects/15003048259766237811/files/ab9e820f44454f78ab5f51fd7280b049"
+    },
+    {
+        "slug":  "25-premios-mobile",
+        "source":  "projects/15003048259766237811/files/55f3de2d72014bad98a3a3776b13eeb8"
+    },
+    {
+        "slug":  "26-historial-mobile",
+        "source":  "projects/15003048259766237811/files/14ff10c190244229872cf9101a5d175a"
+    },
+    {
+        "slug":  "27-clientas-mobile",
+        "source":  "projects/15003048259766237811/files/0eefeb99e750472db90f722dd0e3e375"
+    }
+]

@@ -1,0 +1,151 @@
+/* Continuous reflected light uses transforms/opacity; never animate the glass blur. */
+.customer-world [data-motion-reveal],
+.access-screen [data-motion-reveal] {
+    position: relative;
+}
+.customer-world [data-motion-sheen],
+.access-screen [data-motion-sheen] {
+    position: absolute;
+    pointer-events: none;
+    top: -20%;
+    left: 0;
+    width: 35%;
+    height: 150%;
+    background: linear-gradient(90deg, transparent, #fff5, transparent);
+    opacity: 0;
+}
+.customer-world .customer-bottom-nav a {
+    transition:
+        background-color 180ms ease,
+        color 180ms ease;
+}
+.customer-world .reward-collection-move {
+    transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.customer-world .reward-collection-enter-active {
+    transition:
+        transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 220ms ease;
+}
+.customer-world .reward-collection-leave-active {
+    transition: opacity 120ms ease;
+    position: absolute;
+    width: 100%;
+}
+.customer-world .reward-collection-enter-from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+}
+.customer-world .reward-collection-leave-to {
+    opacity: 0;
+}
+.customer-world dialog[open] .qr-sheet {
+    animation: lemus-pass-open 350ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.customer-world .feedback {
+    animation: lemus-feedback 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes lemus-pass-open {
+    from {
+        opacity: 0.2;
+        transform: translateY(26px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+@keyframes lemus-feedback {
+    from {
+        opacity: 0.3;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .customer-world *,
+    .access-screen * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+.stitch-screen[data-motion-paused] *,
+.stitch-screen[data-motion-paused] *::before,
+.stitch-screen[data-motion-paused] *::after {
+    animation: none !important;
+    transition: none !important;
+}
+@media (max-width: 600px) {
+    .customer-world [data-motion-sheen] {
+        height: 120%;
+    }
+}
+
+.customer-world .customer-ambient {
+    z-index: -1;
+}
+.customer-world .customer-ambient i {
+    filter: none;
+    background: radial-gradient(ellipse, #a5508840, #a5508810 45%, transparent 70%);
+    animation: lemus-ambient-drift 12s ease-in-out infinite alternate;
+}
+.customer-world .customer-ambient i:nth-child(2) {
+    background: radial-gradient(ellipse, #ccc2db26, transparent 70%);
+    animation-duration: 16s;
+    animation-delay: -6s;
+}
+.customer-world .customer-ambient i:nth-child(3) {
+    animation-duration: 19s;
+    animation-delay: -9s;
+}
+.customer-world [data-motion-sheen] {
+    animation: lemus-glass-reflection 7s ease-in-out infinite;
+    animation-play-state: paused;
+}
+.customer-world [data-loop-visible] > [data-motion-sheen] {
+    animation-play-state: running;
+}
+@keyframes lemus-ambient-drift {
+    from {
+        transform: translate(-22px, -20px) scale(0.94);
+        opacity: 0.55;
+    }
+    to {
+        transform: translate(32px, 38px) scale(1.12);
+        opacity: 1;
+    }
+}
+@keyframes lemus-glass-reflection {
+    0%,
+    12% {
+        transform: translateX(-160%) rotate(-18deg);
+        opacity: 0;
+    }
+    24% {
+        opacity: 0.28;
+    }
+    48%,
+    100% {
+        transform: translateX(420%) rotate(-18deg);
+        opacity: 0;
+    }
+}
+.customer-world[data-motion-user-paused] *,
+.customer-world[data-motion-user-paused] *::before,
+.customer-world[data-motion-user-paused] *::after,
+.customer-world[data-motion-paused] *,
+.customer-world[data-motion-paused] *::before,
+.customer-world[data-motion-paused] *::after {
+    animation-play-state: paused !important;
+}
+@media (prefers-reduced-motion: reduce) {
+    .customer-world *,
+    .customer-world *::before,
+    .customer-world *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}

@@ -9,7 +9,7 @@ export default defineConfig({
             input: ['resources/js/app.ts'],
             refresh: true,
         }),
-        vue(),
+        vue({ template: { transformAssetUrls: { includeAbsolute: false } } }),
         vuetify({ autoImport: true }),
     ],
     server: {

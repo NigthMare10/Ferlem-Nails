@@ -17,7 +17,8 @@ Route::prefix('clientes')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::post('verificar-email', [AuthController::class, 'resend'])->middleware('throttle:3,10');
         Route::get('verificar-email/{id}/{hash}', [AuthController::class, 'verify'])->middleware('signed')->name('customer.verification.verify');
-        foreach (['' => 'home', 'perfil' => 'profile', 'progreso' => 'progress', 'movimientos' => 'progress', 'citas' => 'appointments', 'recompensas' => 'rewards', 'canjes' => 'rewards'] as $uri => $section) {
+        Route::redirect('citas', '/clientes');
+        foreach (['' => 'home', 'perfil' => 'profile', 'progreso' => 'progress', 'movimientos' => 'progress', 'recompensas' => 'rewards', 'canjes' => 'rewards'] as $uri => $section) {
             Route::get($uri, [PortalController::class, 'index'])->defaults('section', $section);
         }
         Route::patch('perfil', [PortalController::class, 'update']);

@@ -8,6 +8,7 @@ use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\LoyaltyRedemption;
 use App\Models\LoyaltyReward;
+use App\Models\LoyaltyGiftRecipient;
 use App\Models\Sale;
 use App\Models\Service;
 use Illuminate\Http\Request;
@@ -22,24 +23,56 @@ class PortalController extends Controller
     {
         $customer = auth('customer')->user();
         $loyalty->expireDue();
+        app(\App\Actions\Loyalty\GiftService::class)->expireDue();
         DB::transaction(function () use ($customer, $loyalty) {
             Customer::whereKey($customer->id)->lockForUpdate()->firstOrFail();
             $loyalty->expire($customer);
         });
-        $entries = $customer->entries();
+        $summary = null;
+        $points = function () use ($customer, &$summary) {
+            return $summary ??= $customer->entries()->selectRaw('COALESCE(SUM(points), 0) as balance, COALESCE(SUM(qualifying_points), 0) as qualifying')->first();
+        };
+        $history = null;
+        $redemptionHistory = function () use ($customer, &$history) {
+            return $history ??= LoyaltyRedemption::where('customer_id', $customer->id)->where('status', '!=', 'reserved')
+                ->latest('id')->paginate(20, ['*'], 'canjes')->withQueryString();
+        };
 
         return Inertia::render('Customer/Portal', [
             'customer' => $customer->only('name', 'email', 'phone', 'birthday', 'created_at', 'email_verified_at'),
-            'balance' => $loyalty->balance($customer),
-            'qualifying' => (int) (clone $entries)->sum('qualifying_points'),
-            'visits' => Sale::where('customer_id', $customer->id)->where('status', 'completed')->count(),
-            'entries' => (clone $entries)->latest('id')->paginate(15),
-            'rewards' => LoyaltyReward::where('is_active', true)->orderBy('points_cost')->get(),
-            'redemptions' => LoyaltyRedemption::where('customer_id', $customer->id)->latest('id')->limit(30)->get(),
-            'appointments' => Appointment::where('customer_id', $customer->id)->select('id', 'scheduled_start', 'scheduled_end', 'status')->latest('scheduled_start')->limit(30)->get(),
-            'levels' => json_decode(DB::table('loyalty_settings')->where('id', 1)->value('levels'), true),
-            'favorites' => Service::whereIn('id', DB::table('customer_favorites')->where('customer_id', $customer->id)->select('service_id'))->get(['id', 'name']),
-            'services' => Service::where('is_active', true)->get(['id', 'name']),
+            'balance' => fn () => (int) $points()->balance,
+            'qualifying' => fn () => (int) $points()->qualifying,
+            'visits' => fn () => Sale::where('customer_id', $customer->id)->where('status', 'completed')->count(),
+            'entries' => fn () => $customer->entries()->latest('id')->paginate(15),
+            'rewards' => function () use ($customer) {
+                $usage = LoyaltyRedemption::where('customer_id', $customer->id)->whereIn('status', ['reserved', 'confirmed'])
+                    ->selectRaw('loyalty_reward_id, COUNT(*) as used')->groupBy('loyalty_reward_id')->pluck('used', 'loyalty_reward_id');
+
+                return LoyaltyReward::with('service:id,name')->where('is_active', true)->where(fn ($q) => $q->where('benefit_type', '!=', 'service')->orWhereHas('service', fn ($q) => $q->where('is_active', true)))->orderBy('points_cost')->get()
+                    ->map(fn ($reward) => [...$reward->attributesToArray(), 'name' => $reward->service?->name ?? $reward->name, 'used_by_customer' => (int) ($usage[$reward->id] ?? 0)]);
+            },
+            // Pending reservations must never disappear behind a truncated history.
+            'redemptions' => fn () => LoyaltyRedemption::where('customer_id', $customer->id)->where('status', 'reserved')->latest('id')->get()
+                ->concat($redemptionHistory()->items())->values(),
+            'redemption_history' => fn () => [
+                'current_page' => $redemptionHistory()->currentPage(),
+                'last_page' => $redemptionHistory()->lastPage(),
+                'total' => $redemptionHistory()->total(),
+                'next_page_url' => $redemptionHistory()->nextPageUrl(),
+                'prev_page_url' => $redemptionHistory()->previousPageUrl(),
+            ],
+            'gifts' => function () use ($customer) {
+                $query = LoyaltyGiftRecipient::where('customer_id', $customer->id)->with('batch:id,type,points,service_snapshot,reason,message,expires_at');
+                $history = (clone $query)->whereIn('status', ['credited', 'confirmed', 'cancelled', 'expired'])->latest('id')->paginate(20, ['*'], 'obsequios')->withQueryString();
+                $result = $history->toArray();
+                $result['data'] = (clone $query)->where('status', 'available')->latest('id')->get()->concat($history->items())->values()->toArray();
+
+                return $result;
+            },
+            'appointments' => Inertia::optional(fn () => Appointment::where('customer_id', $customer->id)->select('id', 'scheduled_start', 'scheduled_end', 'status')->latest('scheduled_start')->limit(30)->get()),
+            'levels' => fn () => json_decode(DB::table('loyalty_settings')->where('id', 1)->value('levels'), true),
+            'favorites' => Inertia::optional(fn () => Service::whereIn('id', DB::table('customer_favorites')->where('customer_id', $customer->id)->select('service_id'))->get(['id', 'name'])),
+            'services' => Inertia::optional(fn () => Service::where('is_active', true)->get(['id', 'name'])),
             'section' => $request->route()->defaults['section'] ?? 'profile',
             'has_avatar' => (bool) $customer->avatar_path,
         ]);
@@ -75,7 +108,11 @@ class PortalController extends Controller
     public function reserve(Request $request, LoyaltyReward $reward, LoyaltyService $loyalty)
     {
         $data = $request->validate(['operation_token' => ['required', 'uuid']]);
-        $loyalty->reserve(auth('customer')->user(), $reward, $data['operation_token']);
+        $reservation = $loyalty->reserve(auth('customer')->user(), $reward, $data['operation_token']);
+
+        if ($reservation->status !== 'reserved') {
+            return back()->with('success', 'Esta operación ya fue procesada. Consulta el estado en tus canjes anteriores.');
+        }
 
         return back()->with('success', 'Recompensa reservada por 24 horas. Preséntala al personal.');
     }

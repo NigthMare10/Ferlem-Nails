@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-10-30T18:54:13.042Z",
+  "sample": {
+    "cpuThrottle": 4,
+    "sampleWindowMs": 7200,
+    "viewport": "390x844",
+    "frames": 295,
+    "medianFrameMs": 16.700000000000273,
+    "p95FrameMs": 33.400000000000546,
+    "maxFrameMs": 50.100000000000364,
+    "longTasks": [],
+    "runningAfterSequence": 0,
+    "continuousAnimations": 5
+  },
+  "javascriptErrors": [],
+  "note": "Chromium desktop CPU throttling is not a physical low-end phone or a load/concurrency test."
+}

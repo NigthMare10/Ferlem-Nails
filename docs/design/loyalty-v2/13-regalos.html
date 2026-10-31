@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>APROBACION 13 - Regalos enviados</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&amp;family=Noto+Serif:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-dim": "#e9d5e0",
+            "secondary-container": "#f9cae4",
+            "on-tertiary-fixed": "#350a29",
+            "on-tertiary-container": "#ad7295",
+            "surface": "#fff7f9",
+            "inverse-on-surface": "#ffebf7",
+            "error": "#ba1a1a",
+            "on-primary-fixed-variant": "#593e53",
+            "on-primary-container": "#9a7b91",
+            "secondary-fixed": "#ffd8ed",
+            "on-background": "#231820",
+            "surface-variant": "#f1dde9",
+            "on-secondary": "#ffffff",
+            "error-container": "#ffdad6",
+            "surface-bright": "#fff7f9",
+            "secondary": "#78536a",
+            "primary-container": "#2a1426",
+            "on-primary": "#ffffff",
+            "on-error": "#ffffff",
+            "outline-variant": "#d0c3ca",
+            "primary": "#010001",
+            "inverse-surface": "#392d36",
+            "secondary-fixed-dim": "#e8b9d3",
+            "on-tertiary": "#ffffff",
+            "outline": "#7f747a",
+            "surface-tint": "#72566b",
+            "on-tertiary-fixed-variant": "#683656",
+            "surface-container-low": "#ffeff7",
+            "tertiary": "#010001",
+            "primary-fixed-dim": "#e0bcd5",
+            "on-error-container": "#93000a",
+            "tertiary-fixed": "#ffd8ec",
+            "tertiary-container": "#350a29",
+            "surface-container-high": "#f7e3ef",
+            "on-secondary-fixed-variant": "#5e3c51",
+            "on-secondary-container": "#775268",
+            "primary-fixed": "#fdd8f1",
+            "background": "#fff7f9",
+            "on-surface-variant": "#4d444a",
+            "inverse-primary": "#e0bcd5",
+            "surface-container": "#fde8f4",
+            "surface-container-lowest": "#ffffff",
+            "on-surface": "#231820",
+            "surface-container-highest": "#f1dde9",
+            "tertiary-fixed-dim": "#f6b3d9",
+            "on-secondary-fixed": "#2e1125",
+            "on-primary-fixed": "#2a1426"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-desktop": "2.5rem",
+            "space-sm": "0.5rem",
+            "space-lg": "1.5rem",
+            "space-xs": "0.25rem",
+            "gutter-mobile": "1rem",
+            "gutter-desktop": "1.5rem",
+            "margin-mobile": "1rem",
+            "gutter": "1.5rem",
+            "space-xl": "2.5rem",
+            "space-md": "1rem",
+            "margin": "2rem"
+          },
+          "fontFamily": {
+            "title-md": ["DM Sans"],
+            "headline-md": ["Noto Serif"],
+            "display-lg": ["Noto Serif"],
+            "headline-sm": ["Noto Serif"],
+            "label-md": ["DM Sans"],
+            "headline-lg-mobile": ["Noto Serif"],
+            "body-sm": ["DM Sans"],
+            "body-md": ["DM Sans"],
+            "label-sm": ["DM Sans"],
+            "body-lg": ["DM Sans"],
+            "label-lg": ["DM Sans"],
+            "headline-lg": ["Noto Serif"]
+          },
+          "fontSize": {
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "display-lg": ["40px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 20;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="h-full bg-[#f7f6f8] text-on-surface antialiased font-body-md text-body-md selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- Fixed Left Sidebar (272px) as specified in JSON and design hierarchy -->
+<aside class="fixed top-0 left-0 h-screen w-[272px] z-30 bg-surface-container-lowest border-r border-outline-variant flex flex-col justify-between p-space-md select-none overflow-y-auto"><div class="flex flex-col gap-y-4"><div class="flex items-center gap-3 px-space-sm py-2"><div aria-label="LEMUS Atelier monogram icon" class="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-headline-sm text-headline-sm shadow-sm">L</div><div class="flex flex-col"><span class="font-headline-md text-headline-md tracking-tight font-medium text-primary uppercase leading-tight">LEMUS Atelier</span><span class="font-label-md text-label-md text-outline">Directorio Operativo</span></div></div><nav aria-label="Navegación principal" class="flex flex-col space-y-3 mt-2"><div class="space-y-1"><div class="px-3 py-1 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Jornada</div><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#"><span class="material-symbols-outlined text-[20px]">home</span><span>Inicio</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#"><span class="material-symbols-outlined text-[20px]">calendar_today</span><span>Agenda</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#"><span class="material-symbols-outlined text-[20px]">history</span><span>Historial de citas</span></a></div><div class="space-y-1"><div class="px-3 py-1 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">Movimiento</div><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#"><span class="material-symbols-outlined text-[20px]">point_of_sale</span><span>Nueva venta</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span>Facturas</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#"><span class="material-symbols-outlined text-[20px]">payments</span><span>Gastos</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#"><span class="material-symbols-outlined text-[20px]">trending_up</span><span>Ganancias generales</span></a></div><div class="space-y-1"><div class="px-3 py-1 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold">El estudio</div><div class="text-on-surface rounded-lg px-space-md py-space-sm flex items-center justify-between font-label-md text-label-md font-semibold text-primary"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">settings</span><span>Configuración</span></div><span class="material-symbols-outlined text-[16px] text-outline">expand_less</span></div><div class="ml-6 pl-2.5 border-l border-outline-variant flex flex-col space-y-1 mt-1"><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md px-2.5 py-1.5 font-label-md text-label-md transition-colors" href="#">General</a><a class="bg-secondary-container text-on-secondary-container font-semibold rounded-md px-2.5 py-1.5 flex items-center justify-between font-label-md text-label-md" href="#"><span>Fidelidad y recompensas</span><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md px-2.5 py-1.5 font-label-md text-label-md transition-colors" href="#">Usuarios y permisos</a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md px-2.5 py-1.5 font-label-md text-label-md transition-colors" href="#">Servicios</a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-md px-2.5 py-1.5 font-label-md text-label-md transition-colors" href="#">Horario de atención</a></div></div></nav></div><div class="pt-4 border-t border-outline-variant"><a class="text-on-surface-variant hover:text-error hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#"><span class="material-symbols-outlined text-[20px]">logout</span><span>Cerrar sesión</span></a></div></aside>
+<!-- Main Canvas Area -->
+<div class="ml-[272px] min-h-screen flex flex-col bg-[#f7f6f8]">
+<!-- TopBar Shell -->
+<header class="sticky top-0 z-20 mx-space-md my-space-sm h-16 rounded-xl bg-surface-container-lowest border border-outline-variant shadow-sm px-space-lg flex items-center justify-between">
+<!-- Breadcrumb Path -->
+<nav aria-label="Breadcrumb" class="flex items-center gap-2 font-label-md text-label-md text-outline">
+<span class="hover:text-on-surface transition-colors cursor-pointer">Configuración</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-semibold">Fidelidad y recompensas</span>
+</nav>
+<!-- Trailing Cluster -->
+<div class="flex items-center gap-3"><button class="w-9 h-9 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="Notificaciones" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span></button><div class="h-6 w-[1px] bg-outline-variant mx-1"></div><div class="flex items-center gap-2.5 pl-1"><div aria-label="SD user avatar profile picture" class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-sm text-label-sm font-semibold border border-outline-variant">SD</div><div class="flex flex-col text-left"><span class="font-label-md text-label-md font-semibold text-primary leading-tight">Sofia Durón</span><span class="font-label-sm text-label-sm text-outline">Administradora</span></div></div></div>
+</header>
+<!-- Operational Main Content -->
+<main class="flex-1 px-margin-desktop py-4 flex flex-col gap-6 max-w-[1440px]">
+<!-- Module Tabs Segment (Premios, Historial, Niveles, Regalos) -->
+<div class="flex items-center justify-between border-b border-outline-variant">
+<div class="flex items-center gap-8 -mb-[1px]">
+<a class="pb-3 font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1.5" href="#">
+<span>Premios</span>
+<span class="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-surface-container text-secondary">4</span>
+</a>
+<a class="pb-3 font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+            Historial
+          </a>
+<a class="pb-3 font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface transition-colors" href="#">
+            Niveles
+          </a>
+<!-- Active Tab: Regalos -->
+<a class="pb-3 font-label-lg text-label-lg font-semibold text-primary border-b-2 border-primary-container flex items-center gap-1.5" href="#">
+<span>Regalos</span>
+</a>
+</div>
+<!-- Sample Data Indicator -->
+<div class="flex items-center gap-1.5 pb-2 text-outline font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#a37a92]"></span>
+<span>Datos de ejemplo</span>
+</div>
+</div>
+<!-- Hero Header & Primary Action -->
+<div class="flex items-start justify-between">
+<div class="space-y-1">
+<h1 class="font-headline-lg text-headline-lg font-normal text-primary tracking-tight">
+            Regalos para tus clientas
+          </h1>
+<p class="font-body-md text-body-md text-outline">
+            Puntos o servicios de cortesía, sin costo de canje
+          </p>
+</div>
+<!-- Primary Action Button (+ Crear regalo) -->
+<button class="h-11 px-5 rounded-xl bg-primary-container hover:bg-[#3e1e38] active:bg-[#1f0e1c] text-on-primary font-label-lg text-label-lg flex items-center gap-2 shadow-sm transition-all duration-150" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>Crear regalo</span>
+</button>
+</div>
+<!-- Filters Toolbar -->
+<div class="bg-surface-container-lowest p-3.5 rounded-2xl border border-outline-variant shadow-sm flex items-center justify-between gap-4">
+<!-- Search Input -->
+<div class="relative flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="w-full h-11 pl-10 pr-4 bg-white border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary-container focus:ring-2 focus:ring-[#a37a92]/20 outline-none transition-all" placeholder="Buscar por código, clienta o motivo..." type="text"/>
+</div>
+<!-- Filter Selectors -->
+<div class="flex items-center gap-3">
+<!-- Type Filter -->
+<div class="flex items-center gap-2">
+<label class="font-label-sm text-label-sm text-outline" for="filter-type">Tipo:</label>
+<select class="h-11 px-3.5 bg-white border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface focus:border-primary-container focus:ring-2 focus:ring-[#a37a92]/20 outline-none transition-all cursor-pointer" id="filter-type">
+<option>Todos</option>
+<option>Puntos</option>
+<option>Servicios</option>
+</select>
+</div>
+<!-- Status Filter -->
+<div class="flex items-center gap-2">
+<label class="font-label-sm text-label-sm text-outline" for="filter-status">Estado:</label>
+<select class="h-11 px-3.5 bg-white border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface focus:border-primary-container focus:ring-2 focus:ring-[#a37a92]/20 outline-none transition-all cursor-pointer" id="filter-status"><option>Todos</option><option>Completado</option><option>Parcial</option><option>En proceso</option></select>
+</div>
+</div>
+</div>
+<!-- Ledger Table Surface -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-sm overflow-hidden flex flex-col">
+<div class="overflow-x-auto">
+<table class="w-full border-collapse text-left"><thead><tr class="h-11 border-b border-outline-variant bg-[#fbf9fa]"><th class="pl-6 pr-4 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold" scope="col">Lote / fecha</th><th class="px-4 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold" scope="col">Regalo / valor</th><th class="px-4 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold" scope="col">Destinatarias / total</th><th class="px-4 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold" scope="col">Motivo</th><th class="px-4 font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold" scope="col">Estado</th><th class="pl-4 pr-6 text-right font-label-sm text-label-sm uppercase tracking-wider text-outline font-semibold" scope="col">Acción</th></tr></thead><tbody class="divide-y divide-outline-variant/50"><tr class="h-[58px] hover:bg-[#fbfafb] transition-colors group"><td class="pl-6 pr-4 whitespace-nowrap"><div class="font-label-md text-label-md font-semibold text-primary">REG-2026-089</div><div class="font-body-sm text-body-sm text-outline">24 Mar 2026</div></td><td class="px-4 whitespace-nowrap"><div class="font-body-md text-body-md font-medium text-primary">200 pts por clienta</div><div class="font-body-sm text-body-sm text-outline">Bono fidelidad</div></td><td class="px-4 whitespace-nowrap font-body-md text-body-md text-on-surface"><span class="font-medium text-primary">3 clientas</span><span class="text-outline text-body-sm block text-xs">(600 pts total)</span></td><td class="px-4 font-body-md text-body-md text-on-surface">Aniversario de fidelidad</td><td class="px-4 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#eef4f0] text-[#274836] border border-[#274836]/20">Completado</span></td><td class="pl-4 pr-6 whitespace-nowrap text-right"><button class="h-8 px-3 rounded-lg text-primary hover:bg-[#a37a92]/10 font-label-md text-label-md font-semibold transition-colors" type="button">Ver detalle</button></td></tr><tr class="h-[58px] hover:bg-[#fbfafb] transition-colors group"><td class="pl-6 pr-4 whitespace-nowrap"><div class="font-label-md text-label-md font-semibold text-primary">REG-2026-088</div><div class="font-body-sm text-body-sm text-outline">22 Mar 2026</div></td><td class="px-4 whitespace-nowrap"><div class="font-body-md text-body-md font-medium text-primary">Spa de manos</div><div class="font-body-sm text-body-sm text-outline">(Sin costo)</div></td><td class="px-4 whitespace-nowrap font-body-md text-body-md text-on-surface"><span class="font-medium text-primary">2 clientas</span><span class="text-outline text-body-sm block text-xs">(2 servicios)</span></td><td class="px-4 font-body-md text-body-md text-on-surface">Cortesía por reapertura</td><td class="px-4 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-surface-container-high text-on-secondary-container border border-secondary-container">Parcial</span></td><td class="pl-4 pr-6 whitespace-nowrap text-right"><button class="h-8 px-3 rounded-lg text-primary hover:bg-[#a37a92]/10 font-label-md text-label-md font-semibold transition-colors" type="button">Ver detalle</button></td></tr><tr class="h-[58px] hover:bg-[#fbfafb] transition-colors group"><td class="pl-6 pr-4 whitespace-nowrap"><div class="font-label-md text-label-md font-semibold text-primary">REG-2026-085</div><div class="font-body-sm text-body-sm text-outline">18 Mar 2026</div></td><td class="px-4 whitespace-nowrap"><div class="font-body-md text-body-md font-medium text-primary">Pedicura spa</div><div class="font-body-sm text-body-sm text-outline">(Sin costo)</div></td><td class="px-4 whitespace-nowrap font-body-md text-body-md text-on-surface"><span class="font-medium text-primary">1 clienta</span><span class="text-outline text-body-sm block text-xs">(1 servicio)</span></td><td class="px-4 font-body-md text-body-md text-on-surface">Regalo exclusivo VIP</td><td class="px-4 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#eef4f0] text-[#274836] border border-[#274836]/20">Completado</span></td><td class="pl-4 pr-6 whitespace-nowrap text-right"><button class="h-8 px-3 rounded-lg text-primary hover:bg-[#a37a92]/10 font-label-md text-label-md font-semibold transition-colors" type="button">Ver detalle</button></td></tr><tr class="h-[58px] hover:bg-[#fbfafb] transition-colors group"><td class="pl-6 pr-4 whitespace-nowrap"><div class="font-label-md text-label-md font-semibold text-primary">REG-2026-072</div><div class="font-body-sm text-body-sm text-outline">05 Mar 2026</div></td><td class="px-4 whitespace-nowrap"><div class="font-body-md text-body-md font-medium text-primary">150 pts por clienta</div><div class="font-body-sm text-body-sm text-outline">Bono campaña</div></td><td class="px-4 whitespace-nowrap font-body-md text-body-md text-on-surface"><span class="font-medium text-primary">5 clientas</span><span class="text-outline text-body-sm block text-xs">(750 pts total)</span></td><td class="px-4 font-body-md text-body-md text-on-surface">Campaña Primavera</td><td class="px-4 whitespace-nowrap"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-surface-container text-secondary border border-outline-variant/40">En proceso</span></td><td class="pl-4 pr-6 whitespace-nowrap text-right"><button class="h-8 px-3 rounded-lg text-primary hover:bg-[#a37a92]/10 font-label-md text-label-md font-semibold transition-colors" type="button">Ver detalle</button></td></tr></tbody></table>
+</div>
+<!-- Ledger Footer Pagination Information -->
+<div class="px-6 py-3.5 border-t border-outline-variant bg-[#fbf9fa] flex items-center justify-between">
+<p class="font-body-sm text-body-sm text-outline">
+            Mostrando 1-4 de 4 lotes de regalos
+          </p>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-outline/50 cursor-not-allowed" disabled="" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<span class="px-2 font-label-md text-label-md font-semibold text-primary">1</span>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-outline/50 cursor-not-allowed" disabled="" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

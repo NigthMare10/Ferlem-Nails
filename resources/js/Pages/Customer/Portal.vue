@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { computed, onUnmounted, ref, watch } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import CustomerLayout from '../../Layouts/CustomerLayout.vue';
-import {redemptionLabels} from '../../utils/loyalty';
+import MemberHome from '../../Components/Customer/MemberHome.vue';
+import MemberProfile from '../../Components/Customer/MemberProfile.vue';
+import MemberRewards from '../../Components/Customer/MemberRewards.vue';
+import MemberGifts from '../../Components/Customer/MemberGifts.vue';
+import { useLoyaltyRefresh } from '../../composables/useLoyaltyRefresh';
 const props = defineProps<{
     customer: any;
     balance: number;
@@ -11,6 +15,8 @@ const props = defineProps<{
     entries: any;
     rewards: any[];
     redemptions: any[];
+    redemption_history?: any;
+    gifts?: any;
     appointments: any[];
     levels: Array<{ name: string; points: number; benefits: string }>;
     favorites: any[];
@@ -18,31 +24,44 @@ const props = defineProps<{
     section: string;
     has_avatar: boolean;
 }>();
-const level = computed(() => [...props.levels].reverse().find((l) => props.qualifying >= l.points) ?? props.levels[0]);
-const nextLevel = computed(() => props.levels.find((l) => l.points > props.qualifying));
+useLoyaltyRefresh(() => [
+    ...props.redemptions,
+    ...(props.gifts?.data ?? [])
+        .filter((g: any) => g.status === 'available' && g.batch.expires_at)
+        .map((g: any) => ({ status: 'reserved', expires_at: g.batch.expires_at })),
+]);
+const levels = computed(() => [...props.levels].sort((a, b) => a.points - b.points));
+const level = computed(() => [...levels.value].reverse().find((l) => props.qualifying >= l.points) ?? levels.value[0]);
+const nextLevel = computed(() => levels.value.find((l) => l.points > props.qualifying));
 const progress = computed(() =>
-    nextLevel.value
-        ? Math.min(100, (100 * (props.qualifying - level.value.points)) / (nextLevel.value.points - level.value.points))
+    nextLevel.value && level.value
+        ? Math.max(0, Math.min(100, (100 * (props.qualifying - level.value.points)) / (nextLevel.value.points - level.value.points)))
         : 100,
 );
-const profile = useForm({
-    name: props.customer.name,
-    phone: props.customer.phone ?? '',
-    birthday: props.customer.birthday ?? '',
-});
-const avatar = useForm({ photo: null as File | null });
-const avatarUrl = ref('/clientes/foto?v=' + Date.now());
-const canje = useForm({ operation_token: crypto.randomUUID() });
+const nextReward = computed(() => props.rewards.find((r) => r.points_cost > props.balance) ?? props.rewards[0]);
+const qrDialog = ref<HTMLDialogElement>();
 const qrImage = ref('');
 const qrCode = ref('');
 const qrError = ref('');
 const qrBusy = ref(false);
-const settings = ref(false);
-const date = (value: string) =>
-    new Intl.DateTimeFormat('es-HN', { dateStyle: 'medium', timeZone: 'America/Tegucigalpa' }).format(new Date(value));
+const remaining = ref(0);
+const qrLifetime = ref(300);
+const qrTime = computed(() => `${Math.floor(remaining.value / 60)}:${String(remaining.value % 60).padStart(2, '0')}`);
+let timer: ReturnType<typeof setInterval> | undefined;
+function closeQr() {
+    qrDialog.value?.close();
+    if (timer) clearInterval(timer);
+    qrImage.value = '';
+    qrCode.value = '';
+    remaining.value = 0;
+}
+onUnmounted(closeQr);
+watch(() => props.section, closeQr);
 async function qr() {
+    if (qrBusy.value) return;
     qrBusy.value = true;
     qrError.value = '';
+    const requestedAt = Date.now();
     try {
         const response = await fetch('/clientes/qr', {
             method: 'POST',
@@ -58,506 +77,393 @@ async function qr() {
                 Accept: 'application/json',
             },
         });
-        if (!response.ok) throw new Error('Verifica tu correo e inténtalo de nuevo.');
+        if (!response.ok) throw new Error();
         const data = await response.json();
         const QR = await import('qrcode');
-        qrImage.value = await QR.toDataURL(data.token, { width: 280, margin: 2 });
+        qrImage.value = await QR.toDataURL(data.token, { width: 560, margin: 4, errorCorrectionLevel: 'M', color: { dark: '#24122cff', light: '#ffffffff' } });
         qrCode.value = data.token;
-    } catch (error) {
-        qrError.value = String(error);
+        qrLifetime.value = data.expires_in;
+        const expires = requestedAt + data.expires_in * 1000;
+        remaining.value = Math.max(0, Math.ceil((expires - Date.now()) / 1000));
+        if (timer) clearInterval(timer);
+        timer = setInterval(() => {
+            remaining.value = Math.max(0, Math.ceil((expires - Date.now()) / 1000));
+            if (!remaining.value) {
+                qrImage.value = '';
+                qrCode.value = '';
+                if (timer) clearInterval(timer);
+            }
+        }, 1000);
+        qrDialog.value?.showModal();
+    } catch {
+        qrDialog.value?.close();
+        qrError.value = 'No pudimos generar tu QR. Verifica tu correo y vuelve a intentarlo.';
     } finally {
         qrBusy.value = false;
     }
 }
-function reserve(reward: any) {
-    if (canje.processing) return;
-    canje.operation_token = crypto.randomUUID();
-    canje.post(`/clientes/recompensas/${reward.id}/canjes`, { preserveScroll: true });
-}
+const date = (value: string) => new Intl.DateTimeFormat('es-HN', { dateStyle: 'medium', timeZone: 'America/Tegucigalpa' }).format(new Date(value));
 </script>
 <template>
-    <Head title="Mi perfil Lemus" /><CustomerLayout>
-        <VAlert v-if="!customer.email_verified_at" type="info" class="mb-5"
-            >Verifica tu correo para mostrar tu QR y canjear recompensas.<VBtn
-                variant="text"
-                @click="router.post('/clientes/verificar-email')"
-                >Reenviar correo</VBtn
-            ></VAlert
-        >
-        <template v-if="['home', 'profile'].includes(section)">
-            <section class="member">
-                <img
-                    v-if="has_avatar"
-                    class="member-avatar"
-                    :src="avatarUrl"
-                    alt="Mi foto de perfil"
-                    style="object-fit: cover"
-                />
-                <div v-else class="member-avatar">{{ customer.name.slice(0, 1) }}</div>
+    <Head :title="section === 'rewards' ? 'Recompensas' : section === 'profile' ? 'Mi perfil' : 'Mi espacio Lemus'" />
+    <CustomerLayout>
+        <div v-if="!customer.email_verified_at" class="feedback" role="status">
+            Verifica tu correo para mostrar tu QR y reservar recompensas.
+            <button type="button" class="verification-button" @click="router.post('/clientes/verificar-email')">Reenviar correo</button>
+        </div>
+        <p v-if="qrError" class="feedback feedback-error" role="alert">{{ qrError }}</p>
+        <MemberGifts v-if="section === 'rewards'" :gifts="gifts" />
+        <p v-if="section === 'home' && gifts?.data?.length" class="feedback">
+            <Link href="/clientes/recompensas#gift-heading">Consulta tus regalos en Recompensas →</Link>
+        </p>
+        <MemberHome
+            v-if="section === 'home'"
+            :customer="customer"
+            :balance="balance"
+            :qualifying="qualifying"
+            :visits="visits"
+            :level="level"
+            :next-level="nextLevel"
+            :progress="progress"
+            :reward="nextReward"
+            :qr-busy="qrBusy"
+            @qr="qr"
+        />
+        <MemberProfile v-else-if="section === 'profile'" :customer="customer" :has-avatar="has_avatar" :level="level" :qr-busy="qrBusy" @qr="qr" />
+        <MemberRewards
+            v-else-if="section === 'rewards'"
+            :customer="customer"
+            :balance="balance"
+            :rewards="rewards"
+            :redemptions="redemptions"
+            :history-pagination="redemption_history"
+        />
+        <section v-else-if="section === 'progress'" class="progress-page">
+            <Link href="/clientes">← Volver a inicio</Link>
+            <h1>Mi progreso</h1>
+            <p>{{ qualifying }} puntos calificables · {{ balance }} disponibles para canje</p>
+            <article v-for="l in levels" :key="l.name" class="progress-level" :class="{ reached: qualifying >= l.points }">
                 <div>
-                    <h1>{{ customer.name }}</h1>
-                    <p>Clienta desde {{ date(customer.created_at) }}</p>
-                    <span class="member-badge">♥ Miembro Lemus</span>
+                    <strong>{{ l.name }}</strong
+                    ><span>{{ l.points }} puntos calificables</span>
                 </div>
-            </section>
-            <Link href="/clientes/progreso" class="level-card"
-                ><div class="level-top">
-                    <VIcon icon="mdi-crown" size="43" color="#bd9c65" /><span
-                        >TU NIVEL ACTUAL<strong>{{ level.name }}</strong></span
-                    ><b>{{ balance }} puntos</b>
-                </div>
-                <div class="progress"><i :style="{ width: progress + '%' }" /></div>
-                <p v-if="nextLevel">
-                    {{ Math.max(0, nextLevel.points - qualifying) }} puntos más para llegar a
-                    <strong>Nivel {{ nextLevel.name }} →</strong>
-                </p>
-                <p v-else>Disfruta de tu nivel más alto.</p></Link
-            >
-            <div class="member-stats">
+                <p>{{ l.benefits }}</p>
+            </article>
+            <h2>Mis movimientos</h2>
+            <article v-for="entry in entries.data" :key="entry.id" class="point-entry">
                 <div>
-                    <VIcon icon="mdi-calendar-heart" /><strong>{{ visits }}</strong
-                    ><span>Visitas</span>
+                    <strong>{{ entry.note ?? entry.type }}</strong>
+                    <p>{{ date(entry.created_at) }}</p>
                 </div>
-                <div>
-                    <VIcon icon="mdi-star-outline" /><strong data-testid="loyalty-balance">{{ balance }}</strong
-                    ><span>Puntos</span>
-                </div>
-                <div>
-                    <VIcon icon="mdi-gift-outline" /><strong>{{
-                        redemptions.filter((r) => r.status === 'confirmed').length
-                    }}</strong
-                    ><span>Recompensas</span>
-                </div>
-                <div>
-                    <VIcon icon="mdi-heart-outline" /><strong>{{ favorites.length }}</strong
-                    ><span>Favoritos</span>
-                </div>
-            </div>
-            <VBtn block variant="tonal" :loading="qrBusy" @click="qr">Mostrar mi QR de fidelidad</VBtn>
-            <p class="text-error">{{ qrError }}</p>
-            <div class="section-heading">
-                <h2>Mis recompensas</h2>
-                <Link href="/clientes/recompensas">Ver todas →</Link>
-            </div>
-            <div class="reward-grid">
-                <article v-for="reward in rewards.slice(0, 3)" :key="reward.id">
-                    <VIcon icon="mdi-gift-outline" size="32" />
-                    <h3>{{ reward.name }}</h3>
-                    <p>{{ reward.points_cost }} puntos</p>
-                    <VIcon v-if="balance < reward.points_cost" icon="mdi-lock-outline" />
-                    <div class="progress">
-                        <i :style="{ width: Math.min(100, (Math.max(0, balance) / reward.points_cost) * 100) + '%' }" />
-                    </div>
-                </article>
-            </div>
-            <div v-if="!rewards.length" class="soft-panel">Pronto encontrarás nuevas recompensas aquí.</div>
-            <section class="beauty-banner">
-                <VIcon icon="mdi-flower-outline" size="60" />
-                <div>
-                    <h2>Cada visita te acerca a más belleza ♥</h2>
-                    <p>Gracias por ser parte de Studio Lemus.</p>
-                </div>
-            </section>
-            <VBtn variant="text" @click="settings = !settings">Editar mi perfil</VBtn>
-            <VForm
-                v-if="settings"
-                @submit.prevent="
-                    avatar.post('/clientes/foto', {
-                        forceFormData: true,
-                        onSuccess: () => (avatarUrl = '/clientes/foto?v=' + Date.now()),
-                    })
-                "
-                ><VFileInput
-                    v-model="avatar.photo"
-                    label="Foto de perfil"
-                    accept="image/jpeg,image/png,image/webp"
-                    :error-messages="avatar.errors.photo"
-                /><VBtn type="submit" :disabled="!avatar.photo" :loading="avatar.processing"
-                    >Actualizar foto</VBtn
-                ></VForm
-            >
-            <VForm v-if="settings" @submit.prevent="profile.patch('/clientes/perfil')"
-                ><VTextField v-model="profile.name" label="Nombre" :error-messages="profile.errors.name" /><VTextField
-                    v-model="profile.phone"
-                    label="Teléfono"
-                    :error-messages="profile.errors.phone"
-                /><VTextField
-                    v-model="profile.birthday"
-                    label="Fecha de nacimiento"
-                    type="date"
-                    :disabled="!!customer.birthday"
-                    :error-messages="profile.errors.birthday"
-                /><VBtn type="submit" :loading="profile.processing">Guardar</VBtn></VForm
-            >
-            <h2>Servicios favoritos</h2>
-            <VChip
-                v-for="service in services"
-                :key="service.id"
-                class="ma-1"
-                :color="favorites.some((f) => f.id === service.id) ? 'primary' : undefined"
-                @click="
-                    favorites.some((f) => f.id === service.id)
-                        ? router.delete(`/clientes/favoritos/${service.id}`, { preserveScroll: true })
-                        : router.put(`/clientes/favoritos/${service.id}`, {}, { preserveScroll: true })
-                "
-                >{{ service.name }}</VChip
-            >
-            <VBtn block variant="text" class="mt-6" @click="router.post('/clientes/logout')">Cerrar sesión</VBtn>
-        </template>
-        <template v-else-if="section === 'progress'">
-            <div class="section-heading">
-                <h2>Mi progreso</h2>
-                <b>{{ balance }} puntos</b>
-            </div>
-            <div class="level-track">
-                <div v-for="l in levels" :key="l.name" :class="{ reached: qualifying >= l.points }">
-                    <VIcon icon="mdi-crown-outline" /><strong>{{ l.name }}</strong
-                    ><small>{{ l.points }}+ pts</small>
-                </div>
-            </div>
-            <div class="soft-panel">
-                {{
-                    nextLevel
-                        ? `Te faltan ${nextLevel.points - qualifying} puntos para ${nextLevel.name}`
-                        : '¡Alcanzaste el nivel más alto!'
-                }}
-            </div>
-            <h2>Historial de visitas y puntos</h2>
-            <article v-for="entry in entries.data" :key="entry.id" class="history-row">
-                <VIcon icon="mdi-flower-outline" />
-                <div>
-                    <small>{{ date(entry.created_at) }}</small>
-                    <p>{{ entry.note ?? entry.type }}</p>
-                </div>
-                <b>{{ entry.points > 0 ? '+' : '' }}{{ entry.points }} pts</b>
+                <strong>{{ entry.points > 0 ? '+' : '' }}{{ entry.points }} pts</strong>
             </article>
             <p v-if="!entries.data.length">Tu historial comenzará con tu primera visita.</p>
-            <VPagination
-                v-if="entries.last_page > 1"
-                :model-value="entries.current_page"
-                :length="entries.last_page"
-                @update:model-value="router.get('/clientes/movimientos', { page: $event })"
-            />
-            <section class="soft-panel">
-                <h2>Beneficios de tu nivel</h2>
-                <p>{{ level.benefits }}</p>
-            </section>
-        </template>
-        <template v-else-if="section === 'rewards'">
-            <h1>Mis recompensas</h1>
-            <p class="my-4">{{ balance }} puntos disponibles</p>
-            <VAlert v-if="canje.hasErrors" type="error">{{ Object.values(canje.errors).join(' ') }}</VAlert>
-            <article v-for="reward in rewards" :key="reward.id" class="soft-panel mb-4">
-                <h2>{{ reward.name }}</h2>
-                <p>{{ reward.description }}</p>
-                <p>{{ reward.points_cost }} puntos</p>
-                <VBtn
-                    class="mt-3"
-                    :disabled="balance < reward.points_cost || !customer.email_verified_at"
-                    :loading="canje.processing"
-                    @click="reserve(reward)"
-                    >Reservar recompensa</VBtn
+            <nav v-if="entries.last_page > 1" aria-label="Páginas de movimientos" class="entry-pagination">
+                <button
+                    v-for="p in entries.last_page"
+                    :key="p"
+                    :aria-current="p === entries.current_page ? 'page' : undefined"
+                    type="button"
+                    @click="router.get('/clientes/movimientos', { page: p })"
                 >
-            </article>
-            <h2>Mis canjes</h2>
-            <article v-for="r in redemptions" :key="r.id" class="history-row">
-                <div>
-                    <strong>{{ r.reward_snapshot.name }}</strong>
-                    <p>Código {{ r.id }} · {{ redemptionLabels[r.status] }}</p>
-                    <small>Vence: {{ date(r.expires_at) }}</small>
+                    {{ p }}
+                </button>
+            </nav>
+        </section>
+        <section v-else class="progress-page"><Link href="/clientes">Volver a mi inicio →</Link></section>
+        <dialog
+            ref="qrDialog"
+            class="member-qr"
+            aria-labelledby="qr-heading"
+            aria-describedby="qr-instructions"
+            @cancel="closeQr"
+            @close="closeQr"
+            @click="$event.target === qrDialog && closeQr()"
+        >
+            <div class="qr-sheet">
+                <header>
+                    <span class="qr-pass-brand"><span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span> STUDIO LEMUS PASS</span
+                    ><button type="button" aria-label="Cerrar QR" @click="closeQr"><span class="material-symbols-outlined">close</span></button>
+                </header>
+                <p class="qr-invitation">Tu próxima experiencia empieza aquí</p>
+                <h2 id="qr-heading">{{ customer.name }}</h2>
+                <p class="qr-member-level">{{ level?.name }} · {{ balance }} pts disponibles</p>
+                <div v-if="qrImage" class="qr-stage">
+                    <span class="qr-orbit" aria-hidden="true" />
+                    <div class="qr-image"><img :src="qrImage" alt="QR temporal de fidelidad" width="240" height="240" /></div>
                 </div>
-            </article>
-        </template>
-        <template v-else-if="section === 'appointments'"
-            ><h1>Mis citas</h1>
-            <p class="my-4">Solo se muestran citas vinculadas de forma verificada a tu cuenta.</p>
-            <article v-for="a in appointments" :key="a.id" class="soft-panel mb-4">
-                <strong>{{ date(a.scheduled_start) }}</strong>
-                <p>
-                    {{
-                        new Intl.DateTimeFormat('es-HN', {
-                            timeStyle: 'short',
-                            hour12: true,
-                            timeZone: 'America/Tegucigalpa',
-                        }).format(new Date(a.scheduled_start))
-                    }}
-                    · {{ a.status }}
-                </p>
-            </article>
-            <p v-if="!appointments.length">Aún no tienes citas vinculadas.</p></template
-        >
-        <VDialog
-            :model-value="!!qrImage"
-            max-width="360"
-            @update:model-value="
-                qrImage = '';
-                qrCode = '';
-            "
-            ><VCard class="pa-5 text-center"
-                ><h2>Mi QR Lemus</h2>
-                <img
-                    :src="qrImage"
-                    alt="QR temporal de fidelidad"
-                    width="280"
-                    height="280"
-                    style="max-width: 100%; height: auto"
-                />
-                <p>Válido durante 5 minutos. No compartas este código.</p>
-                <details>
+                <p v-else class="qr-expired" role="status">Tu QR ha vencido. Genera uno nuevo para identificarte.</p>
+                <div class="qr-validity">
+                    <p class="qr-caption">
+                        <span class="material-symbols-outlined" aria-hidden="true">{{ remaining ? 'verified_user' : 'timer_off' }}</span
+                        >{{ remaining ? `Válido durante ${qrTime}` : 'Código vencido' }}
+                    </p>
+                    <div class="qr-time-track" aria-hidden="true"><span :style="{ transform: `scaleX(${remaining / Math.max(1, qrLifetime)})` }" /></div>
+                </div>
+                <p id="qr-instructions" class="qr-note">Presenta este código al personal.<br />Es personal y temporal. No lo compartas.</p>
+                <details v-if="qrCode">
                     <summary>Código alternativo</summary>
-                    <code style="overflow-wrap: anywhere">{{ qrCode }}</code>
+                    <code>{{ qrCode }}</code>
                 </details>
-                <VBtn
-                    @click="
-                        qrImage = '';
-                        qrCode = '';
-                    "
-                    >Cerrar</VBtn
-                ></VCard
-            ></VDialog
-        >
+                <button v-if="!remaining" class="qr-regenerate" type="button" :disabled="qrBusy" @click="qr">Generar nuevo QR</button>
+            </div>
+        </dialog>
     </CustomerLayout>
 </template>
 <style scoped>
-.member {
+.verification-button {
+    display: block;
+    color: #ffaedc;
+    text-decoration: underline;
+    margin-top: 8px;
+}
+.member-qr {
+    max-width: 360px;
+    width: calc(100% - 32px);
+    margin: auto;
+    color: #f5daf6;
+    background: transparent;
+    border: 0;
+    padding: 0;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: 32px;
+}
+.member-qr::backdrop {
+    background: #1d0e21cc;
+    backdrop-filter: blur(16px);
+}
+.qr-sheet {
+    padding: clamp(16px, 5vw, 28px);
+    border-radius: 32px;
+    border: 1px solid #f3f0f838;
+    background: radial-gradient(ellipse at 0 0, #8a3b6e66, transparent 65%), linear-gradient(155deg, #411a4e, #24122c);
+    box-shadow:
+        inset 0 1px 2px #ffffff40,
+        0 20px 48px -12px #120516cc;
+    text-align: center;
+    backdrop-filter: blur(36px);
+}
+.qr-sheet header {
     display: flex;
     align-items: center;
-    gap: 20px;
-    margin-bottom: 26px;
+    justify-content: space-between;
+    margin-bottom: 20px;
 }
-.member-avatar {
-    width: 90px;
-    height: 90px;
+.qr-sheet header > span {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: #ccc2db;
+}
+.qr-sheet header button {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
     border-radius: 50%;
-    background: #e6d2c6;
+    background: #402f4466;
     display: grid;
     place-items: center;
-    font: 44px Georgia;
-    flex-shrink: 0;
 }
-.member h1 {
-    font-size: 28px;
+.qr-sheet header .material-symbols-outlined {
+    font-size: 18px;
 }
-.member p {
-    font-size: 13px;
-    color: #777;
-    margin: 8px 0;
-}
-.member-badge {
-    background: #ebd2cd;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-}
-.level-card {
-    display: block;
-    color: inherit;
-    text-decoration: none;
-    padding: 24px;
-    background: linear-gradient(110deg, #e9cec7, #efddd6);
-    border-radius: 22px;
-}
-.level-top {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-.level-top > span {
-    font-size: 11px;
-    letter-spacing: 1px;
-    flex: 1;
-}
-.level-top strong {
-    display: block;
-    font: 30px Georgia;
-    letter-spacing: 0;
-}
-.level-top b,
-.section-heading b {
-    font-size: 12px;
-    border-radius: 20px;
-    padding: 7px;
-    background: #e7c4bf;
-    white-space: nowrap;
-}
-.progress {
-    height: 12px;
-    background: #faf1ec;
-    border-radius: 10px;
-    margin: 18px 0 12px;
-    overflow: hidden;
-}
-.progress i {
-    display: block;
-    height: 100%;
-    background: #c88d8b;
-    border-radius: 10px;
-}
-.level-card p {
-    font-size: 14px;
-    color: #6c625e;
-}
-.level-card p strong {
-    display: block;
-    font: 22px Georgia;
-    color: #292520;
-    margin-top: 6px;
-}
-.member-stats {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin: 30px 0;
-    gap: 8px;
-}
-.member-stats > div {
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
-    gap: 8px;
-}
-.member-stats > div + div {
-    border-left: 1px solid #e7dcd5;
-}
-.member-stats .v-icon,
-.reward-grid .v-icon {
-    color: #b98077;
-}
-.member-stats strong {
-    font: 25px Georgia;
-}
-.member-stats span {
-    font-size: 12px;
-    color: #756e66;
-}
-.section-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-.section-heading a {
-    color: #b67c76;
-    font-size: 13px;
-    text-decoration: none;
-}
-.reward-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-}
-.reward-grid article {
-    text-align: center;
-    background: #f0e8e1;
-    border-radius: 16px;
-    padding: 20px 10px;
-}
-.reward-grid h3 {
-    font: 14px Arial;
-    margin: 16px 0 10px;
+.qr-sheet h2 {
+    font:
+        500 24px/32px 'Syne',
+        sans-serif;
     overflow-wrap: anywhere;
 }
-.reward-grid p {
+.qr-member-level {
+    color: #ffaedc;
     font-size: 12px;
+    margin-bottom: 20px;
 }
-.reward-grid .progress {
-    height: 6px;
-    margin-bottom: 0;
-}
-.beauty-banner {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin: 24px 0;
-    background: #ead2ca;
-    border-radius: 16px;
-    padding: 24px;
-}
-.beauty-banner h2 {
-    font-size: 24px;
-    margin: 0 0 12px;
-}
-.soft-panel {
-    padding: 22px;
-    background: #f1e2dd;
-    border-radius: 16px;
-}
-.soft-panel h2 {
-    margin-top: 0;
-}
-.level-track {
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
-    margin: 25px 0;
-}
-.level-track > div {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    text-align: center;
-    gap: 8px;
-    font-size: 12px;
-    color: #aaa;
-    flex: 1;
-}
-.level-track .reached {
-    color: #b77473;
-}
-.level-track .v-icon {
-    border: 1px solid;
-    padding: 10px;
-    box-sizing: content-box;
-    border-radius: 50%;
-}
-.history-row {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 0;
-    border-bottom: 1px solid #e7dcd5;
-}
-.history-row > div {
-    flex: 1;
-}
-.history-row small {
-    color: #777;
-}
-.history-row b {
-    font-size: 13px;
-    color: #b45b60;
-    background: #f2dfda;
+.qr-image {
+    position: relative;
+    width: 256px;
+    max-width: 100%;
+    margin: auto;
+    background: #fff;
     padding: 8px;
     border-radius: 20px;
 }
-@media (max-width: 360px) {
-    .member {
-        gap: 12px;
+.qr-image img {
+    width: 100%;
+    height: auto;
+}
+.qr-caption {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 12px;
+}
+.qr-note {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #d6c1ca;
+    margin-top: 4px;
+}
+.qr-sheet details {
+    margin-top: 14px;
+    font-size: 11px;
+}
+.qr-sheet summary {
+    min-height: 44px;
+    padding: 14px 0;
+    cursor: pointer;
+    color: #ccc2db;
+}
+.qr-pass-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.qr-pass-brand .material-symbols-outlined {
+    font-size: 20px;
+    color: #ffaedc;
+}
+.qr-invitation {
+    color: #d6c1ca;
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+.qr-stage {
+    position: relative;
+    padding: 10px;
+    margin: auto;
+    max-width: 280px;
+    overflow: hidden;
+    border-radius: 28px;
+    background: #ffaedc26;
+}
+.qr-orbit {
+    position: absolute;
+    inset: -45%;
+    background: conic-gradient(from 0deg, transparent 60%, #ffaedc, #ccc2db, transparent 85%);
+    animation: lemus-qr-orbit 9s linear infinite;
+    pointer-events: none;
+}
+.qr-validity {
+    margin: 20px auto 12px;
+    max-width: 240px;
+}
+.qr-caption .material-symbols-outlined {
+    font-size: 18px;
+    color: #ffaedc;
+}
+.qr-time-track {
+    height: 3px;
+    margin-top: 12px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #ffaedc26;
+}
+.qr-time-track span {
+    display: block;
+    height: 100%;
+    background: #ffaedc;
+    transform-origin: left;
+    transition: transform 1s linear;
+}
+@keyframes lemus-qr-orbit {
+    to {
+        transform: rotate(360deg);
     }
-    .member-avatar {
-        width: 65px;
-        height: 65px;
+}
+@media (max-height: 650px) {
+    .qr-sheet header {
+        margin-bottom: 8px;
     }
-    .member h1 {
-        font-size: 24px;
+    .qr-stage {
+        max-width: 220px;
     }
-    .level-card {
-        padding: 17px;
+    .qr-member-level {
+        margin-bottom: 12px;
     }
-    .level-top {
-        gap: 8px;
-    }
-    .level-top strong {
-        font-size: 25px;
-    }
-    .reward-grid {
-        grid-template-columns: 1fr;
-    }
-    .beauty-banner {
-        padding: 18px;
-    }
-    .beauty-banner > .v-icon {
-        display: none;
-    }
+}
+.qr-sheet code {
+    display: block;
+    overflow-wrap: anywhere;
+    margin-top: 8px;
+}
+.qr-regenerate {
+    margin-top: 16px;
+    padding: 12px;
+    width: 100%;
+    border-radius: 999px;
+    background: #8a3b6e;
+}
+.qr-expired {
+    padding: 24px;
+    font-size: 14px;
+}
+.progress-page {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.progress-page h1 {
+    font:
+        600 30px/36px 'Syne',
+        sans-serif;
+}
+.progress-page h2 {
+    font:
+        500 24px/32px 'Syne',
+        sans-serif;
+}
+.progress-page p {
+    font-size: 13px;
+    color: #d6c1ca;
+}
+.progress-page > a {
+    color: #ffaedc;
+    font-size: 12px;
+}
+.progress-level {
+    padding: 20px;
+    border: 1px solid #52434a;
+    border-radius: 24px;
+    background: #2d123673;
+}
+.progress-level.reached {
+    border-color: #ffaedc66;
+}
+.progress-level > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+}
+.progress-level span {
+    font-size: 11px;
+    color: #ccc2db;
+}
+.progress-level p {
+    margin-top: 8px;
+}
+.point-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid #52434a66;
+    padding-bottom: 16px;
+    font-size: 13px;
+}
+.entry-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.entry-pagination button {
+    padding: 10px 14px;
+    border: 1px solid #52434a;
+    border-radius: 8px;
+}
+.entry-pagination [aria-current] {
+    background: #8a3b6e;
 }
 </style>

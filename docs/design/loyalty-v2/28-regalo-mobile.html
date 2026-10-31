@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>APROBACION 28 - Configurar Regalo Mobile Servicio</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;family=Noto+Serif:ital,wght@0,400;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              plum: '#2a1426',
+              plumHover: '#3b1d35',
+              pearl: '#f7f6f8',
+              surface: '#fff7f9',
+              accent: '#835471',
+              accentLight: '#f3e8ee',
+              border: '#e8dfe5',
+              textMain: '#241b21',
+              textMuted: '#6f646c'
+            }
+          },
+          fontFamily: {
+            serif: ['"Noto Serif"', 'serif'],
+            sans: ['"DM Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-brand-pearl font-sans text-brand-textMain antialiased flex flex-col min-h-screen max-w-[390px] mx-auto border-x border-brand-border">
+<!-- TOPBAR MÓVIL CON RETORNO Y TÍTULO DE FLUJO -->
+<header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-brand-border px-4 py-3 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<a aria-label="Volver" class="w-11 h-11 -ml-1 flex items-center justify-center rounded-lg hover:bg-brand-pearl text-brand-plum active:scale-95 transition-all" href="#">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</a>
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-serif font-bold text-sm tracking-tight text-brand-plum">Crear nuevo regalo</span>
+</div>
+<p class="text-[11px] text-brand-textMuted leading-none mt-0.5">Paso 2 de 3 · Definir beneficio</p>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Menú" class="w-11 h-11 flex items-center justify-center rounded-lg hover:bg-brand-pearl text-brand-plum active:scale-95 transition-all">
+<span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+</div>
+</header>
+<!-- STEPPER COMPACTO -->
+<div class="bg-white border-b border-brand-border px-4 py-2.5">
+<div class="flex items-center justify-between gap-1 text-xs">
+<div class="flex items-center gap-1 text-emerald-800 font-semibold">
+<span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 text-[11px] flex items-center justify-center">✓</span>
+<span>Clientas (3)</span>
+</div>
+<span class="h-0.5 w-6 bg-brand-plum"></span>
+<div class="flex items-center gap-1.5 font-bold text-brand-plum">
+<span class="w-6 h-6 rounded-full bg-brand-plum text-white text-[11px] flex items-center justify-center">2</span>
+<span>Servicio</span>
+</div>
+<span class="h-0.5 w-6 bg-brand-border"></span>
+<div class="flex items-center gap-1.5 text-brand-textMuted">
+<span class="w-6 h-6 rounded-full bg-brand-pearl border border-brand-border text-[11px] flex items-center justify-center font-medium">3</span>
+<span>Revisar</span>
+</div>
+</div>
+</div>
+<!-- CONTENIDO SCROLLEABLE (CON PB-36 PARA EVITAR OVERLAP CON SAFE-AREA FOOTER) -->
+<main class="flex-1 px-4 py-3 space-y-4 pb-48">
+<!-- SELECTOR DE MODALIDAD: PUNTOS VS SERVICIO EXISTENTE -->
+<div class="space-y-1.5">
+<label class="text-xs font-bold text-brand-plum block">Tipo de beneficio a otorgar</label>
+<div class="grid grid-cols-2 gap-2">
+<button class="h-11 rounded-xl border border-brand-border bg-white text-brand-textMuted text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-brand-pearl transition-all" type="button">
+<span class="material-symbols-outlined text-[16px]">stars</span>
+<span>Puntos de fidelidad</span>
+</button>
+<button class="h-11 rounded-xl bg-brand-plum text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">spa</span>
+<span>Servicio existente</span>
+<span class="material-symbols-outlined text-[14px]">check</span>
+</button>
+</div>
+</div>
+<!-- SELECTOR DE SERVICIO OPERATIVO EXISTENTE -->
+<div class="bg-white rounded-2xl border border-brand-border p-3.5 space-y-3 shadow-sm">
+<div class="flex items-center justify-between text-xs">
+<span class="font-bold text-brand-plum flex items-center gap-1">
+<span class="material-symbols-outlined text-brand-accent text-[16px]">room_service</span>
+<span>Servicio a regalar *</span>
+</span>
+<span class="text-[10px] text-brand-accent bg-brand-accentLight px-2 py-0.5 rounded font-semibold">Catálogo LEMUS</span>
+</div>
+<!-- PICKER DROPDOWN SIMULADO CON SERVICIO SELECCIONADO -->
+<div class="w-full h-12 px-3 rounded-xl border-2 border-brand-plum/40 bg-brand-pearl/40 flex items-center justify-between text-xs cursor-pointer">
+<div class="flex items-center gap-2 truncate pr-2">
+<span class="material-symbols-outlined text-brand-accent text-[18px]">spa</span>
+<span class="font-semibold text-brand-plum truncate">Spa de manos</span>
+</div>
+<span class="material-symbols-outlined text-brand-plum text-[18px]">expand_more</span>
+</div>
+<!-- FICHA TÉCNICA DEL SERVICIO CON REGLA CLARA: 1 SERVICIO POR CLIENTA -->
+<div class="bg-brand-surface rounded-xl p-3 border border-brand-border/70 space-y-2 text-xs">
+<div class="flex items-center justify-between">
+<span class="font-medium text-brand-plum">Ficha técnica (30 min)</span>
+<span class="text-[11px] text-brand-textMuted">Manicura spa completa</span>
+</div>
+<div class="grid grid-cols-2 gap-2 pt-1 border-t border-brand-border/60 text-[11px]">
+<div>
+<span class="text-brand-textMuted block text-[10px] uppercase font-bold">Precio referencia</span>
+<span class="font-semibold text-brand-plum">L 200.00 (Sin cobro)</span>
+</div>
+<div>
+<span class="text-brand-textMuted block text-[10px] uppercase font-bold">Asignación unitaria</span>
+<span class="font-semibold text-brand-plum">1 servicio por clienta</span>
+</div>
+</div>
+</div>
+</div>
+<!-- PARÁMETROS DE ENTREGA Y VENCIMIENTO OPCIONAL -->
+<div class="bg-white rounded-2xl border border-brand-border p-3.5 space-y-3 shadow-sm">
+<h3 class="font-bold text-xs text-brand-plum flex items-center gap-1.5">
+<span class="material-symbols-outlined text-brand-accent text-[16px]">tune</span>
+<span>Parámetros de entrega y caducidad</span>
+</h3>
+<div class="space-y-1">
+<label class="text-[11px] font-medium text-brand-textMuted block">Fecha de vencimiento del vale (opcional)</label>
+<div class="relative">
+<input class="w-full h-11 pl-3 pr-9 rounded-xl border border-brand-border bg-white text-xs text-brand-textMain font-medium focus:outline-none focus:ring-1 focus:ring-brand-plum" type="text" value="31 Dic 2026"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-brand-textMuted text-[18px]">calendar_month</span>
+</div>
+<p class="text-[10px] text-brand-textMuted mt-0.5">Si se deja vacío, el servicio no tendrá caducidad predeterminada.</p>
+</div>
+</div>
+<!-- MOTIVO ADMINISTRATIVO Y MENSAJE PERSONALIZADO -->
+<div class="bg-white rounded-2xl border border-brand-border p-3.5 space-y-3 shadow-sm">
+<h3 class="font-bold text-xs text-brand-plum flex items-center gap-1.5">
+<span class="material-symbols-outlined text-brand-accent text-[16px]">chat_bubble_outline</span>
+<span>Justificación y comunicación</span>
+</h3>
+<div class="space-y-1">
+<label class="text-[11px] font-medium text-brand-textMuted block">Motivo del regalo *</label>
+<input class="w-full h-11 px-3 rounded-xl border border-brand-border bg-white text-xs text-brand-textMain font-medium focus:outline-none focus:ring-1 focus:ring-brand-plum" type="text" value="Cortesía por reapertura"/>
+<p class="text-[10px] text-brand-textMuted">Registro auditable visible en la bitácora del atelier.</p>
+</div>
+<div class="space-y-1 pt-1">
+<label class="text-[11px] font-medium text-brand-textMuted flex items-center justify-between"><span>Mensaje para la clienta</span><span class="text-[10px] text-brand-accent">Opcional</span></label>
+<textarea class="w-full p-2.5 rounded-xl border border-brand-border bg-white text-xs text-brand-textMain focus:outline-none focus:ring-1 focus:ring-brand-plum leading-relaxed" rows="3">Te invitamos a disfrutar de una sesión de Spa de manos de cortesía en LEMUS Atelier.</textarea>
+</div>
+</div>
+<!-- RECAP EXPLICATIVO: 3 CLIENTAS = 3 SERVICIOS & REGLA DE NO COBRO DE PUNTOS -->
+<div class="bg-brand-surface rounded-2xl border border-brand-border p-3.5 space-y-2.5 text-xs">
+<div class="flex items-center justify-between border-b border-brand-border/70 pb-2">
+<span class="font-bold text-brand-plum">Resumen del lote</span>
+<span class="font-serif font-bold text-sm text-brand-plum">3 clientas = 3 servicios</span>
+</div>
+<div class="space-y-1.5 text-[11px]">
+<div class="flex items-center justify-between text-brand-textMuted">
+<span>Elena Morales de la Quintana</span>
+<span class="font-medium text-brand-plum">1 Vale Spa de manos</span>
+</div>
+<div class="flex items-center justify-between text-brand-textMuted">
+<span>Carmen Sofía Vallecillo</span>
+<span class="font-medium text-brand-plum">1 Vale Spa de manos</span>
+</div>
+<div class="flex items-center justify-between text-brand-textMuted">
+<span>María José Hernández</span>
+<span class="font-medium text-brand-plum">1 Vale Spa de manos</span>
+</div>
+</div>
+<!-- REGLA CONTABLE CLARA -->
+<div class="p-2.5 bg-white rounded-xl border border-brand-border text-[11px] text-brand-textMuted flex items-start gap-2 mt-2">
+<span class="material-symbols-outlined text-emerald-700 text-[16px] mt-0.5 shrink-0">check_circle</span>
+<div class="leading-relaxed"><strong class="text-brand-plum">Cero deducción:</strong> No se descuentan puntos a ninguna clienta ni genera puntos acumulables por compra. Operación 100% administrativa.</div>
+</div>
+</div>
+</main>
+<!-- FIXED SAFE-AREA FOOTER CON ATRÁS / REVISAR -->
+<footer class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] bg-white/95 backdrop-blur border-t border-brand-border p-4 shadow-lg z-50">
+<div class="flex items-center justify-between mb-2 text-xs">
+<span class="text-[11px] text-brand-textMuted">Configuración de servicio lista</span>
+<span class="font-bold text-brand-plum">Total: 3 vales a emitir</span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<button class="h-11 rounded-xl border border-brand-border bg-white text-brand-textMain font-medium text-xs flex items-center justify-center gap-1 hover:bg-brand-pearl active:scale-95 transition-all" type="button">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+<span>Atrás (Clientas)</span>
+</button>
+<button class="h-11 rounded-xl bg-brand-plum text-white font-medium text-xs flex items-center justify-center gap-1.5 shadow-sm hover:bg-brand-plumHover active:scale-95 transition-all" type="button">
+<span>Revisar y confirmar</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</footer>
+</body>
+</html>

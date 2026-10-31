@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-surface" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>APROBACION 05 - Historial de canjes</title>
+<!-- Google Fonts: Noto Serif & DM Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;family=Noto+Serif:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "on-primary-fixed": "#2a1426",
+            "secondary-fixed-dim": "#e8b9d3",
+            "on-surface-variant": "#4d444a",
+            "on-primary-fixed-variant": "#593e53",
+            "error": "#ba1a1a",
+            "tertiary": "#010001",
+            "on-primary": "#ffffff",
+            "surface-container-highest": "#f1dde9",
+            "on-tertiary": "#ffffff",
+            "secondary-container": "#f9cae4",
+            "on-tertiary-fixed-variant": "#683656",
+            "on-secondary-fixed-variant": "#5e3c51",
+            "background": "#fff7f9",
+            "on-secondary": "#ffffff",
+            "inverse-surface": "#392d36",
+            "error-container": "#ffdad6",
+            "primary-fixed-dim": "#e0bcd5",
+            "primary": "#010001",
+            "outline": "#7f747a",
+            "tertiary-fixed-dim": "#f6b3d9",
+            "on-secondary-container": "#775268",
+            "outline-variant": "#d0c3ca",
+            "tertiary-fixed": "#ffd8ec",
+            "surface-bright": "#fff7f9",
+            "on-error": "#ffffff",
+            "surface-container": "#fde8f4",
+            "secondary-fixed": "#ffd8ed",
+            "surface-dim": "#e9d5e0",
+            "surface-container-low": "#ffeff7",
+            "inverse-primary": "#e0bcd5",
+            "tertiary-container": "#350a29",
+            "on-surface": "#231820",
+            "on-error-container": "#93000a",
+            "surface-container-lowest": "#ffffff",
+            "on-tertiary-fixed": "#350a29",
+            "secondary": "#78536a",
+            "on-primary-container": "#9a7b91",
+            "surface": "#f7f6f8",
+            "surface-tint": "#72566b",
+            "on-background": "#231820",
+            "primary-container": "#2a1426",
+            "inverse-on-surface": "#ffebf7",
+            "primary-fixed": "#fdd8f1",
+            "on-tertiary-container": "#ad7295",
+            "surface-variant": "#f1dde9",
+            "on-secondary-fixed": "#2e1125",
+            "surface-container-high": "#f7e3ef"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-mobile": "1rem",
+            "space-xl": "2.5rem",
+            "space-lg": "1.5rem",
+            "space-md": "1rem",
+            "margin-desktop": "2.5rem",
+            "space-xs": "0.25rem",
+            "gutter": "1.5rem",
+            "space-sm": "0.5rem",
+            "margin": "2rem",
+            "gutter-mobile": "1rem",
+            "gutter-desktop": "1.5rem"
+          },
+          "fontFamily": {
+            "headline-lg": ["Noto Serif"],
+            "label-lg": ["DM Sans"],
+            "headline-md": ["Noto Serif"],
+            "headline-lg-mobile": ["Noto Serif"],
+            "body-sm": ["DM Sans"],
+            "body-md": ["DM Sans"],
+            "headline-sm": ["Noto Serif"],
+            "display-lg": ["Noto Serif"],
+            "label-md": ["DM Sans"],
+            "label-sm": ["DM Sans"],
+            "title-md": ["DM Sans"],
+            "body-lg": ["DM Sans"]
+          },
+          "fontSize": {
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "400" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+            "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "500" }],
+            "display-lg": ["40px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+            "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "title-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body class="h-full bg-surface text-on-surface antialiased font-body-md text-body-md flex">
+<!-- SIDEBAR (272px fixed, pure white #ffffff, subtle right border #d0c3ca) -->
+<aside class="fixed top-0 left-0 h-screen w-[272px] z-30 bg-surface-container-lowest border-r border-outline-variant flex flex-col justify-between p-space-md shadow-none select-none">
+<!-- Top Segment: Brand & Navigation -->
+<div class="flex flex-col space-y-4 overflow-y-auto pr-1">
+<!-- Brand Monogram & Title -->
+<div class="flex items-center gap-space-sm px-2 pt-1 pb-2">
+<div class="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-headline-sm text-headline-sm font-semibold tracking-wider shadow-sm">
+          LA
+        </div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-headline-sm font-medium text-primary tracking-tight leading-none uppercase">Studio Lemus</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium tracking-wider uppercase mt-1">Directorio Operativo</span>
+</div>
+</div>
+<!-- CTA "+ Nueva cita" -->
+<!-- Navigation Hierarchy -->
+<nav class="space-y-4 pt-2">
+<!-- SECTION: JORNADA -->
+<div>
+<span class="px-space-md text-[10px] font-semibold text-outline tracking-wider uppercase">JORNADA</span>
+<div class="mt-1 space-y-0.5">
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="home">home</span>
+<span>Inicio</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="point_of_sale">point_of_sale</span>
+<span>Nueva venta</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_today">calendar_today</span>
+<span>Agenda</span>
+</a>
+</div>
+</div>
+<!-- SECTION: MOVIMIENTO -->
+<div>
+<span class="px-space-md text-[10px] font-semibold text-outline tracking-wider uppercase">MOVIMIENTO</span>
+<div class="mt-1 space-y-0.5">
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="receipt_long">receipt_long</span>
+<span>Facturas</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="history">history</span>
+<span>Historial de citas</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="payments">payments</span>
+<span>Gastos</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined text-[18px]" data-icon="trending_up">trending_up</span>
+<span>Ganancias generales</span>
+</a>
+</div>
+</div>
+<!-- SECTION: EL ESTUDIO (Configuración ACTIVA y desplegada) -->
+<div>
+<span class="px-space-md text-[10px] font-semibold text-outline tracking-wider uppercase">EL ESTUDIO</span>
+<div class="mt-1 space-y-0.5">
+<!-- Active Parent: Configuración -->
+<div class="rounded-lg bg-surface-container-high px-space-md py-2 flex items-center justify-between text-on-surface font-semibold text-label-md">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[18px] text-primary-container" data-icon="settings">settings</span>
+<span class="text-primary-container font-label-md">Configuración</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-primary-container" data-icon="expand_more">expand_more</span>
+</div>
+<!-- Desplegable Subsecciones -->
+<div class="ml-4 pl-3 border-l border-outline-variant space-y-1 mt-1">
+<a class="bg-secondary-container text-on-secondary-container font-medium rounded-lg px-3 py-1.5 flex items-center justify-between text-label-sm shadow-sm" href="#">
+<span>Fidelidad y recompensas</span>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-3 py-1.5 flex items-center gap-2 text-label-sm transition-colors" href="#">
+<span>Usuarios y permisos</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-3 py-1.5 flex items-center gap-2 text-label-sm transition-colors" href="#">
+<span>Servicios</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-3 py-1.5 flex items-center gap-2 text-label-sm transition-colors" href="#">
+<span>Horario de atención</span>
+</a>
+</div>
+</div>
+</div>
+</nav>
+</div>
+<!-- Bottom Action: Cerrar sesión -->
+<div class="pt-3 border-t border-outline-variant">
+<button class="w-full text-on-surface-variant hover:text-error hover:bg-error-container/40 rounded-lg px-space-md py-2.5 flex items-center gap-space-sm font-label-md text-label-md transition-colors duration-150" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="logout">logout</span>
+<span>Cerrar sesión</span>
+</button>
+</div>
+</aside>
+<!-- MAIN OPERATIONAL WORKSPACE (Offset 272px Desktop Canvas) -->
+<div class="flex-1 ml-[272px] flex flex-col min-h-screen bg-surface">
+<!-- FLOATING TOPBAR -->
+<header class="sticky top-0 z-20 mx-space-md my-space-sm bg-surface-container-lowest border border-outline-variant rounded-xl shadow-sm h-16 flex items-center justify-between px-space-lg">
+<!-- Breadcrumb -->
+<div class="flex items-center gap-2 text-body-md text-on-surface-variant font-label-md">
+<span class="material-symbols-outlined text-[18px] text-outline" data-icon="settings">settings</span>
+<span class="hover:text-on-surface transition-colors cursor-pointer">Configuración</span>
+<span class="material-symbols-outlined text-[14px] text-outline-variant" data-icon="chevron_right">chevron_right</span>
+<span class="font-medium text-primary-container">Fidelidad y recompensas</span>
+</div>
+<!-- Trailing Controls: Descargar ledger, Campana con dot, Ayuda, Avatar -->
+<div class="flex items-center gap-3"><div class="flex items-center gap-3"><button class="w-10 h-10 rounded-xl hover:bg-surface-container flex items-center justify-center text-on-surface-variant relative transition-colors" title="Notificaciones" type="button"><span class="material-symbols-outlined text-[22px]" data-icon="notifications">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface-container-lowest"></span></button><div class="h-5 w-px bg-outline-variant"></div><div class="flex items-center gap-3 pl-1"><div class="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md font-semibold text-xs tracking-wider ring-1 ring-outline-variant">SD</div><div class="flex flex-col text-left leading-tight"><span class="font-label-md text-label-md font-semibold text-on-surface">Sofia Durón</span><span class="font-label-sm text-[11px] text-on-surface-variant">Administradora</span></div></div></div></div>
+</header>
+<!-- CONTENT CANVAS -->
+<main class="flex-1 px-space-xl py-space-md max-w-[1440px] w-full min-w-0">
+<!-- HEADER CON TÍTULO PRINCIPAL Y CHIP -->
+<section class="mb-5">
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg font-normal text-on-surface tracking-tight">APROBACION 05 - Historial de canjes</h1>
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-label-sm font-label-sm bg-surface-container-high text-on-secondary-container border border-outline-variant">
+            Datos de ejemplo
+          </span>
+</div>
+<p class="mt-1 text-on-surface-variant font-body-md text-body-md w-full leading-relaxed">Auditoría de reservas y entregas. Los puntos se descuentan al reservar; si la reserva vence (24 horas) o se cancela, los puntos y el cupo se reintegran automáticamente a la clienta.</p>
+</section>
+<!-- PESTAÑAS DEL MÓDULO (Premios, Historial, Niveles, Regalos) -->
+<nav class="flex items-center gap-8 border-b border-outline-variant mb-6 text-label-lg font-label-lg">
+<a class="pb-3 text-on-surface-variant hover:text-on-surface font-label-lg transition-colors" href="#">
+          Premios
+        </a>
+<a class="pb-3 text-primary-container border-b-2 border-primary-container font-bold transition-colors" href="#">
+          Historial
+        </a>
+<a class="pb-3 text-on-surface-variant hover:text-on-surface font-label-lg transition-colors" href="#">
+          Niveles
+        </a>
+<a class="pb-3 text-on-surface-variant hover:text-on-surface font-label-lg transition-colors" href="#">
+          Regalos
+        </a>
+</nav>
+<!-- BARRA DE CONTROL Y FILTROS (Altura estricta 44px) -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-3 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-4"><div class="w-full flex flex-col gap-3"><div class="w-full"><div class="relative w-full"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]" data-icon="search">search</span><input class="w-full h-11 pl-10 pr-3 bg-surface-container-lowest border border-outline-variant rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline focus:border-primary-container focus:ring-2 focus:ring-[#a37a92]/20 transition-all outline-none" placeholder="Buscar por clienta, código (ej. CJ-9042) o servicio..." type="text"/></div></div><div class="w-full flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-outline-variant/40"><div class="inline-flex flex-wrap h-auto bg-surface-container p-1 rounded-xl items-center font-label-md text-label-md gap-1"><button class="px-3 h-9 rounded-lg bg-surface-container-lowest text-primary-container font-semibold shadow-xs transition-all" type="button">Todas (24)</button><button class="px-3 h-9 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" type="button">Pendientes (5)</button><button class="px-3 h-9 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" type="button">Entregadas (14)</button><button class="px-3 h-9 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" type="button">Canceladas (3)</button><button class="px-3 h-9 rounded-lg text-on-surface-variant hover:text-on-surface transition-all" type="button">Vencidas (2)</button></div><div class="flex items-center gap-3"><div class="relative"><select class="h-11 pl-9 pr-8 bg-surface-container-lowest border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface appearance-none focus:border-primary-container focus:ring-2 focus:ring-[#a37a92]/20 cursor-pointer"><option>Últimos 30 días</option><option>Este mes</option><option>Trimestre actual</option><option>Año 2026</option></select><span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px] pointer-events-none" data-icon="calendar_month">calendar_month</span><span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px] pointer-events-none" data-icon="expand_more">expand_more</span></div><div class="relative"><select class="h-11 pl-9 pr-8 bg-surface-container-lowest border border-outline-variant rounded-xl font-label-md text-label-md text-on-surface appearance-none focus:border-primary-container focus:ring-2 focus:ring-[#a37a92]/20 cursor-pointer"><option>Todos los orígenes</option><option>Canje</option><option>Regalo</option></select><span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px] pointer-events-none" data-icon="filter_alt">filter_alt</span><span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-outline text-[18px] pointer-events-none" data-icon="expand_more">expand_more</span></div></div></div></div></section>
+<!-- TABLA / LEDGER (Fondo blanco, esquinas redondeadas 12px, bordes #d0c3ca) -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse"><thead><tr class="h-10 border-b border-outline-variant bg-surface-container/30 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider"><th class="px-5 font-semibold">Canje / servicio</th><th class="px-4 font-semibold">Clienta</th><th class="px-4 font-semibold">Origen / puntos</th><th class="px-4 font-semibold">Vigencia</th><th class="px-4 font-semibold">Estado</th><th class="px-5 text-right font-semibold">Acción</th></tr></thead><tbody class="divide-y divide-outline-variant/60 font-body-md text-body-md"><tr class="h-[64px] hover:bg-[#fbfafb] transition-colors"><td class="px-5"><div class="flex flex-col"><span class="font-mono text-label-md font-semibold text-primary-container">CJ-9042</span><span class="font-medium text-on-surface">Manicura semipermanente</span></div></td><td class="px-4"><div class="flex flex-col"><span class="font-medium text-on-surface">Mariana Zelaya</span><span class="font-body-sm text-body-sm text-on-surface-variant">mariana.zelaya@gmail.com</span></div></td><td class="px-4"><div class="flex items-center gap-2"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-semibold bg-[rgba(163,122,146,0.15)] text-primary-container border border-[rgba(163,122,146,0.3)]">Canje</span><span class="font-mono font-medium text-primary-container text-body-md">-500 pts</span></div></td><td class="px-4 text-body-md"><div class="flex flex-col"><span class="text-on-surface">24 Mar 2026 - 10:15 AM</span><span class="text-[11px] font-semibold text-[#8a5b28]">Vence en 24h: 25 Mar 2026</span></div></td><td class="px-4"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-[#faf4ec] text-[#734820] border border-[#f0dfcc]"><span class="w-1.5 h-1.5 rounded-full bg-[#b87635]"></span>Pendiente de entrega</span></td><td class="px-5 text-right"><button class="h-10 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container hover:border-outline text-on-surface font-label-md text-label-md font-medium transition-all active:scale-[0.98] inline-flex items-center justify-center whitespace-nowrap" type="button">Ver detalle</button></td></tr><tr class="h-[64px] hover:bg-[#fbfafb] transition-colors"><td class="px-5"><div class="flex flex-col"><span class="font-mono text-label-md font-semibold text-primary-container">CJ-9038</span><span class="font-medium text-on-surface">Retiro de acrílico express</span></div></td><td class="px-4"><div class="flex flex-col"><span class="font-medium text-on-surface">Andrea Callejas</span><span class="font-body-sm text-body-sm text-on-surface-variant">andrea.c@outlook.com</span></div></td><td class="px-4"><div class="flex items-center gap-2"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-medium bg-secondary-fixed/50 text-on-secondary-fixed border border-secondary-fixed-dim">Regalo</span><span class="font-body-sm text-on-surface-variant">Sin costo / 0 pts</span></div></td><td class="px-4 text-body-md"><div class="flex flex-col"><span class="text-on-surface">23 Mar 2026 - 04:20 PM</span><span class="text-[11px] font-semibold text-[#8a5b28]">Vence en 24h: 24 Mar 2026</span></div></td><td class="px-4"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-[#faf4ec] text-[#734820] border border-[#f0dfcc]"><span class="w-1.5 h-1.5 rounded-full bg-[#b87635]"></span>Pendiente de entrega</span></td><td class="px-5 text-right"><button class="h-10 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container hover:border-outline text-on-surface font-label-md text-label-md font-medium transition-all active:scale-[0.98] inline-flex items-center justify-center whitespace-nowrap" type="button">Ver detalle</button></td></tr><tr class="h-[64px] hover:bg-[#fbfafb] transition-colors"><td class="px-5"><div class="flex flex-col"><span class="font-mono text-label-md font-semibold text-primary-container">CJ-8991</span><span class="font-medium text-on-surface">Pedicura spa hidratante</span></div></td><td class="px-4"><div class="flex flex-col"><span class="font-medium text-on-surface">Sofia Bueso</span><span class="font-body-sm text-body-sm text-on-surface-variant">sbueso@corporacion.hn</span></div></td><td class="px-4"><div class="flex items-center gap-2"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-semibold bg-[rgba(163,122,146,0.15)] text-primary-container border border-[rgba(163,122,146,0.3)]">Canje</span><span class="font-mono font-medium text-primary-container text-body-md">-700 pts</span></div></td><td class="px-4 text-body-md"><div class="flex flex-col"><span class="text-on-surface">20 Mar 2026 - 11:30 AM</span><span class="text-[11px] text-on-surface-variant">Completado: 20 Mar 2026</span></div></td><td class="px-4"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-[#eef4f0] text-[#274836] border border-[#d6e5dc]"><span class="w-1.5 h-1.5 rounded-full bg-[#3e7256]"></span>Entregada</span></td><td class="px-5 text-right"><button class="h-10 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container hover:border-outline text-on-surface font-label-md text-label-md font-medium transition-all active:scale-[0.98] inline-flex items-center justify-center whitespace-nowrap" type="button">Ver detalle</button></td></tr><tr class="h-[64px] hover:bg-[#fbfafb] transition-colors"><td class="px-5"><div class="flex flex-col"><span class="font-mono text-label-md font-semibold text-primary-container">CJ-8920</span><span class="font-medium text-on-surface">Tratamiento capilar Olaplex</span></div></td><td class="px-4"><div class="flex flex-col"><span class="font-medium text-on-surface">Elena Rosenthal</span><span class="font-body-sm text-body-sm text-on-surface-variant">elena.rosenthal@yahoo.com</span></div></td><td class="px-4"><div class="flex items-center gap-2"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-semibold bg-[rgba(163,122,146,0.15)] text-primary-container border border-[rgba(163,122,146,0.3)]">Canje</span><span class="font-mono font-medium text-secondary text-body-md">Reintegrados (+850 pts)</span></div></td><td class="px-4 text-body-md"><div class="flex flex-col"><span class="text-on-surface">18 Mar 2026 - 09:00 AM</span><span class="text-[11px] text-on-surface-variant">Cancelada: 18 Mar 2026</span></div></td><td class="px-4"><div class="relative group inline-block"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-surface-container text-on-surface-variant border border-outline-variant cursor-help"><span class="w-1.5 h-1.5 rounded-full bg-outline"></span>Cancelada</span><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:flex items-center px-2 py-1 bg-inverse-surface text-inverse-on-surface rounded-md text-[10px] font-label-sm whitespace-nowrap shadow-md z-10">Puntos devueltos</div></div></td><td class="px-5 text-right"><button class="h-10 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container hover:border-outline text-on-surface font-label-md text-label-md font-medium transition-all active:scale-[0.98] inline-flex items-center justify-center whitespace-nowrap" type="button">Ver detalle</button></td></tr><tr class="h-[64px] hover:bg-[#fbfafb] transition-colors"><td class="px-5"><div class="flex flex-col"><span class="font-mono text-label-md font-semibold text-primary-container">CJ-8874</span><span class="font-medium text-on-surface">Spa de manos parafina</span></div></td><td class="px-4"><div class="flex flex-col"><span class="font-medium text-on-surface">Camila Facussé</span><span class="font-body-sm text-body-sm text-on-surface-variant">cfacusse@gmail.com</span></div></td><td class="px-4"><div class="flex items-center gap-2"><span class="inline-flex items-center px-2 py-0.5 rounded-full text-label-sm font-semibold bg-[rgba(163,122,146,0.15)] text-primary-container border border-[rgba(163,122,146,0.3)]">Canje</span><span class="font-mono font-medium text-secondary text-body-md">Reintegrados (+300 pts)</span></div></td><td class="px-4 text-body-md"><div class="flex flex-col"><span class="text-on-surface">14 Mar 2026 - 11:00 AM</span><span class="text-[11px] text-error font-medium">Expiró: 15 Mar 2026</span></div></td><td class="px-4"><span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm font-semibold bg-error-container/40 text-[#852727] border border-error-container"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>Vencida</span></td><td class="px-5 text-right"><button class="h-10 px-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-surface-container hover:border-outline text-on-surface font-label-md text-label-md font-medium transition-all active:scale-[0.98] inline-flex items-center justify-center whitespace-nowrap" type="button">Ver detalle</button></td></tr></tbody></table>
+</div>
+<!-- PAGINACIÓN AL PIE -->
+<footer class="h-14 px-5 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between font-label-md text-label-md">
+<div class="text-on-surface-variant">
+            Mostrando <span class="font-semibold text-on-surface">1-5</span> de <span class="font-semibold text-on-surface">24</span> registros
+          </div>
+<div class="flex items-center gap-2">
+<!-- Botón Anterior -->
+<button class="h-9 px-3 rounded-lg border border-outline-variant text-on-surface-variant hover:text-on-surface hover:bg-surface-container font-medium flex items-center gap-1 transition-all disabled:opacity-40" disabled="" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_left">chevron_left</span>
+<span>Anterior</span>
+</button>
+<!-- Páginas [1] 2 3 4 5 -->
+<div class="flex items-center gap-1">
+<button class="w-9 h-9 rounded-lg bg-primary-container text-on-primary font-semibold flex items-center justify-center shadow-xs" type="button">
+                1
+              </button>
+<button class="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface font-medium flex items-center justify-center transition-colors" type="button">
+                2
+              </button>
+<button class="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface font-medium flex items-center justify-center transition-colors" type="button">
+                3
+              </button>
+<button class="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface font-medium flex items-center justify-center transition-colors" type="button">
+                4
+              </button>
+<button class="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface font-medium flex items-center justify-center transition-colors" type="button">
+                5
+              </button>
+</div>
+<!-- Botón Siguiente -->
+<button class="h-9 px-3 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container font-medium flex items-center gap-1 transition-all" type="button">
+<span>Siguiente</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+</footer>
+</div>
+<!-- OPERATIONAL AUDIT FOOTNOTE BANNER -->
+<aside class="mt-6 p-4 rounded-xl border border-outline-variant bg-surface-container/40 flex items-start gap-3"><span class="material-symbols-outlined text-secondary text-[22px] mt-0.5" data-icon="verified_user">verified_user</span><div class="text-body-sm leading-relaxed text-on-surface-variant"><p class="font-medium text-on-surface">Normativa de auditoría automática (Honduras GMT-6):</p><p class="mt-0.5">Cualquier canje en estado pendiente que exceda las <strong class="font-semibold text-on-surface">24 HORAS</strong> tras su emisión sin registro de canje físico en el TPV liberará automáticamente los puntos correspondientes y el inventario retenido sin requerir autorización manual.</p></div></aside>
+</main>
+</div>
+</body></html>

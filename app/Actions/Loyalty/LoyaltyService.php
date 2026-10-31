@@ -42,7 +42,7 @@ class LoyaltyService
         abort_unless($actor->is_active && $actor->can('loyalty.award'), 403);
         DB::transaction(function () use ($actor, $sale, $qrToken) {
             $qr = DB::table('customer_qr_tokens')->where('token_hash', hash('sha256', $qrToken))->lockForUpdate()->first();
-            if (! $qr || $qr->used_at || now()->greaterThan($qr->expires_at)) {
+            if (! $qr || $qr->used_at || now()->greaterThanOrEqualTo($qr->expires_at)) {
                 throw ValidationException::withMessages(['qr' => 'QR vencido o utilizado. Solicita uno nuevo.']);
             }
             $customer = Customer::whereKey($qr->customer_id)->lockForUpdate()->firstOrFail();
@@ -112,6 +112,9 @@ class LoyaltyService
                 return $existing;
             }
             $reward = LoyaltyReward::whereKey($reward->id)->lockForUpdate()->firstOrFail();
+            if ($reward->benefit_type === 'service' && ! $reward->service?->is_active) {
+                throw ValidationException::withMessages(['reward' => 'El servicio vinculado ya no está disponible.']);
+            }
             $today = now(CreateAppointmentAction::TIMEZONE)->toDateString();
             if (! $reward->is_active || $reward->starts_on && $reward->starts_on > $today || $reward->ends_on && $reward->ends_on < $today || $reward->stock !== null && $reward->stock < 1) {
                 throw ValidationException::withMessages(['reward' => 'Recompensa no disponible.']);
@@ -123,7 +126,9 @@ class LoyaltyService
             if ($used >= $reward->per_customer_limit || $this->balance($customer) < $reward->points_cost) {
                 throw ValidationException::withMessages(['reward' => 'Puntos insuficientes o límite de canjes alcanzado.']);
             }
-            $redemption = LoyaltyRedemption::create(['customer_id' => $customer->id, 'loyalty_reward_id' => $reward->id, 'operation_token' => $token, 'points_cost' => $reward->points_cost, 'status' => 'reserved', 'expires_at' => now()->addHours(24), 'reward_snapshot' => $reward->only('name', 'description', 'benefit_type', 'service_id', 'discount_percent')]);
+            $snapshot = [...$reward->only('name', 'description', 'benefit_type', 'service_id', 'discount_percent'), 'stock_reserved' => $reward->stock !== null];
+            if ($reward->benefit_type === 'service') $snapshot['name'] = $reward->service->name;
+            $redemption = LoyaltyRedemption::create(['customer_id' => $customer->id, 'loyalty_reward_id' => $reward->id, 'operation_token' => $token, 'points_cost' => $reward->points_cost, 'status' => 'reserved', 'expires_at' => now()->addHours(24), 'reward_snapshot' => $snapshot]);
             if ($actor) {
                 $redemption->update(['reserved_by' => $actor->id]);
                 DB::table('security_audits')->insert(['actor_id' => $actor->id, 'action' => 'redemption.reserved', 'subject_type' => 'redemption', 'subject_id' => $redemption->id, 'after' => json_encode(['customer_id' => $customer->id, 'reward_id' => $reward->id, 'points' => $reward->points_cost]), 'created_at' => now(), 'updated_at' => now()]);
@@ -145,10 +150,13 @@ class LoyaltyService
             if ($locked->status !== 'reserved') {
                 return;
             }
-            $locked->status = $status;
+            $locked->status = $status === 'cancelled' && $locked->expires_at->lessThanOrEqualTo(now()) ? 'expired' : $status;
+            $locked->resolved_at = now();
             $locked->save();
             LoyaltyEntry::firstOrCreate(['source_key' => 'release:'.$locked->id], ['customer_id' => $locked->customer_id, 'redemption_id' => $locked->id, 'type' => 'release', 'points' => $locked->points_cost, 'note' => 'Reserva liberada']);
-            LoyaltyReward::whereKey($locked->loyalty_reward_id)->whereNotNull('stock')->increment('stock');
+            if ($locked->reward_snapshot['stock_reserved'] ?? true) {
+                LoyaltyReward::whereKey($locked->loyalty_reward_id)->whereNotNull('stock')->increment('stock');
+            }
         }, 3);
     }
 }

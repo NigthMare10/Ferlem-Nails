@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mi perfil — Studio Lemus</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Syne:wght@500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-bright": "#453348",
+            "surface-dim": "#1d0e21",
+            "surface": "#1d0e21",
+            "surface-container-highest": "#402f44",
+            "primary-fixed": "#ffd8eb",
+            "on-secondary-container": "#bdb4cc",
+            "surface-tint": "#ffaedc",
+            "surface-container-high": "#352438",
+            "secondary-container": "#4c465a",
+            "on-tertiary-container": "#d0cdd5",
+            "on-tertiary": "#303036",
+            "tertiary-container": "#58575e",
+            "on-error-container": "#ffdad6",
+            "error": "#ffb4ab",
+            "on-tertiary-fixed": "#1b1b21",
+            "tertiary": "#c8c5cd",
+            "on-primary-container": "#ffbae0",
+            "inverse-primary": "#924275",
+            "tertiary-fixed-dim": "#c8c5cd",
+            "primary-container": "#8a3b6e",
+            "inverse-on-surface": "#3c2a3f",
+            "on-primary-fixed": "#3c002c",
+            "surface-container-low": "#251629",
+            "on-background": "#f5daf6",
+            "primary-fixed-dim": "#ffaedc",
+            "error-container": "#93000a",
+            "outline": "#9e8c94",
+            "outline-variant": "#52434a",
+            "on-surface": "#f5daf6",
+            "on-secondary-fixed": "#1e192a",
+            "secondary-fixed-dim": "#ccc2db",
+            "on-primary-fixed-variant": "#762a5c",
+            "on-primary": "#5a1144",
+            "tertiary-fixed": "#e4e1e9",
+            "surface-variant": "#402f44",
+            "secondary-fixed": "#e8def7",
+            "surface-container": "#2a1a2d",
+            "background": "#1d0e21",
+            "secondary": "#ccc2db",
+            "inverse-surface": "#f5daf6",
+            "on-surface-variant": "#d6c1ca",
+            "on-error": "#690005",
+            "on-secondary-fixed-variant": "#4a4457",
+            "surface-container-lowest": "#17081b",
+            "primary": "#ffaedc",
+            "on-secondary": "#332d40",
+            "on-tertiary-fixed-variant": "#47464c"
+          },
+          "borderRadius": {
+            "DEFAULT": "1rem",
+            "lg": "2rem",
+            "xl": "3rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin": "3rem",
+            "space-lg": "2rem",
+            "margin-mobile": "1.25rem",
+            "gutter": "1.5rem",
+            "gutter-mobile": "1rem",
+            "space-xl": "3.5rem",
+            "space-xs": "0.375rem",
+            "space-md": "1.25rem",
+            "space-sm": "0.75rem"
+          },
+          "fontFamily": {
+            "display-lg-mobile": ["Syne"],
+            "body-xl": ["Plus Jakarta Sans"],
+            "headline-xl-mobile": ["Syne"],
+            "label-md": ["Plus Jakarta Sans"],
+            "display-lg": ["Syne"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "headline-lg": ["Syne"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "headline-md": ["Syne"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-xl": ["Syne"],
+            "body-md": ["Plus Jakarta Sans"]
+          },
+          "fontSize": {
+            "display-lg-mobile": ["38px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-xl": ["18px", { "lineHeight": "28px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-xl-mobile": ["30px", { "lineHeight": "36px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "display-lg": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "700" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "body-lg": ["16px", { "lineHeight": "26px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.08em", "fontWeight": "600" }],
+            "headline-xl": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0.01em", "fontWeight": "400" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    /* Liquid Glass & Refractive Luster Specular Highlights */
+    .liquid-glass-tier-1 {
+      background: rgba(45, 18, 54, 0.45);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow: 0 20px 48px -12px rgba(18, 5, 22, 0.8), 0 0 32px -8px rgba(138, 59, 110, 0.18);
+      border: 1px solid rgba(243, 240, 248, 0.12);
+    }
+    
+    .liquid-glass-tier-2 {
+      background: rgba(65, 26, 78, 0.55);
+      backdrop-filter: blur(36px);
+      -webkit-backdrop-filter: blur(36px);
+      box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.22), 0 16px 40px -10px rgba(18, 5, 22, 0.7);
+      border: 1px solid rgba(243, 240, 248, 0.22);
+    }
+
+    .liquid-glass-well {
+      background: rgba(26, 11, 30, 0.6);
+      border: 1px solid rgba(82, 67, 74, 0.35);
+    }
+
+    .liquid-sheen-pill {
+      background: linear-gradient(135deg, #A84C88 0%, #8A3B6E 100%);
+      box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.28), 0 12px 28px -6px rgba(138, 59, 110, 0.45);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen relative overflow-x-hidden selection:bg-primary selection:text-on-primary">
+<!-- Ambient Plum & Lavender Chromatic Light Glows -->
+<div class="fixed top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary-container/20 rounded-full blur-[110px] pointer-events-none -z-10"></div>
+<div class="fixed bottom-24 right-0 w-80 h-80 bg-primary/10 rounded-full blur-[90px] pointer-events-none -z-10"></div>
+<!-- Shared Component: TopAppBar -->
+<header class="bg-surface/70 dark:bg-surface/70 backdrop-blur-xl docked full-width top-0 sticky z-40 border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center w-full px-5 py-3.5 max-w-md mx-auto">
+<div class="flex items-center gap-3">
+<!-- Leading Avatar / Brand Mark -->
+<div class="w-7 h-7 rounded-full p-[1px] bg-gradient-to-tr from-outline-variant to-primary/40 flex items-center justify-center">
+<div class="w-full h-full rounded-full bg-surface-container-high flex items-center justify-center text-primary font-headline-md text-label-md">
+            S
+          </div>
+</div>
+<span class="text-headline-md font-headline-md tracking-tight text-on-surface dark:text-on-surface">Studio Lemus</span>
+</div>
+<!-- Subtle Atelier Privé Tag -->
+<span class="font-label-sm text-label-sm tracking-widest text-outline uppercase px-2 py-0.5 rounded-full border border-outline-variant/40 bg-surface-container-lowest/60">
+        Atelier Privé
+      </span>
+</div>
+</header>
+<!-- Mobile Canvas (Max-w-md container strictly respecting visual fidelity) -->
+<main class="w-full max-w-md mx-auto px-5 pt-6 pb-28 flex flex-col gap-6">
+<!-- Section: Identity / Profile Header -->
+<section class="flex flex-col items-center text-center pt-2">
+<!-- Avatar with Frosted Glass Ring & Pearl Specular Luster -->
+<div class="relative group mb-4">
+<div class="w-24 h-24 rounded-full p-[1.5px] bg-gradient-to-b from-primary-fixed/60 via-primary-container/40 to-outline-variant/20 shadow-[0_0_24px_rgba(255,174,220,0.18)]">
+<div class="w-full h-full rounded-full bg-surface-container-low flex items-center justify-center relative overflow-hidden backdrop-blur-md">
+<!-- Pearlescent Soft Light Halo inside avatar -->
+<div class="absolute inset-0 bg-gradient-to-tr from-primary-container/30 to-transparent"></div>
+<!-- Initial 'S' of Sofía -->
+<span class="font-headline-xl text-headline-xl text-primary font-bold tracking-tight z-10">S</span>
+</div>
+</div>
+<!-- Micro status dot with pearlescent core -->
+<div class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-surface-container-lowest flex items-center justify-center border border-outline-variant/50">
+<div class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_#ffaedc]"></div>
+</div>
+</div>
+<!-- Identity Name -->
+<h1 class="font-headline-md text-headline-md font-semibold text-on-surface tracking-tight mb-1">
+        Sofía Lemus
+      </h1>
+<!-- Atelier Status Pill -->
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-container/20 border border-primary-fixed/20 shadow-sm mb-2">
+<span class="material-symbols-outlined text-primary text-[14px]" data-icon="workspace_premium" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span class="font-label-sm text-label-sm text-primary tracking-wider uppercase font-semibold">Clienta Preferente</span>
+</div>
+<!-- Email Identifier -->
+<p class="font-body-md text-body-md text-on-surface-variant font-normal">
+        sofia.lemus@couture.com
+      </p>
+</section>
+<!-- Section: Account Information / Liquid Glass Bento Tray -->
+<section class="liquid-glass-tier-1 rounded-lg p-5 flex flex-col gap-4">
+<div class="flex items-center justify-between pb-1 border-b border-outline-variant/25">
+<span class="font-label-sm text-label-sm text-on-surface-variant tracking-wider uppercase">Información de la cuenta</span>
+<span class="font-label-sm text-label-sm text-outline">Datos personales</span>
+</div>
+<!-- Field: Nombre -->
+<div class="liquid-glass-well rounded-md p-3.5 flex items-center justify-between transition-all duration-200 hover:border-outline-variant">
+<div class="flex flex-col gap-0.5">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Nombre completo</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">Sofía Lemus</span>
+</div>
+<button aria-label="Editar nombre" class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-variant/40 hover:bg-surface-variant text-primary font-label-sm text-label-sm transition-colors duration-150 active:scale-95" type="button">
+<span class="material-symbols-outlined text-[14px]" data-icon="edit">edit</span>
+<span>Editar</span>
+</button>
+</div>
+<!-- Field: Teléfono -->
+<div class="liquid-glass-well rounded-md p-3.5 flex items-center justify-between transition-all duration-200 hover:border-outline-variant">
+<div class="flex flex-col gap-0.5">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Teléfono de contacto</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">+52 55 4912 8304</span>
+</div>
+<button aria-label="Editar teléfono" class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-variant/40 hover:bg-surface-variant text-primary font-label-sm text-label-sm transition-colors duration-150 active:scale-95" type="button">
+<span class="material-symbols-outlined text-[14px]" data-icon="edit">edit</span>
+<span>Editar</span>
+</button>
+</div>
+<!-- Field: Fecha de nacimiento (Bloque protegido) -->
+<div class="liquid-glass-well rounded-md p-3.5 flex flex-col gap-2.5 border-outline-variant/20">
+<div class="flex items-center justify-between">
+<div class="flex flex-col gap-0.5">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Fecha de nacimiento</span>
+<span class="font-body-md text-body-md text-on-surface font-medium">14 de Octubre</span>
+</div>
+<div class="flex items-center gap-1 text-outline px-2 py-0.5 rounded-full bg-surface-container/60 border border-outline-variant/30">
+<span class="material-symbols-outlined text-[13px]" data-icon="lock" style="font-variation-settings: 'FILL' 1;">lock</span>
+<span class="font-label-sm text-label-sm">Registrada</span>
+</div>
+</div>
+<!-- Nota explicativa requerida -->
+<div class="flex items-start gap-2 pt-2 border-t border-outline-variant/20">
+<span class="material-symbols-outlined text-secondary text-[16px] shrink-0 mt-0.5" data-icon="info">info</span>
+<p class="font-label-sm text-label-sm text-secondary/90 leading-relaxed font-normal">
+            Una vez registrada tu fecha de nacimiento, no puede modificarse por motivos de seguridad del atelier y beneficios anuales.
+          </p>
+</div>
+</div>
+</section>
+<!-- Section: Actions (Liquid Glass QR & Sign out) -->
+<section class="flex flex-col gap-4 pt-1">
+<!-- Primary Action: Temporal Identification QR Card/Button -->
+<div class="liquid-glass-tier-2 rounded-lg p-4 flex flex-col gap-3 transition-transform duration-200">
+<button class="w-full liquid-sheen-pill text-on-primary py-3 px-5 rounded-full flex items-center justify-center gap-2.5 font-label-lg text-label-lg tracking-wide active:scale-98 transition-all duration-150 group" type="button">
+<span class="material-symbols-outlined text-[20px] transition-transform duration-200 group-hover:scale-110" data-icon="qr_code_2">qr_code_2</span>
+<span>Mostrar mi QR temporal</span>
+</button>
+<!-- Clarification / Subtitle Note -->
+<p class="font-label-sm text-label-sm text-on-surface-variant text-center px-2 leading-normal">
+          Código para identificarte en atelier y vincular tu visita o compra. No valida canjes de recompensas.
+        </p>
+</div>
+<!-- Secondary Action: Cerrar sesión sobrio y sobrio en vidrio tenue -->
+<button class="w-full py-3 px-4 rounded-full border border-outline-variant/40 bg-surface-container-low/40 hover:bg-surface-variant/30 text-on-surface-variant hover:text-on-surface flex items-center justify-center gap-2 font-label-md text-label-md transition-colors duration-200 active:scale-95" type="button">
+<span class="material-symbols-outlined text-[18px] text-outline" data-icon="logout">logout</span>
+<span>Cerrar sesión</span>
+</button>
+</section>
+</main>
+<!-- Shared Component: BottomNavBar -->
+<!-- Contextual State: Page is 'Mi perfil'. The active navigation is strictly 'Mi perfil'. -->
+<nav class="bg-surface-container-low/75 dark:bg-surface-container-low/75 backdrop-blur-2xl docked full-width bottom-0 rounded-t-2xl shadow-[0_-8px_32px_rgba(29,14,33,0.6)] fixed bottom-0 left-0 w-full z-50">
+<div class="flex justify-around items-center px-4 py-2 pb-6 max-w-md mx-auto">
+<!-- Tab 1: Inicio (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-3 py-1.5 transition-all duration-200 hover:text-primary dark:hover:text-primary hover:bg-surface-variant/30 rounded-xl active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="sparkles">arrow_back_ios_new</span>
+<span class="text-label-sm font-label-sm mt-0.5">Inicio</span>
+</a>
+<!-- Tab 2: Recompensas (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-3 py-1.5 transition-all duration-200 hover:text-primary dark:hover:text-primary hover:bg-surface-variant/30 rounded-xl active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="workspace_premium">workspace_premium</span>
+<span class="text-label-sm font-label-sm mt-0.5">Recompensas</span>
+</a>
+<!-- Tab 3: Mi perfil (Active - Strictly mapped according to hierarchy rules) -->
+<a class="flex flex-col items-center justify-center bg-primary-container/40 dark:bg-primary-container/40 text-on-primary-container dark:text-on-primary-container rounded-full px-4 py-1.5 transition-all duration-300 shadow-sm active:scale-95" href="#">
+<span class="material-symbols-outlined text-[22px]" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="text-label-sm font-label-sm mt-0.5 font-semibold">Mi perfil</span>
+</a>
+</div>
+</nav>
+</body></html>

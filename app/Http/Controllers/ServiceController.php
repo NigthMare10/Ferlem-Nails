@@ -77,6 +77,9 @@ class ServiceController extends Controller
     public function destroy(Request $request, Service $service): RedirectResponse
     {
         $this->allowed($request, Permissions::SERVICES_DELETE);
+        if (\App\Models\LoyaltyGiftBatch::where('service_id', $service->id)->exists() || \App\Models\LoyaltyReward::where('service_id', $service->id)->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['service' => 'El servicio está vinculado a premios o regalos. Desactívalo para conservar el historial.']);
+        }
         $service->delete();
 
         return back()->with('success', 'Servicio eliminado correctamente.');

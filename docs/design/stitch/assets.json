@@ -1,0 +1,18 @@
+{
+  "home": [
+    "/images/stitch/home-0.webp",
+    "/images/stitch/home-1.webp"
+  ],
+  "rewards": [
+    "/images/stitch/rewards-0.webp",
+    "/images/stitch/rewards-1.webp",
+    "/images/stitch/rewards-2.webp",
+    "/images/stitch/rewards-3.webp",
+    "/images/stitch/rewards-4.webp",
+    "/images/stitch/rewards-5.webp"
+  ],
+  "profile": [],
+  "admin": [
+    "/images/stitch/admin-0.webp"
+  ]
+}

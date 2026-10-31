@@ -1,0 +1,67 @@
+{
+  "results": [
+    {
+      "width": 320,
+      "route": "/clientes",
+      "overflow": false,
+      "clipped": []
+    },
+    {
+      "width": 320,
+      "route": "/clientes/recompensas",
+      "overflow": false,
+      "clipped": []
+    },
+    {
+      "width": 320,
+      "route": "/clientes/perfil",
+      "overflow": false,
+      "clipped": []
+    },
+    {
+      "width": 390,
+      "route": "/clientes",
+      "overflow": false,
+      "clipped": []
+    },
+    {
+      "width": 390,
+      "route": "/clientes/recompensas",
+      "overflow": false,
+      "clipped": []
+    },
+    {
+      "width": 390,
+      "route": "/clientes/perfil",
+      "overflow": false,
+      "clipped": []
+    },
+    {
+      "width": 768,
+      "route": "/clientes",
+      "overflow": false,
+      "clipped": []
+    },
+    {
+      "width": 768,
+      "route": "/clientes/recompensas",
+      "overflow": false,
+      "clipped": []
+    },
+    {
+      "width": 768,
+      "route": "/clientes/perfil",
+      "overflow": false,
+      "clipped": []
+    }
+  ],
+  "qrDecoded": true,
+  "dialog": {
+    "left": 16,
+    "right": 304,
+    "top": 12,
+    "bottom": 556,
+    "scrollable": true
+  },
+  "errors": []
+}

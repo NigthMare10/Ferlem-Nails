@@ -1,0 +1,19 @@
+@import './fonts.css';
+
+/* The exported screens own their typography and controls, not Vuetify's theme. */
+.stitch-screen { font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1.5; font-size: 16px; width: 100%; isolation: isolate; }
+.stitch-screen { font-variant-numeric:normal; text-rendering:auto; }
+.stitch-screen *, .stitch-screen *::before, .stitch-screen *::after { box-sizing: border-box; border-width: 0; border-style: solid; border-color: currentColor; }
+.stitch-screen :where(h1,h2,h3,h4,p,figure) { margin: 0; font: inherit; }
+.stitch-screen :where(button,input,select,textarea) { font: inherit; color: inherit; letter-spacing: inherit; margin: 0; }
+.stitch-screen :where(button) { cursor: pointer; background: transparent; }
+.stitch-screen :where(button:disabled) { opacity: .5; cursor: not-allowed; }
+.stitch-screen :where(input,textarea,select) { min-width: 0; }
+.stitch-screen a { text-decoration: none; color: inherit; }
+.stitch-screen img { display: block; max-width: 100%; }
+.stitch-screen .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased; font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; flex-shrink: 0; }
+.stitch-screen :focus-visible { outline: 2px solid #ffb1c3; outline-offset: 4px; }
+.stitch-screen .field-error { color: #ffb4ab; font-size: 12px; line-height: 1.5; margin-top: 6px; }
+.stitch-screen .feedback { border: 1px solid #ffffff30; background: #38333c; color: #f5daf6; padding: 12px 16px; border-radius: 12px; margin: 12px 0; font-size: 13px; }
+.stitch-screen .feedback-error { border-color: #ffb4ab; color: #ffdad6; }
+@media (prefers-reduced-motion: reduce) { .stitch-screen *, .stitch-screen *::before, .stitch-screen *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

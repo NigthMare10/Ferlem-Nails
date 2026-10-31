@@ -1,0 +1,702 @@
+{
+  "config": {
+    "argv": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\node_modules\\@playwright\\test\\cli.js",
+      "test",
+      "--config",
+      "playwright.loyalty.config.ts"
+    ],
+    "configFile": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\playwright.loyalty.config.ts",
+    "rootDir": "C:/Users/PC/Desktop/01 - Proyectos/Amorcito/tests/Browser/loyalty-v2",
+    "failOnFlakyTests": false,
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/PC/Desktop/01 - Proyectos/Amorcito/test-results/loyalty-v2-run",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "C:/Users/PC/Desktop/01 - Proyectos/Amorcito/tests/Browser/loyalty-v2",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 90000
+      }
+    ],
+    "filteredProjects": [
+      {
+        "grep": {},
+        "grepInvert": null,
+        "outputDir": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\test-results\\loyalty-v2-run",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "name": "",
+        "testDir": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\tests\\Browser\\loyalty-v2",
+        "snapshotDir": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\tests\\Browser\\loyalty-v2",
+        "testIgnore": [],
+        "testMatch": "**/*.@(spec|test).?(c|m)[jt]s?(x)",
+        "timeout": 90000,
+        "use": {
+          "actionTimeout": 15000,
+          "baseURL": "http://127.0.0.1:8012",
+          "headless": false,
+          "viewport": {
+            "width": 1440,
+            "height": 1000
+          },
+          "trace": "retain-on-failure",
+          "screenshot": "only-on-failure"
+        },
+        "dependencies": [],
+        "ignoreSnapshots": false,
+        "__projectId": ""
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "docs/audits/loyalty-v2/e2e-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "default",
+    "updateSourceMethod": "patch",
+    "version": "1.64.1",
+    "workers": 1,
+    "webServer": {
+      "command": "php -d extension=pdo_sqlite -S 127.0.0.1:8012 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php",
+      "cwd": "./public",
+      "stdout": "ignore",
+      "stderr": "ignore",
+      "url": "http://127.0.0.1:8012/login",
+      "reuseExistingServer": false,
+      "timeout": 60000,
+      "env": {
+        "APP_ENV": "qa",
+        "DB_CONNECTION": "sqlite",
+        "DB_DATABASE": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\storage\\app\\loyalty-1793390693985-qa.sqlite",
+        "DB_URL": "",
+        "APP_URL": "http://127.0.0.1:8012",
+        "SESSION_DRIVER": "file",
+        "CACHE_STORE": "array",
+        "MAIL_MAILER": "array",
+        "QUEUE_CONNECTION": "sync"
+      }
+    }
+  },
+  "suites": [
+    {
+      "title": "loyalty.spec.ts",
+      "file": "loyalty.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "recorrido real: premios, múltiples canjes, regalos, máximo nivel y administración",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 43184,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "crear dos premios desde servicios existentes",
+                      "duration": 1602
+                    },
+                    {
+                      "title": "pausar y reactivar varios premios juntos",
+                      "duration": 1172
+                    },
+                    {
+                      "title": "clienta llega al nivel máximo sin siguiente nivel ficticio",
+                      "duration": 3160
+                    },
+                    {
+                      "title": "reservar dos recompensas distintas",
+                      "duration": 2426
+                    },
+                    {
+                      "title": "editar premio después de reservar conserva el costo histórico",
+                      "duration": 1323
+                    },
+                    {
+                      "title": "entregar un canje sin segundo débito",
+                      "duration": 2058
+                    },
+                    {
+                      "title": "cancelar el segundo canje devuelve puntos y cupo",
+                      "duration": 2707
+                    },
+                    {
+                      "title": "historial sin resultados y recuperación de filtros",
+                      "duration": 2200
+                    },
+                    {
+                      "title": "regalar puntos a dos clientas con revisión explícita",
+                      "duration": 4526
+                    },
+                    {
+                      "title": "regalar servicios y confirmar uno sin puntos ni ventas",
+                      "duration": 5285
+                    },
+                    {
+                      "title": "los regalos aparecen en el portal correcto",
+                      "duration": 2239
+                    },
+                    {
+                      "title": "editar un nivel con revisión sin alterar saldos",
+                      "duration": 2527
+                    },
+                    {
+                      "title": "recorrido de navegación y captura final",
+                      "duration": 5189
+                    }
+                  ],
+                  "startTime": "2026-10-30T20:04:58.873Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-fcfba493952c4455e72c",
+          "file": "loyalty.spec.ts",
+          "line": 51,
+          "column": 1
+        },
+        {
+          "title": "respuesta perdida después del envío: reintento real no duplica puntos",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 12530,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:05:42.316Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-c868d4343d78ab74c90a",
+          "file": "loyalty.spec.ts",
+          "line": 206,
+          "column": 1
+        },
+        {
+          "title": "interfaz rewards a 320px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4530,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:05:54.876Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-c1690e0cf78b8c822cb9",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz history a 320px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4507,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:05:59.440Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-767e046ee3c095072568",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz levels a 320px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4977,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:03.981Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-51e210b29af6eb6ea940",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz gifts a 320px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4205,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:08.980Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-030d64192e958da753f9",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz rewards a 768px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5805,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:13.217Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-8940c8f6003ce52ac35c",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz history a 768px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5123,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:19.065Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-25724de7d368d0daadf9",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz levels a 768px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5562,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:24.227Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-9bc67824c65a085c8073",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz gifts a 768px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4977,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:29.821Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-fa90c6956bf51e30a6cb",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz rewards a 1440px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5339,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:34.822Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-462934f1af2a27f3c903",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz history a 1440px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5542,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:40.189Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-8645a240f7ef38392512",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz levels a 1440px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6048,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:45.767Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-4f5a8510c26385eb50c3",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "interfaz gifts a 1440px sin recortes",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 6097,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:51.840Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-d0cc459cc5179134ff40",
+          "file": "loyalty.spec.ts",
+          "line": 241,
+          "column": 9
+        },
+        {
+          "title": "modal: validación nativa, descartar y Escape mantienen navegación",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 90000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 5151,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-30T20:06:57.960Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d2e0466b923467236b99-3ac3e2c1eb51d52d5d6e",
+          "file": "loyalty.spec.ts",
+          "line": 254,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-30T20:04:58.028Z",
+    "duration": 126743.86200000001,
+    "expected": 15,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

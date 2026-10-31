@@ -44,7 +44,11 @@ class LoyaltyCustomerController extends Controller
     {
         abort_unless($request->user('web')->can('loyalty.manage') && $request->user('web')->can('loyalty.redeem'), 403);
         $data = $request->validate(['operation_token' => ['required', 'uuid']]);
-        $loyalty->reserve($customer,$reward,$data['operation_token'],$request->user('web'));
+        $reservation = $loyalty->reserve($customer,$reward,$data['operation_token'],$request->user('web'));
+
+        if ($reservation->status !== 'reserved') {
+            return back()->with('success', 'Esta operación ya fue procesada. Consulta el estado del canje en el historial.');
+        }
 
         return back()->with('success','Reserva creada para la clienta. Confirma la entrega cuando reciba el beneficio.');
     }

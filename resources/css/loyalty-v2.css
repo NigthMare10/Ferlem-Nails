@@ -1,0 +1,381 @@
+.loyalty-v2 {
+    --loyalty-ink: #2a1426;
+    --loyalty-muted: #665460;
+    --loyalty-line: #d0c3c9;
+    color: var(--loyalty-ink);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    min-width: 0;
+}
+.loyalty-v2 * {
+    box-sizing: border-box;
+}
+.loyalty-v2 h1,
+.loyalty-v2 h2 {
+    font-family: 'Noto Serif', Georgia, serif;
+    font-weight: 400;
+    line-height: 1.25;
+}
+.loyalty-v2 h1 {
+    font-size: clamp(26px, 3vw, 34px);
+    margin-bottom: 10px;
+}
+.loyalty-v2 h2 {
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+.loyalty-v2 h3 {
+    font-size: 17px;
+    margin: 20px 0 8px;
+}
+.loyalty-v2 p {
+    margin: 8px 0;
+}
+.loyalty-v2 small,
+.loyalty-v2 .muted {
+    color: var(--loyalty-muted);
+}
+.loyalty-v2 small {
+    display: block;
+    font-size: 12px;
+}
+.loyalty-v2 button,
+.loyalty-v2 .button {
+    min-height: 44px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font: inherit;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--loyalty-line);
+    background: white;
+    color: var(--loyalty-ink);
+    cursor: pointer;
+    text-decoration: none;
+}
+.loyalty-v2 button:hover:not(:disabled),
+.loyalty-v2 .button:hover {
+    background: #f2eaf0;
+}
+.loyalty-v2 .primary {
+    background: #2a1426;
+    color: white;
+    border-color: #2a1426;
+}
+.loyalty-v2 .primary:hover:not(:disabled) {
+    background: #4b2942;
+}
+.loyalty-v2 button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.loyalty-v2 :focus-visible {
+    outline: 2px solid #8a3b6e;
+    outline-offset: 3px;
+}
+.loyalty-v2 input:not([type='checkbox']),
+.loyalty-v2 select,
+.loyalty-v2 textarea {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    border: 1px solid var(--loyalty-line);
+    border-radius: 12px;
+    padding: 10px 14px;
+    background: white;
+    color: var(--loyalty-ink);
+    font: inherit;
+}
+.loyalty-v2 textarea {
+    min-height: 96px;
+    resize: vertical;
+}
+.loyalty-v2 input[type='checkbox'] {
+    width: 20px;
+    height: 20px;
+    accent-color: #703550;
+    flex-shrink: 0;
+}
+.loyalty-v2 label {
+    display: block;
+    font-weight: 500;
+    margin: 16px 0;
+}
+.loyalty-v2 label > input,
+.loyalty-v2 label > select,
+.loyalty-v2 label > textarea {
+    margin-top: 6px;
+}
+.loyalty-v2 .check {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-height: 44px;
+}
+.loyalty-v2 .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 24px 0;
+    border-bottom: 1px solid var(--loyalty-line);
+}
+.loyalty-v2 .tabs a {
+    color: var(--loyalty-muted);
+    padding: 12px 16px;
+    min-height: 48px;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+}
+.loyalty-v2 .tabs a[aria-current='page'] {
+    border-color: #2a1426;
+    color: #2a1426;
+    font-weight: 700;
+}
+.loyalty-v2 .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 24px 0;
+}
+.loyalty-v2 .toolbar input {
+    flex: 1 1 260px;
+    max-width: 430px;
+}
+.loyalty-v2 .toolbar select {
+    width: auto;
+    max-width: 100%;
+}
+.loyalty-v2 .notice {
+    background: #f5eff3;
+    border: 1px solid var(--loyalty-line);
+    padding: 16px 20px;
+    border-radius: 14px;
+    margin: 16px 0;
+}
+.loyalty-v2 .error {
+    padding: 12px 16px;
+    background: #fdf2f3;
+    color: #7e2632;
+    border: 1px solid #c88f99;
+    border-radius: 12px;
+    margin: 12px 0;
+    overflow-wrap: anywhere;
+}
+.loyalty-v2 .ledger {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    table-layout: fixed;
+    border: 1px solid var(--loyalty-line);
+}
+.loyalty-v2 .ledger th {
+    font-size: 12px;
+    color: var(--loyalty-muted);
+    background: #faf7f9;
+    font-weight: 600;
+}
+.loyalty-v2 .ledger th,
+.loyalty-v2 .ledger td {
+    text-align: left;
+    padding: 16px 12px;
+    border-bottom: 1px solid #e6dce2;
+    overflow-wrap: anywhere;
+    vertical-align: top;
+}
+.loyalty-v2 .ledger .actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.loyalty-v2 .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border: 1px solid var(--loyalty-line);
+    border-radius: 999px;
+    color: #513047;
+    background: #f5eaf1;
+    font-size: 12px;
+}
+.loyalty-v2 .badge.good {
+    color: #274836;
+    background: #eef4f0;
+}
+.loyalty-v2 .empty {
+    padding: 32px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--loyalty-line);
+}
+.loyalty-v2 .pagination {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    align-items: center;
+    margin: 20px 0;
+}
+.loyalty-modal {
+    width: min(560px, calc(100% - 24px));
+    max-height: calc(100dvh - 24px);
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--loyalty-line);
+    border-radius: 20px;
+    background: white;
+    overscroll-behavior: contain;
+    box-shadow: 0 24px 80px #2a142633;
+}
+.loyalty-modal::backdrop {
+    background: #24142066;
+    backdrop-filter: blur(4px);
+}
+.loyalty-modal.loyalty-drawer {
+    width: min(640px, 100%);
+    max-height: 100dvh;
+    height: 100dvh;
+    margin: 0 0 0 auto;
+    border-radius: 20px 0 0 20px;
+}
+.loyalty-v2 .modal-surface {
+    display: flex;
+    flex-direction: column;
+    max-height: inherit;
+    height: 100%;
+}
+.loyalty-v2 .modal-surface > header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--loyalty-line);
+    flex-shrink: 0;
+}
+.loyalty-v2 .modal-surface > header h2 {
+    margin: 0;
+}
+.loyalty-v2 .modal-body {
+    padding: 8px 24px 24px;
+    overflow-y: auto;
+    min-height: 0;
+}
+.loyalty-v2 .modal-surface > footer {
+    padding: 16px 24px max(16px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--loyalty-line);
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    background: white;
+    flex-shrink: 0;
+}
+.loyalty-v2 .columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.loyalty-v2 .columns > * {
+    min-width: 0;
+}
+.loyalty-v2 .detail-list {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px 20px;
+    margin: 20px 0;
+}
+.loyalty-v2 .detail-list dd {
+    overflow-wrap: anywhere;
+}
+.loyalty-v2 .timeline {
+    padding-left: 24px;
+    margin: 20px 0;
+}
+.loyalty-v2 .timeline li {
+    padding: 8px 0;
+}
+.loyalty-v2 .step-list {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 0;
+    color: var(--loyalty-muted);
+}
+.loyalty-v2 .step-list strong {
+    color: #2a1426;
+}
+.loyalty-v2 .client-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid #e6dce2;
+    overflow-wrap: anywhere;
+}
+.loyalty-v2 .client-row > div {
+    min-width: 0;
+    flex: 1;
+}
+.loyalty-v2 .wrap-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+@media (max-width: 900px) {
+    .loyalty-v2 .ledger,
+    .loyalty-v2 .ledger tbody,
+    .loyalty-v2 .ledger tr,
+    .loyalty-v2 .ledger td {
+        display: block;
+        width: 100%;
+    }
+    .loyalty-v2 .ledger thead {
+        display: none;
+    }
+    .loyalty-v2 .ledger tr {
+        padding: 12px;
+        border-bottom: 1px solid var(--loyalty-line);
+    }
+    .loyalty-v2 .ledger td {
+        padding: 8px;
+        border: 0;
+    }
+    .loyalty-v2 .ledger td::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 12px;
+        color: var(--loyalty-muted);
+        margin-bottom: 4px;
+    }
+    .loyalty-v2 .ledger td:has(input[type='checkbox']) {
+        padding: 8px;
+    }
+}
+@media (max-width: 500px) {
+    .loyalty-v2 input:not([type='checkbox']),
+    .loyalty-v2 select,
+    .loyalty-v2 textarea {
+        font-size: 16px;
+    }
+    .loyalty-v2 .columns {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+    .loyalty-v2 .modal-body {
+        padding-inline: 16px;
+    }
+    .loyalty-v2 .modal-surface > header,
+    .loyalty-v2 .modal-surface > footer {
+        padding-inline: 16px;
+    }
+    .loyalty-v2 .tabs {
+        gap: 0;
+    }
+    .loyalty-v2 .tabs a {
+        padding-inline: 12px;
+    }
+}

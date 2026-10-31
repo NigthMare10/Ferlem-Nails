@@ -14,7 +14,6 @@ use App\Models\LoyaltyEntry;
 use App\Models\LoyaltyReward;
 use App\Models\Service;
 use App\Models\User;
-use App\Notifications\CustomerResetPassword;
 use App\Support\AppointmentRevision;
 use App\Support\EmployeeAvailability;
 use App\Support\ItemDiscount;
@@ -263,14 +262,8 @@ class ExtendedOperationsTest extends TestCase
         $staff = $this->staff();
         $staff->update(['email' => $c->email]);
         $original = $staff->password;
-        $this->post('/clientes/olvide-contrasena', ['email' => $c->email])->assertSessionHas('success');
-        $token = null;
-        Notification::assertSentTo($c, CustomerResetPassword::class, function ($n) use (&$token) {
-            $token = $n->token;
-
-            return true;
-        });
-        $this->post('/clientes/restablecer-contrasena', ['email' => $c->email, 'token' => $token, 'password' => 'NewPassword12345', 'password_confirmation' => 'NewPassword12345'])->assertRedirect('/clientes/login');
+        $this->post('/clientes/olvide-contrasena', ['email' => $c->email, 'password' => 'NewPassword12345', 'password_confirmation' => 'NewPassword12345'])->assertSessionHas('success')->assertRedirect('/clientes/login');
+        Notification::assertNothingSent();
         $this->assertTrue(Hash::check('NewPassword12345', $c->fresh()->password));
         $this->assertSame($original, $staff->fresh()->password);
     }
@@ -303,7 +296,9 @@ class ExtendedOperationsTest extends TestCase
         $this->post('/appointments/'.$a->id.'/checkout', ['items' => $items, 'removed_appointment_item_ids' => [], 'checkout_token' => (string) Str::uuid(), 'payment_method' => 'cash'])->assertStatus(303);
         $this->assertSame(20, app(LoyaltyService::class)->balance($c));
         $other = $this->member();
-        $this->actingAs($other, 'customer')->get('/clientes/citas')->assertInertia(fn (Assert $p) => $p->has('appointments', 0));
+        $this->actingAs($other, 'customer')->get('/clientes/citas')->assertRedirect('/clientes');
+        $this->get('/clientes')->assertSuccessful();
+        $this->get('/clientes', ['X-Inertia' => 'true', 'X-Inertia-Version' => \Inertia\Inertia::getVersion(), 'X-Inertia-Partial-Component' => 'Customer/Portal', 'X-Inertia-Partial-Data' => 'appointments'])->assertOk()->assertJsonCount(0, 'props.appointments');
     }
 
     public function test_free_line_does_not_generate_points(): void

@@ -1,0 +1,292 @@
+<!DOCTYPE html><html class="dark" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Recuperar Contraseña — Studio Lemus</title>
+<!-- Google Fonts: Syne & Plus Jakarta Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;family=Syne:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "surface-container-lowest": "#110d15",
+            "primary-fixed-dim": "#ffb1c3",
+            "tertiary-container": "#9ca2a9",
+            "on-error-container": "#ffdad6",
+            "background": "#16121a",
+            "surface-tint": "#ffb1c3",
+            "secondary-fixed": "#eddcfe",
+            "primary": "#ffb1c3",
+            "on-primary-fixed": "#39081a",
+            "on-background": "#e9dfec",
+            "surface-variant": "#38333c",
+            "inverse-primary": "#8b4a5c",
+            "surface-container-highest": "#38333c",
+            "on-surface-variant": "#d6c1c5",
+            "tertiary": "#c1c7cf",
+            "inverse-on-surface": "#332e38",
+            "on-secondary-fixed": "#21172f",
+            "on-secondary": "#362c45",
+            "secondary-fixed-dim": "#d0c0e1",
+            "secondary-container": "#50445f",
+            "on-error": "#690005",
+            "surface-container-low": "#1e1a22",
+            "surface-container": "#221e26",
+            "on-secondary-container": "#c2b2d3",
+            "on-tertiary-fixed": "#161c22",
+            "surface-bright": "#3c3740",
+            "on-primary-container": "#5d2536",
+            "secondary": "#d0c0e1",
+            "primary-fixed": "#ffd9e0",
+            "error": "#ffb4ab",
+            "on-tertiary": "#2b3137",
+            "surface-container-high": "#2d2831",
+            "on-surface": "#e9dfec",
+            "tertiary-fixed": "#dde3eb",
+            "surface-dim": "#16121a",
+            "outline": "#9f8c8f",
+            "surface": "#16121a",
+            "inverse-surface": "#e9dfec",
+            "outline-variant": "#524346",
+            "on-secondary-fixed-variant": "#4d425d",
+            "on-primary-fixed-variant": "#6f3345",
+            "on-tertiary-container": "#32393f",
+            "on-primary": "#541d2e",
+            "primary-container": "#d88b9e",
+            "on-tertiary-fixed-variant": "#41474e",
+            "tertiary-fixed-dim": "#c1c7cf",
+            "error-container": "#93000a"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "space-lg": "2rem",
+            "space-sm": "0.75rem",
+            "space-xs": "0.375rem",
+            "space-xl": "3rem",
+            "margin-desktop": "3rem",
+            "gutter-desktop": "1.5rem",
+            "gutter": "1rem",
+            "margin": "1.25rem",
+            "space-md": "1.25rem"
+          },
+          "fontFamily": {
+            "body-md": ["Plus Jakarta Sans"],
+            "headline-lg": ["Syne"],
+            "headline-lg-mobile": ["Syne"],
+            "body-sm": ["Plus Jakarta Sans"],
+            "label-md": ["Plus Jakarta Sans"],
+            "label-lg": ["Plus Jakarta Sans"],
+            "headline-sm": ["Syne"],
+            "body-lg": ["Plus Jakarta Sans"],
+            "label-sm": ["Plus Jakarta Sans"],
+            "headline-md": ["Syne"],
+            "display-hero": ["Syne"],
+            "display-hero-mobile": ["Syne"]
+          },
+          "fontSize": {
+            "body-md": ["15px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+            "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "0em", "fontWeight": "600" }],
+            "body-sm": ["13px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.06em", "fontWeight": "500" }],
+            "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.04em", "fontWeight": "600" }],
+            "headline-sm": ["20px", { "lineHeight": "28px", "letterSpacing": "0.01em", "fontWeight": "500" }],
+            "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+            "label-sm": ["10px", { "lineHeight": "14px", "letterSpacing": "0.1em", "fontWeight": "600" }],
+            "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "0em", "fontWeight": "500" }],
+            "display-hero": ["44px", { "lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+            "display-hero-mobile": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    /* Liquid glass optical physics & rim highlights */
+    .liquid-glass-card {
+      background: rgba(255, 255, 255, 0.035);
+      backdrop-filter: blur(28px) saturate(145%);
+      -webkit-backdrop-filter: blur(28px) saturate(145%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 16px 40px -10px rgba(10, 6, 14, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+    }
+
+    .specular-border {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(208, 192, 225, 0.02) 100%);
+    }
+
+    .couture-button-gradient {
+      background: linear-gradient(135deg, #d88b9e 0%, #a35c70 100%);
+      box-shadow: 0 8px 24px -4px rgba(216, 139, 158, 0.35), inset 0 1px 1.5px rgba(255, 255, 255, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .couture-button-gradient:hover {
+      box-shadow: 0 10px 28px -2px rgba(216, 139, 158, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.6);
+    }
+
+    .input-ambient-glow:focus-within {
+      border-color: rgba(216, 139, 158, 0.75);
+      box-shadow: 0 0 18px rgba(216, 139, 158, 0.22), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen flex flex-col justify-between selection:bg-primary-container selection:text-on-primary-container font-body-md text-body-md antialiased overflow-x-hidden relative">
+<!-- Ambient Pearlescent & Obsidian Lighting Layers -->
+<div aria-hidden="true" class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+<div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[340px] h-[340px] rounded-full bg-primary-container/10 blur-[90px]"></div>
+<div class="absolute top-1/3 -right-24 w-[280px] h-[280px] rounded-full bg-secondary-container/20 blur-[100px]"></div>
+<div class="absolute bottom-12 -left-20 w-[300px] h-[300px] rounded-full bg-[#39081a]/25 blur-[110px]"></div>
+<!-- Subtle specular grid noise -->
+<div class="absolute inset-0 bg-[radial-gradient(#d6c1c5_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.035]"></div>
+</div>
+<!-- Shared Component: TopAppBar (Docked, Exact JSON specification) -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-space-md py-space-sm h-14 max-w-md mx-auto right-0 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-outline-variant/20 dark:border-outline-variant/20 shadow-sm">
+<!-- Leading: Close / Back Navigation -->
+<a aria-label="Cerrar y volver a iniciar sesión" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary transition-colors duration-200 active:scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined text-[22px]">close</span>
+</a>
+<!-- Headline: Brand Logo -->
+<div class="text-center">
+<span class="text-headline-sm font-headline-sm font-semibold tracking-wider text-on-surface dark:text-on-surface">Studio Lemus</span>
+</div>
+<!-- Trailing: Help / Support Action -->
+<button aria-label="Ayuda y asistencia técnica" class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary transition-colors duration-200 active:scale-95 transition-transform duration-150" type="button">
+<span class="material-symbols-outlined text-[22px]">help_outline</span>
+</button>
+</header>
+<!-- Main Canvas / Content Viewport (Mobile First max-w-md) -->
+<main class="relative z-10 w-full max-w-md mx-auto px-5 pt-20 pb-8 flex-1 flex flex-col justify-center">
+<!-- Atmospheric Brand Crest & Monogram -->
+<div class="flex flex-col items-center text-center mt-3 mb-6">
+<div class="relative mb-3 group">
+<!-- Diffuse ambient aura behind seal -->
+<div class="absolute -inset-1 rounded-full bg-primary-container/20 blur-md group-hover:bg-primary-container/30 transition-all duration-500"></div>
+<!-- SL Monogram Seal -->
+<div class="relative w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center border border-white/20 shadow-[0_8px_20px_rgba(0,0,0,0.45)]">
+<span class="font-headline-sm text-headline-sm font-bold tracking-tight text-primary-fixed-dim select-none">SL</span>
+</div>
+</div>
+<p class="font-label-sm text-label-sm uppercase text-secondary tracking-[0.25em] mb-1.5 opacity-90">STUDIO LEMUS</p>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg font-semibold text-on-surface tracking-tight mb-2">Recuperar contraseña</h1>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-[320px] mx-auto leading-relaxed px-1">Ingresa tus datos para restablecer el acceso a tu cuenta.</p>
+</div>
+<!-- Liquid Glass Form Container -->
+<section class="liquid-glass-card rounded-[24px] p-6 mb-6">
+<form class="space-y-5" id="recovery-form" onsubmit="event.preventDefault(); simulateSubmission();"><!-- Campo 1: Correo electrónico -->
+<div class="space-y-2">
+  <label class="block font-label-md text-label-md text-on-surface font-medium" for="recovery-email">
+    Correo electrónico
+  </label>
+  <div class="relative rounded-lg input-ambient-glow transition-all duration-300">
+    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant">
+      <span class="material-symbols-outlined text-[20px]">mail</span>
+    </div>
+    <input autocomplete="email" class="w-full h-[52px] pl-11 pr-4 bg-white/[0.035] border border-white/10 rounded-lg text-on-surface placeholder:text-on-surface-variant/40 font-body-md text-body-md focus:outline-none focus:ring-0 transition-colors" id="recovery-email" name="email" placeholder="tu@correo.com" required="" type="email">
+  </div>
+</div>
+
+<!-- Campo 2: Nueva contraseña -->
+<div class="space-y-2">
+  <label class="block font-label-md text-label-md text-on-surface font-medium" for="new-password">
+    Nueva contraseña
+  </label>
+  <div class="relative rounded-lg input-ambient-glow transition-all duration-300">
+    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant">
+      <span class="material-symbols-outlined text-[20px]">lock</span>
+    </div>
+    <input autocomplete="new-password" class="w-full h-[52px] pl-11 pr-11 bg-white/[0.035] border border-white/10 rounded-lg text-on-surface placeholder:text-on-surface-variant/40 font-body-md text-body-md focus:outline-none focus:ring-0 transition-colors" id="new-password" name="new_password" placeholder="••••••••" required="" type="password">
+    <button type="button" onclick="const el = document.getElementById('new-password'); const icon = this.querySelector('.material-symbols-outlined'); if(el.type==='password'){el.type='text'; icon.textContent='visibility_off';}else{el.type='password'; icon.textContent='visibility';}" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-on-surface-variant hover:text-primary transition-colors cursor-pointer" aria-label="Mostrar u ocultar contraseña">
+      <span class="material-symbols-outlined text-[20px]">visibility</span>
+    </button>
+  </div>
+</div>
+
+<!-- Campo 3: Confirmar nueva contraseña -->
+<div class="space-y-2">
+  <label class="block font-label-md text-label-md text-on-surface font-medium" for="confirm-password">
+    Confirmar nueva contraseña
+  </label>
+  <div class="relative rounded-lg input-ambient-glow transition-all duration-300">
+    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-on-surface-variant">
+      <span class="material-symbols-outlined text-[20px]">lock</span>
+    </div>
+    <input autocomplete="new-password" class="w-full h-[52px] pl-11 pr-11 bg-white/[0.035] border border-white/10 rounded-lg text-on-surface placeholder:text-on-surface-variant/40 font-body-md text-body-md focus:outline-none focus:ring-0 transition-colors" id="confirm-password" name="confirm_password" placeholder="••••••••" required="" type="password">
+    <button type="button" onclick="const el = document.getElementById('confirm-password'); const icon = this.querySelector('.material-symbols-outlined'); if(el.type==='password'){el.type='text'; icon.textContent='visibility_off';}else{el.type='password'; icon.textContent='visibility';}" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-on-surface-variant hover:text-primary transition-colors cursor-pointer" aria-label="Mostrar u ocultar contraseña">
+      <span class="material-symbols-outlined text-[20px]">visibility</span>
+    </button>
+  </div>
+</div>
+
+<!-- CTA: Cambiar contraseña -->
+<button class="couture-button-gradient w-full h-[54px] rounded-full flex items-center justify-center gap-2.5 text-on-primary font-label-lg text-label-lg font-semibold tracking-wide transition-all duration-200 active:scale-[0.98] cursor-pointer mt-3" id="submit-btn" type="submit">
+  <span class="">Cambiar contraseña</span>
+  <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button></form>
+</section>
+<!-- Lower Secondary Link Card -->
+<div class="text-center space-y-4">
+<a class="inline-flex items-center justify-center gap-2 min-h-[48px] px-5 py-2.5 rounded-full specular-border text-secondary hover:text-primary transition-all duration-200 active:scale-95 font-label-md text-label-md group" href="#">
+<span class="material-symbols-outlined text-[18px] transition-transform duration-200 group-hover:-translate-x-0.5">arrow_back</span>
+<span class="">¿Recordaste tu contraseña? Volver a iniciar sesión</span>
+</a>
+</div>
+</main>
+<!-- Micro-Footer Discreto / Atelier Signature -->
+<footer class="relative z-10 w-full py-4 text-center">
+<p class="font-label-sm text-label-sm text-on-surface-variant/40 tracking-[0.2em] uppercase select-none">
+      • ATELIER PRIVÉ •
+    </p>
+</footer>
+<!-- Micro-interactions: Feedback inline trigger -->
+<script>
+    function simulateSubmission() {
+      const emailInput = document.getElementById('recovery-email');
+      const toast = document.getElementById('status-toast');
+      const submitBtn = document.getElementById('submit-btn');
+
+      if (emailInput.checkValidity() && emailInput.value.trim() !== '') {
+        // Subtle loading pulse feedback
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+          <span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+          <span>Enviando...</span>
+        `;
+        
+        setTimeout(() => {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `
+            <span>Enlace enviado</span>
+            <span class="material-symbols-outlined text-[20px]">check</span>
+          `;
+          submitBtn.classList.remove('couture-button-gradient');
+          submitBtn.classList.add('bg-surface-variant', 'border-white/20', 'text-on-surface');
+
+          toast.classList.remove('hidden');
+          toast.classList.add('flex');
+        }, 800);
+      }
+    }
+  </script>
+
+
+</body></html>

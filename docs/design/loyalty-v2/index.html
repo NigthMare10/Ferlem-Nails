@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Studio Lemus · Propuesta de fidelidad</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f7f6f8; color: #2a1426; font-family: 'Segoe UI', sans-serif; line-height: 1.5; }
+    main { max-width: 1440px; margin: auto; padding: 32px clamp(16px, 4vw, 48px) 64px; }
+    h1 { font-size: clamp(26px, 4vw, 40px); line-height: 1.2; margin: 0 0 12px; }
+    h2 { margin: 40px 0 16px; font-size: 24px; }
+    p { max-width: 78ch; }
+    a { color: #703550; text-underline-offset: 4px; }
+    a:focus-visible { outline: 3px solid #703550; outline-offset: 4px; }
+    .notice { border: 1px solid #d0c3c9; padding: 16px; background: #fff; border-radius: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px; }
+    figure { margin: 0; min-width: 0; }
+    figure a { display: block; border: 1px solid #d0c3c9; border-radius: 12px; overflow: hidden; background: #fff; }
+    figure img { width: 100%; height: 240px; object-fit: contain; object-position: top; display: block; }
+    figcaption { padding: 10px 0; font-size: 15px; font-weight: 600; }
+    footer { margin-top: 40px; color: #665460; }
+    @media (prefers-reduced-motion: no-preference) { a { transition: color 150ms ease; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Fidelidad y recompensas · Propuesta</h1>
+    <p>28 vistas y estados creados en Stitch. Abre cualquier imagen para verla completa.</p>
+    <p><a href="https://stitch.withgoogle.com/projects/15003048259766237811" target="_blank" rel="noopener">Abrir proyecto en Stitch</a></p>
+    <div class="notice"><strong>Solo diseño para aprobación.</strong> No se modificó la aplicación. El sidebar y la navegación actuales se conservarán; las variaciones de esos elementos en las imágenes de Stitch no forman parte del cambio.</div>
+    <p><strong>Dos conceptos distintos:</strong> los puntos que se ganan al pagar siguen en Servicios; aquí eliges servicios existentes y defines su costo de canje. Los regalos no cobran puntos a la clienta.</p>
+    <p>Los nombres, precios, saldos, fechas y beneficios son ejemplos. Proponemos que los puntos regalados aumenten el saldo disponible, pero no el nivel. Esta regla queda pendiente de aprobación.</p>
+  </header>
+  <div id="screens"></div>
+  <footer>Las imágenes son maquetas estáticas, no formularios funcionales. Las etiquetas FINAL/APROBACIÓN identifican revisiones, no una aprobación ya otorgada. <a href="README.md">Alcance y notas de revisión</a>.</footer>
+</main>
+<script>
+  const groups = [
+    ['Premios vinculados a servicios', [
+      ['01-premios', '01 · Catálogo de premios'], ['02-anadir-premio', '02 · Añadir premio desde un servicio'],
+      ['03-selector-servicios', '03 · Selector de servicios abierto'], ['04-pausar-premio', '04 · Confirmar pausa'],
+      ['22-sin-premios', '22 · Estado vacío'], ['23-editar-premio', '23 · Editar premio'], ['24-descartar', '24 · Descartar cambios'],
+    ]],
+    ['Historial y entrega de canjes', [
+      ['05-historial', '05 · Historial de canjes'], ['06-detalle-canje', '06 · Detalle de reserva'],
+      ['07-confirmar-entrega', '07 · Confirmar entrega'], ['08-cancelar-reserva', '08 · Cancelar y devolver puntos'],
+      ['09-canje-vencido', '09 · Reserva vencida'],
+    ]],
+    ['Niveles de fidelidad', [
+      ['10-niveles', '10 · Niveles y puntos calificables'], ['11-editar-nivel', '11 · Añadir / editar nivel'],
+      ['12-confirmar-niveles', '12 · Revisar cambios de niveles'],
+    ]],
+    ['Regalos a una o varias clientas', [
+      ['13-regalos', '13 · Registro de regalos'], ['14-destinatarias', '14 · Selección de clientas'],
+      ['15-regalar-puntos', '15 · Regalar puntos'], ['16-regalar-servicio', '16 · Regalar un servicio existente'],
+      ['17-confirmar-regalo', '17 · Revisar antes de enviar'], ['18-resultado-lote', '18 · Resultado y reintento parcial'],
+      ['19-detalle-regalo', '19 · Detalle del servicio regalado'], ['20-entregar-regalo', '20 · Confirmar entrega de regalo'],
+      ['21-cancelar-regalo', '21 · Cancelar regalo disponible'],
+    ]],
+    ['Adaptaciones móviles', [
+      ['25-premios-mobile', '25 · Premios en móvil'], ['26-historial-mobile', '26 · Historial en móvil'],
+      ['27-clientas-mobile', '27 · Seleccionar clientas en móvil'], ['28-regalo-mobile', '28 · Regalar servicio en móvil'],
+    ]],
+  ];
+  const root = document.getElementById('screens');
+  for (const [title, screens] of groups) {
+    const section = document.createElement('section');
+    const heading = document.createElement('h2'); heading.textContent = title; section.append(heading);
+    const grid = document.createElement('div'); grid.className = 'grid';
+    for (const [slug, label] of screens) {
+      const figure = document.createElement('figure');
+      const link = document.createElement('a'); link.href = slug + '.png'; link.target = '_blank'; link.rel = 'noopener';
+      const image = document.createElement('img'); image.src = slug + '.png'; image.alt = label; image.loading = 'lazy';
+      const caption = document.createElement('figcaption'); caption.textContent = label;
+      link.append(image); figure.append(link, caption); grid.append(figure);
+    }
+    section.append(grid); root.append(section);
+  }
+</script>
+</body>
+</html>

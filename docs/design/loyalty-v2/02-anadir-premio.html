@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>APROBACION 02 - Panel Añadir Premio</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;family=Noto+Serif:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed": "#ffd8ec",
+            "inverse-primary": "#e0bcd5",
+            "on-surface-variant": "#4d444a",
+            "surface-variant": "#f1dde9",
+            "inverse-surface": "#392d36",
+            "on-primary-fixed-variant": "#593e53",
+            "on-primary-fixed": "#2a1426",
+            "primary": "#010001",
+            "surface-container-highest": "#f1dde9",
+            "inverse-on-surface": "#ffebf7",
+            "on-tertiary-container": "#ad7295",
+            "on-secondary-fixed": "#2e1125",
+            "secondary": "#78536a",
+            "surface-container-high": "#f7e3ef",
+            "tertiary": "#010001",
+            "error-container": "#ffdad6",
+            "on-primary": "#ffffff",
+            "error": "#ba1a1a",
+            "background": "#fff7f9",
+            "secondary-fixed": "#ffd8ed",
+            "secondary-container": "#f9cae4",
+            "on-secondary-container": "#775268",
+            "surface-container-lowest": "#ffffff",
+            "on-error": "#ffffff",
+            "outline": "#7f747a",
+            "tertiary-fixed-dim": "#f6b3d9",
+            "tertiary-container": "#350a29",
+            "secondary-fixed-dim": "#e8b9d3",
+            "surface": "#fff7f9",
+            "primary-container": "#2a1426",
+            "on-tertiary-fixed": "#350a29",
+            "primary-fixed": "#fdd8f1",
+            "on-tertiary-fixed-variant": "#683656",
+            "on-error-container": "#93000a",
+            "surface-dim": "#e9d5e0",
+            "primary-fixed-dim": "#e0bcd5",
+            "on-surface": "#231820",
+            "on-background": "#231820",
+            "outline-variant": "#d0c3ca",
+            "surface-container-low": "#ffeff7",
+            "on-tertiary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "surface-tint": "#72566b",
+            "surface-container": "#fde8f4",
+            "surface-bright": "#fff7f9",
+            "on-primary-container": "#9a7b91",
+            "on-secondary-fixed-variant": "#5e3c51"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-mobile": "1rem",
+            "gutter": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2.5rem",
+            "gutter-mobile": "1rem",
+            "space-md": "1rem",
+            "margin-desktop": "2.5rem",
+            "space-xs": "0.25rem",
+            "gutter-desktop": "1.5rem",
+            "margin": "2rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "display-lg": ["Noto Serif"],
+            "body-lg": ["DM Sans"],
+            "label-sm": ["DM Sans"],
+            "body-sm": ["DM Sans"],
+            "headline-md": ["Noto Serif"],
+            "headline-lg-mobile": ["Noto Serif"],
+            "label-md": ["DM Sans"],
+            "headline-lg": ["Noto Serif"],
+            "title-md": ["DM Sans"],
+            "label-lg": ["DM Sans"],
+            "body-md": ["DM Sans"],
+            "headline-sm": ["Noto Serif"]
+          },
+          "fontSize": {
+            "display-lg": ["40px", { lineHeight: "52px", letterSpacing: "-0.02em", fontWeight: "400" }],
+            "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+            "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }],
+            "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+            "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "500" }],
+            "headline-lg-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.01em", fontWeight: "500" }],
+            "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }],
+            "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.015em", fontWeight: "400" }],
+            "title-md": ["16px", { lineHeight: "24px", letterSpacing: "0.01em", fontWeight: "600" }],
+            "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "500" }],
+            "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+            "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "500" }]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    /* Ambient luxury shadows */
+    .shadow-plum-subtle {
+      box-shadow: 0 4px 16px -2px rgba(42, 20, 38, 0.04), 0 2px 6px -1px rgba(42, 20, 38, 0.02);
+    }
+    .shadow-plum-drawer {
+      box-shadow: 0 16px 36px -4px rgba(42, 20, 38, 0.12), -10px 0 28px -6px rgba(42, 20, 38, 0.06);
+    }
+    /* Custom subtle scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #d0c3ca;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #78536a;
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface antialiased h-full overflow-hidden flex">
+<!-- ========================================================================= -->
+<!-- BACKGROUND APP ECOSYSTEM (Screen 01: Catálogo de Premios - Back-Office)  -->
+<!-- ========================================================================= -->
+<!-- Shared Component: SideNavBar -->
+<aside class="fixed top-0 left-0 h-screen w-[272px] z-10 border-r border-outline-variant bg-surface-container-lowest"><div class="flex flex-col justify-between h-full w-[272px] p-space-md"><div class="flex flex-col gap-5"><div class="flex items-center gap-3 px-2 py-1"><div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary"><span class="font-headline-sm text-headline-sm text-on-primary">L</span></div><div class="flex flex-col"><span class="font-headline-md text-headline-md tracking-tight font-medium text-primary uppercase">Studio Lemus</span><span class="font-label-sm text-label-sm text-on-surface-variant">Gestión Operativa</span></div></div><nav class="flex flex-col gap-4 overflow-y-auto max-h-[calc(100vh-180px)] pr-1 custom-scrollbar"><div class="flex flex-col gap-1"><span class="px-3 font-label-sm text-label-sm text-outline uppercase tracking-wider">Jornada</span><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150" href="#"><span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span><span class="font-label-md text-label-md">Agenda</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150" href="#"><span class="material-symbols-outlined" data-icon="history">history</span><span class="font-label-md text-label-md">Citas</span></a></div><div class="flex flex-col gap-1"><span class="px-3 font-label-sm text-label-sm text-outline uppercase tracking-wider">Movimiento</span><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150" href="#"><span class="material-symbols-outlined" data-icon="point_of_sale">point_of_sale</span><span class="font-label-md text-label-md">Ventas</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150" href="#"><span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span><span class="font-label-md text-label-md">Facturas</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150" href="#"><span class="material-symbols-outlined" data-icon="payments">payments</span><span class="font-label-md text-label-md">Gastos</span></a></div><div class="flex flex-col gap-1"><span class="px-3 font-label-sm text-label-sm text-outline uppercase tracking-wider">El estudio</span><a class="bg-secondary-container text-on-secondary-container font-semibold rounded-lg px-space-md py-space-sm flex items-center gap-space-sm" href="#"><span class="material-symbols-outlined" data-icon="stars" style="font-variation-settings: 'FILL' 1;">stars</span><span class="font-label-md text-label-md">Fidelización &amp; Premios</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150" href="#"><span class="material-symbols-outlined" data-icon="spa">spa</span><span class="font-label-md text-label-md">Servicios</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-lg px-space-md py-space-sm flex items-center gap-space-sm transition-colors duration-150" href="#"><span class="material-symbols-outlined" data-icon="settings">settings</span><span class="font-label-md text-label-md">Configuración</span></a></div></nav></div><div class="pt-4 border-t border-outline-variant"><a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm hover:bg-surface-container transition-colors duration-150" href="#"><span class="material-symbols-outlined" data-icon="logout">logout</span><span class="font-label-md text-label-md">Cerrar sesión</span></a></div></div></aside>
+<!-- Main Background Canvas (Catálogo de Premios view) -->
+<div class="flex-1 ml-[272px] flex flex-col h-screen overflow-hidden">
+<!-- Shared Component: TopNavBar -->
+<header class="sticky top-0 z-20 rounded-xl my-space-sm mx-space-md bg-surface-container-lowest border border-outline-variant shadow-sm flex items-center justify-between h-16 px-space-lg">
+<div class="flex items-center gap-6">
+<!-- Search in top nav -->
+<div class="relative w-72">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]" data-icon="search">search</span>
+<input class="w-full h-10 pl-9 pr-4 rounded-xl border border-outline-variant bg-surface text-body-md font-body-md focus:border-primary-container focus:ring-1 focus:ring-primary-container placeholder:text-outline outline-none transition-all" placeholder="Buscar premios o reglas..." type="text"/>
+</div>
+<!-- Navigation Links -->
+<nav class="flex items-center gap-6">
+<a class="border-b-2 border-primary text-primary font-medium pb-1 font-label-lg text-label-lg" href="#">Premios</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors font-label-lg text-label-lg" href="#">Historial</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors font-label-lg text-label-lg" href="#">Niveles</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-1 transition-colors font-label-lg text-label-lg" href="#">Regalos</a>
+</nav>
+</div>
+<!-- Trailing Action Cluster -->
+<div class="flex items-center gap-3"><button class="h-10 px-4 rounded-xl bg-primary-container text-on-primary hover:bg-on-primary-fixed transition-all text-label-lg font-label-lg flex items-center gap-1.5 active:scale-[0.98] shadow-sm"><span class="material-symbols-outlined text-[18px]" data-icon="add">add</span><span>Nuevo premio</span></button><div class="h-6 w-px bg-outline-variant mx-1"></div><button class="p-2 text-on-surface-variant hover:text-on-surface rounded-lg hover:bg-surface-container transition-colors"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button><div class="w-9 h-9 rounded-full bg-secondary-fixed flex items-center justify-center font-label-sm text-label-sm font-semibold text-on-secondary-fixed ml-1">SD</div></div>
+</header>
+<!-- Background Content Canvas: Catálogo de Premios Ledger -->
+<main class="flex-1 overflow-y-auto px-space-xl py-6 flex flex-col gap-6">
+<!-- Title & Operational Stats Header -->
+<div class="flex items-baseline justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Lealtad &amp; Fidelización</span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Catálogo de Premios</h1>
+</div>
+<div class="flex items-center gap-4 text-body-md font-body-md text-on-surface-variant">
+<span>6 Premios activos</span>
+<span>·</span>
+<span>1,840 Canjes acumulados</span>
+</div>
+</div>
+<!-- Quick Metrics Bento Cards -->
+<!-- Table Ledger Mock for Background Authenticity -->
+<div class="bg-surface-container-lowest rounded-2xl border border-outline-variant shadow-plum-subtle overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant flex items-center justify-between">
+<span class="font-title-md text-title-md text-on-surface">Premios configurados</span>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Filtro:</span>
+<span class="font-label-md text-label-md font-medium text-primary">Todos los servicios</span>
+</div>
+</div>
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="h-10 border-b border-outline-variant bg-surface text-on-surface-variant font-label-sm text-label-sm">
+<th class="px-6 font-semibold">SERVICIO VINCULADO</th>
+<th class="px-6 font-semibold">COSTE CANJE</th>
+<th class="px-6 font-semibold">VALOR COMERCIAL</th>
+<th class="px-6 font-semibold">ESTADO</th>
+<th class="px-6 font-semibold text-right">ACCIONES</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/50 font-body-md text-body-md text-on-surface">
+<tr class="h-[52px] hover:bg-surface/50">
+<td class="px-6 font-medium">Hidratación Capilar Profunda</td>
+<td class="px-6"><span class="font-semibold text-primary">850</span> pts</td>
+<td class="px-6 text-on-surface-variant">L 650</td>
+<td class="px-6"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#eef4f0] text-[#274836]">Activo</span></td>
+<td class="px-6 text-right text-on-surface-variant"><span class="material-symbols-outlined text-[18px]" data-icon="more_horiz">more_horiz</span></td>
+</tr>
+<tr class="h-[52px] hover:bg-surface/50">
+<td class="px-6 font-medium">Pedicura Spa Exfoliante</td>
+<td class="px-6"><span class="font-semibold text-primary">600</span> pts</td>
+<td class="px-6 text-on-surface-variant">L 480</td>
+<td class="px-6"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#eef4f0] text-[#274836]">Activo</span></td>
+<td class="px-6 text-right text-on-surface-variant"><span class="material-symbols-outlined text-[18px]" data-icon="more_horiz">more_horiz</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+</main>
+</div>
+<!-- ========================================================================= -->
+<!-- MODAL OVERLAY & SLIDE-OVER SIDE DRAWER (SCREEN 02 CORE TASK)              -->
+<!-- ========================================================================= -->
+<!-- Translucent Dark Backdrop overlay (blur + plum tinted opacity) -->
+<div class="fixed inset-0 z-40 bg-[#1f141d]/40 backdrop-blur-[3px] transition-opacity duration-300"></div>
+<!-- Polished 560px width Slide-over Drawer Panel -->
+<aside aria-label="Panel Lateral Añadir premio" class="fixed top-0 right-0 z-50 h-full w-[560px] bg-surface-container-lowest border-l border-outline-variant shadow-plum-drawer flex flex-col transform transition-transform duration-300 ease-out">
+<!-- 1. Panel Header -->
+<header class="flex-none px-space-lg py-5 border-b border-outline-variant flex items-start justify-between bg-surface-container-lowest">
+<div class="flex flex-col gap-1 pr-4">
+<h2 class="font-headline-md text-headline-md text-primary tracking-tight">Añadir premio</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Vincula un servicio existente y establece los puntos requeridos para el canje.
+        </p>
+</div>
+<button aria-label="Cerrar panel lateral" class="flex-none w-9 h-9 rounded-xl border border-outline-variant flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]" data-icon="close">close</span>
+</button>
+</header>
+<!-- 2. Scrollable Form Body -->
+<div class="flex-1 overflow-y-auto px-space-lg py-6 flex flex-col gap-6 custom-scrollbar bg-surface-container-lowest pb-32">
+<!-- Field 1: Servicio existente (Required) -->
+<div class="flex flex-col gap-2">
+<label class="flex items-center justify-between font-label-lg text-label-lg text-on-surface" for="servicio-combobox">
+<span>Servicio existente <span class="text-error">*</span></span>
+<span class="font-label-sm text-label-sm text-secondary">Catálogo oficial</span>
+</label>
+<!-- Combobox -->
+<div class="relative">
+<div class="flex items-center justify-between w-full h-11 px-3.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface text-body-md font-body-md cursor-pointer hover:border-secondary transition-colors">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="spa">spa</span>
+<span class="font-medium text-primary">Manicura semipermanente</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]" data-icon="unfold_more">unfold_more</span>
+</div>
+</div>
+<!-- Read-only service summary box (tinted container #fbf9fa, border #d0c3c9, rounded-lg p-3) -->
+<div class="mt-1 bg-[#fbf9fa] border border-outline-variant rounded-xl p-3.5 flex flex-col gap-3">
+<div class="grid grid-cols-3 gap-2">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Duración</span>
+<span class="font-title-md text-title-md text-primary mt-0.5">60 min</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Precio</span>
+<span class="font-title-md text-title-md text-primary mt-0.5">L 350</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Puntos otorgados</span>
+<span class="font-title-md text-title-md text-secondary mt-0.5">35 pts <span class="text-[11px] font-normal text-on-surface-variant">/ compra</span></span>
+</div>
+</div>
+<!-- Explicit helper callout banner -->
+<div class="pt-2 border-t border-outline-variant/60 flex items-start gap-2 text-body-sm font-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-secondary text-[16px] mt-0.5 flex-none" data-icon="info">info</span>
+<span>Estos puntos se editan en Servicios y no son el costo del canje.</span>
+</div>
+</div>
+</div>
+<!-- Field 2: Puntos necesarios para canjear (Required) -->
+<div class="flex flex-col gap-1.5">
+<label class="flex items-center justify-between font-label-lg text-label-lg text-on-surface" for="puntos-canje">
+<span>Puntos necesarios para canjear <span class="text-error">*</span></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Puntaje entero positivo</span>
+</label>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-secondary">
+<span class="material-symbols-outlined text-[20px]" data-icon="stars">stars</span>
+</div>
+<input class="w-full h-11 pl-11 pr-14 bg-surface-container-lowest border border-outline-variant rounded-xl text-primary font-title-md text-title-md focus:border-primary-container focus:ring-2 focus:ring-secondary/20 outline-none transition-all" id="puntos-canje" min="1" step="10" type="number" value="500"/>
+<div class="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-on-surface-variant font-label-sm text-label-sm">
+            PTS
+          </div>
+</div>
+</div>
+<!-- Field 3: Descripción pública para clientas (Opcional) -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="font-label-lg text-label-lg text-on-surface" for="descripcion-premio">
+            Descripción pública para clientas
+          </label>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Opcional</span>
+</div>
+<textarea class="w-full p-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-on-surface font-body-md text-body-md focus:border-primary-container focus:ring-2 focus:ring-secondary/20 outline-none transition-all resize-none leading-relaxed" id="descripcion-premio" rows="3">Disfruta de un esmaltado semipermanente impecable en tono de tu elección con acabado de alto brillo.</textarea>
+<span class="text-right font-label-sm text-label-sm text-outline">98 / 200 caracteres</span>
+</div>
+<!-- Divider line -->
+<div class="h-px bg-outline-variant"></div>
+<!-- Section 4: Reglas de disponibilidad -->
+<div class="flex flex-col gap-4">
+<div>
+<h3 class="font-title-md text-title-md text-primary">Reglas de disponibilidad</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Condiciones de redención en mostrador y aplicación móvil.</p>
+</div>
+<!-- Segmented control: Cupos -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface">Cupos de recompensa</label>
+<div class="grid grid-cols-2 p-1 bg-surface border border-outline-variant rounded-xl">
+<button class="py-2 rounded-lg bg-surface-container-lowest text-primary font-label-md text-label-md shadow-sm border border-outline-variant/60 flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="all_inclusive">all_inclusive</span>
+<span>Ilimitados</span>
+</button>
+<button class="py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors flex items-center justify-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[16px]" data-icon="pin">pin</span>
+<span>Límite de cupos</span>
+</button>
+</div>
+</div>
+<!-- Input: Máximo por clienta -->
+<div class="flex flex-col gap-1.5"><div class="flex items-center justify-between"><label class="font-label-md text-label-md text-on-surface" for="max-clienta">Máximo por clienta (total) <span class="text-on-surface-variant font-normal">— acumulado histórico</span></label><span class="font-label-sm text-label-sm text-on-surface-variant">Sin renovación mensual</span></div><div class="relative"><input class="w-full h-11 px-3.5 bg-surface-container-lowest border border-outline-variant rounded-xl text-primary font-body-md text-body-md focus:border-primary-container focus:ring-2 focus:ring-secondary/20 outline-none" id="max-clienta" min="1" type="number" value="1"/><span class="absolute right-3.5 top-1/2 -translate-y-1/2 font-label-sm text-label-sm text-on-surface-variant">canje(s) en total</span></div><p class="font-body-sm text-body-sm text-on-surface-variant">Límite total no recurrente por clienta durante toda la vigencia del premio.</p></div>
+<!-- Dates validity: Desde / Hasta -->
+<div class="grid grid-cols-2 gap-3">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Desde</label>
+<div class="h-11 px-3 bg-surface border border-outline-variant rounded-xl flex items-center justify-between text-body-md font-body-md text-on-surface">
+<span>Sin límite</span>
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="calendar_month">calendar_month</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface-variant">Hasta</label>
+<div class="h-11 px-3 bg-surface border border-outline-variant rounded-xl flex items-center justify-between text-body-md font-body-md text-on-surface">
+<span>Sin límite</span>
+<span class="material-symbols-outlined text-outline text-[18px]" data-icon="event_busy">event_busy</span>
+</div>
+</div>
+</div>
+<!-- Checkbox: Cumpleaños -->
+<label class="flex items-start gap-3 p-3 rounded-xl border border-outline-variant bg-[#fbf9fa] cursor-pointer hover:bg-surface transition-colors">
+<input checked="" class="w-5 h-5 mt-0.5 rounded-[6px] border-secondary text-primary-container focus:ring-secondary/30 accent-[#2a1426]" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-primary font-medium">Aplicable únicamente en el mes de cumpleaños de la clienta</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Se desbloqueará automáticamente en el perfil de la clienta durante los 30 días de su aniversario.</span>
+</div>
+</label>
+<!-- Toggle switch: Estado activo -->
+<div class="flex items-center justify-between p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[18px]" data-icon="check_circle">check_circle</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-lg text-label-lg text-on-surface font-medium">Estado: Activo de inmediato</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Visible en catálogo y canjeable en el POS</span>
+</div>
+</div>
+<!-- Visual Switch -->
+<div class="w-12 h-6 bg-primary-container rounded-full p-0.5 flex items-center justify-end cursor-pointer">
+<div class="w-5 h-5 rounded-full bg-surface-container-lowest shadow-sm"></div>
+</div>
+</div>
+</div>
+<!-- Divider line -->
+<div class="h-px bg-outline-variant"></div>
+<!-- 5. Live Preview Card: 'Vista previa para la clienta' -->
+<div class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-widest">Vista previa para la clienta</span>
+<span class="font-label-sm text-label-sm text-outline">Formato voucher / app</span>
+</div>
+<!-- Elegant mini ticket card -->
+<div class="relative overflow-hidden rounded-2xl border border-outline-variant bg-gradient-to-br from-surface to-surface-container-low p-4 shadow-sm">
+<!-- Subtle decorative radial background tone -->
+<div class="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-secondary-fixed/40 blur-2xl pointer-events-none"></div>
+<div class="flex items-start justify-between relative z-10">
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-primary-container text-on-primary">
+                PREMIO
+              </span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-secondary">
+<span class="material-symbols-outlined text-[14px]" data-icon="cake">cake</span>
+                Cumpleañera
+              </span>
+</div>
+<!-- Points Badge -->
+<div class="flex items-baseline gap-1 bg-surface-container-lowest px-2.5 py-1 rounded-lg border border-outline-variant shadow-sm">
+<span class="font-headline-sm text-headline-sm text-primary leading-none">500</span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">PUNTOS</span>
+</div>
+</div>
+<div class="mt-3 relative z-10">
+<h4 class="font-headline-sm text-headline-sm text-primary">Manicura semipermanente</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 line-clamp-2">
+              Disfruta de un esmaltado semipermanente impecable en tono de tu elección con acabado de alto brillo.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-outline-variant/60 flex items-center justify-between text-body-sm font-body-sm text-on-surface-variant relative z-10">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="schedule">schedule</span>
+<span>Duración 60 min</span>
+</span>
+<span class="font-label-sm text-label-sm font-medium text-primary bg-secondary-fixed/50 px-2 py-0.5 rounded-md">
+              Valor L 350
+            </span>
+</div>
+</div>
+</div>
+</div>
+<!-- 3. Fixed Bottom Footer -->
+<footer class="flex-none px-space-lg py-4 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-end gap-3 shadow-lg">
+<button class="h-11 px-6 rounded-xl border border-outline-variant text-on-surface hover:bg-surface transition-colors font-label-lg text-label-lg active:scale-[0.98]" type="button">
+        Cancelar
+      </button>
+<button class="h-11 px-7 rounded-xl bg-[#2a1426] hover:bg-[#3e1e38] active:bg-[#1f0e1c] text-on-primary font-label-lg text-label-lg shadow-sm transition-all duration-150 flex items-center gap-2 active:scale-[0.98]" type="button">
+<span class="material-symbols-outlined text-[18px]" data-icon="save">save</span>
+<span>Guardar premio</span>
+</button>
+</footer>
+</aside>
+</body></html>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+
+<html class="h-full bg-background" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FINAL 01 - Catálogo de Premios — LEMUS Atelier</title>
+<!-- Google Fonts: Noto Serif & DM Sans -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;family=Noto+Serif:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS v3 -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "tertiary-fixed": "#ffd8ec",
+            "inverse-primary": "#e0bcd5",
+            "on-surface-variant": "#4d444a",
+            "surface-variant": "#f1dde9",
+            "inverse-surface": "#392d36",
+            "on-primary-fixed-variant": "#593e53",
+            "on-primary-fixed": "#2a1426",
+            "primary": "#010001",
+            "surface-container-highest": "#f1dde9",
+            "inverse-on-surface": "#ffebf7",
+            "on-tertiary-container": "#ad7295",
+            "on-secondary-fixed": "#2e1125",
+            "secondary": "#78536a",
+            "surface-container-high": "#f7e3ef",
+            "tertiary": "#010001",
+            "error-container": "#ffdad6",
+            "on-primary": "#ffffff",
+            "error": "#ba1a1a",
+            "background": "#fff7f9",
+            "secondary-fixed": "#ffd8ed",
+            "secondary-container": "#f9cae4",
+            "on-secondary-container": "#775268",
+            "surface-container-lowest": "#ffffff",
+            "on-error": "#ffffff",
+            "outline": "#7f747a",
+            "tertiary-fixed-dim": "#f6b3d9",
+            "tertiary-container": "#350a29",
+            "secondary-fixed-dim": "#e8b9d3",
+            "surface": "#fff7f9",
+            "primary-container": "#2a1426",
+            "on-tertiary-fixed": "#350a29",
+            "primary-fixed": "#fdd8f1",
+            "on-tertiary-fixed-variant": "#683656",
+            "on-error-container": "#93000a",
+            "surface-dim": "#e9d5e0",
+            "primary-fixed-dim": "#e0bcd5",
+            "on-surface": "#231820",
+            "on-background": "#231820",
+            "outline-variant": "#d0c3ca",
+            "surface-container-low": "#ffeff7",
+            "on-tertiary": "#ffffff",
+            "on-secondary": "#ffffff",
+            "surface-tint": "#72566b",
+            "surface-container": "#fde8f4",
+            "surface-bright": "#fff7f9",
+            "on-primary-container": "#9a7b91",
+            "on-secondary-fixed-variant": "#5e3c51"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+          "spacing": {
+            "margin-mobile": "1rem",
+            "gutter": "1.5rem",
+            "space-sm": "0.5rem",
+            "space-xl": "2.5rem",
+            "gutter-mobile": "1rem",
+            "space-md": "1rem",
+            "margin-desktop": "2.5rem",
+            "space-xs": "0.25rem",
+            "gutter-desktop": "1.5rem",
+            "margin": "2rem",
+            "space-lg": "1.5rem"
+          },
+          "fontFamily": {
+            "display-lg": ["Noto Serif"],
+            "body-lg": ["DM Sans"],
+            "label-sm": ["DM Sans"],
+            "body-sm": ["DM Sans"],
+            "headline-md": ["Noto Serif"],
+            "headline-lg-mobile": ["Noto Serif"],
+            "label-md": ["DM Sans"],
+            "headline-lg": ["Noto Serif"],
+            "title-md": ["DM Sans"],
+            "label-lg": ["DM Sans"],
+            "body-md": ["DM Sans"],
+            "headline-sm": ["Noto Serif"]
+          },
+          "fontSize": {
+            "display-lg": ["40px", {"lineHeight": "52px", "letterSpacing": "-0.02em", "fontWeight": "400"}],
+            "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+            "label-sm": ["11px", {"lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "600"}],
+            "body-sm": ["12px", {"lineHeight": "16px", "fontWeight": "400"}],
+            "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+            "headline-lg-mobile": ["26px", {"lineHeight": "34px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+            "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+            "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.015em", "fontWeight": "400"}],
+            "title-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+            "label-lg": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+            "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+            "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "500"}]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="h-full bg-[#f7f6f8] text-on-surface antialiased flex selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- ========================================================================= -->
+<!-- SIDEBAR: Lemus Atelier Executive Navigation (272px fixed)                 -->
+<!-- ========================================================================= -->
+<aside class="fixed top-0 left-0 h-screen w-[272px] z-30 bg-surface-container-lowest border-r border-outline-variant flex flex-col justify-between p-space-md select-none overflow-y-auto">
+<div class="flex flex-col gap-y-6">
+<!-- Brand Header -->
+<!-- Quick Action CTA -->
+<!-- Grouped Nav Items -->
+<nav class="flex flex-col gap-y-5 px-space-xs">
+<!-- JORNADA GROUP -->
+<div>
+<p class="px-space-md text-[10px] font-semibold text-outline uppercase tracking-wider mb-1.5 font-label-sm">
+            Jornada
+          </p>
+<ul class="space-y-0.5">
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">home</span>
+<span>Inicio</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">point_of_sale</span>
+<span>Nueva venta</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">calendar_today</span>
+<span>Agenda</span>
+</a>
+</li>
+</ul>
+</div>
+<!-- MOVIMIENTO GROUP -->
+<div>
+<p class="px-space-md text-[10px] font-semibold text-outline uppercase tracking-wider mb-1.5 font-label-sm">
+            Movimiento
+          </p>
+<ul class="space-y-0.5">
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">receipt_long</span>
+<span>Facturas</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">history</span>
+<span>Historial de citas</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">payments</span>
+<span>Gastos</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[20px] text-outline">trending_up</span>
+<span>Ganancias generales</span>
+</a>
+</li>
+</ul>
+</div>
+<!-- EL ESTUDIO GROUP -->
+<div>
+<p class="px-space-md text-[10px] font-semibold text-outline uppercase tracking-wider mb-1.5 font-label-sm">
+            El Estudio
+          </p>
+<ul class="space-y-0.5">
+<!-- Parent Configuración Item (Expanded) -->
+<li>
+<div class="text-on-surface rounded-lg px-space-md py-space-sm flex items-center justify-between font-label-md text-label-md font-medium">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-[20px] text-primary">settings</span>
+<span>Configuración</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">expand_less</span>
+</div>
+<!-- Nested sub-navigation for settings -->
+<ul class="mt-1 ml-4 pl-3 border-l border-outline-variant space-y-1">
+<li>
+<!-- Fidelidad y recompensas: ACTIVE item specified by context and brand anchors -->
+<a class="bg-secondary-container text-on-secondary-container font-semibold rounded-lg px-space-md py-space-sm flex items-center gap-space-sm text-[13px] font-label-md transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">card_membership</span>
+<span>Fidelidad y recompensas</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm text-[13px] font-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[18px] text-outline">badge</span>
+<span>Usuarios y permisos</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm text-[13px] font-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[18px] text-outline">spa</span>
+<span>Servicios</span>
+</a>
+</li>
+<li>
+<a class="text-on-surface-variant hover:text-on-surface rounded-lg px-space-md py-space-sm flex items-center gap-space-sm text-[13px] font-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[18px] text-outline">schedule</span>
+<span>Horario de atención</span>
+</a>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</nav>
+</div>
+<!-- Sidebar Footer -->
+<div class="pt-4 border-t border-outline-variant px-space-xs">
+<a class="text-on-surface-variant hover:text-error rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors hover:bg-surface-container" href="#">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span>Cerrar sesión</span>
+</a>
+</div>
+</aside>
+<!-- ========================================================================= -->
+<!-- MAIN WORKSPACE                                                            -->
+<!-- ========================================================================= -->
+<div class="ml-[272px] flex-1 flex flex-col min-h-screen">
+<!-- TopAppBar: Floating rounded white card as defined in Design System / JSON -->
+<header class="sticky top-0 z-20 rounded-xl my-space-sm mx-space-md bg-surface-container-lowest border border-outline-variant shadow-sm flex items-center justify-between h-16 px-space-lg">
+<!-- Breadcrumb Path & Page Title -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant">
+<span class="hover:text-primary transition-colors cursor-pointer">Configuración</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface font-semibold">Fidelidad y recompensas</span>
+</div>
+</div>
+<!-- Trailing Controls: Search, Ledger Actions, Notifications & Avatar -->
+<div class="flex items-center gap-4">
+<!-- Direct Quick Ledger Action -->
+<!-- Trailing Icon Actions -->
+<button class="relative p-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors" title="Notificaciones" type="button">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-secondary"></span>
+</button>
+<!-- SD Account Avatar -->
+<div class="flex items-center gap-3 pl-2 border-l border-outline-variant">
+<div class="w-9 h-9 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center font-label-md text-label-md font-semibold text-primary" title="SD user avatar profile picture">
+            SD
+          </div>
+<div class="hidden md:flex flex-col text-left">
+<span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">Sofia Durón</span>
+<span class="font-label-sm text-[11px] text-on-surface-variant">Administradora</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Canvas Operational Workspace Container -->
+<main class="flex-1 px-space-xl py-6 max-w-[1440px] w-full mx-auto space-y-6">
+<!-- ========================================================================= -->
+<!-- TOP BANNER / HEADER                                                      -->
+<!-- ========================================================================= -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div>
+<div class="flex items-center gap-3">
+<h1 class="font-headline-lg text-headline-lg text-primary">
+              Fidelidad y recompensas
+            </h1>
+<!-- Subdued Badge -->
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-label-sm font-medium bg-surface-container text-on-surface-variant border border-outline-variant">
+              Datos de ejemplo
+            </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">
+            Gestiona el catálogo de premios por canje y consulta el balance de puntos de clientas.
+          </p>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- SUB-NAVIGATION TABS                                                       -->
+<!-- ========================================================================= -->
+<div class="border-b border-outline-variant flex items-center gap-8">
+<a class="border-b-2 border-primary-container text-primary font-medium font-label-lg text-label-lg pb-2 flex items-center gap-1.5" href="#">
+<span>Premios</span>
+<span class="text-xs font-semibold px-2 py-0.2 rounded-full bg-surface-container text-secondary">4</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-2 font-label-lg text-label-lg transition-colors flex items-center gap-1.5" href="#">
+<span>Historial</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-2 font-label-lg text-label-lg transition-colors flex items-center gap-1.5" href="#">
+<span>Niveles</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface pb-2 font-label-lg text-label-lg transition-colors flex items-center gap-1.5" href="#">
+<span>Regalos</span>
+</a>
+</div>
+<!-- ========================================================================= -->
+<!-- QUIET INTRO EXPLANATION BANNER                                            -->
+<!-- ========================================================================= -->
+<div class="rounded-xl border border-outline-variant bg-[#fbf9fa] p-4 flex items-start gap-3.5 border-l-4 border-l-[#a37a92]">
+<span class="material-symbols-outlined text-[22px] text-secondary mt-0.5">info</span>
+<div class="flex-1">
+<h2 class="font-title-md text-title-md text-on-surface leading-snug">
+            Convierte tus servicios en premios
+          </h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+            Los puntos ganados se configuran en Servicios. Aquí defines cuánto cuesta canjear un premio.
+          </p>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- ACTION & FILTER TOOLBAR                                                   -->
+<!-- ========================================================================= -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+<!-- Search & Filter Cluster -->
+<div class="flex flex-wrap items-center gap-3 flex-1">
+<!-- Search input -->
+<div class="relative w-full max-w-sm">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-outline">
+              search
+            </span>
+<input class="w-full h-11 pl-10 pr-4 rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-md text-body-md focus:border-primary-container focus:ring-2 focus:ring-secondary/20 transition-all outline-none" placeholder="Buscar premio o servicio..." type="text"/>
+</div>
+<!-- Segmented Filter -->
+<div class="inline-flex p-1 bg-surface-container-lowest border border-outline-variant rounded-xl text-xs font-label-md"><button class="px-3.5 py-1.5 rounded-lg bg-primary-container text-on-primary font-medium transition-colors" type="button">Todos (4)</button><button class="px-3.5 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface transition-colors" type="button">Activos (3)</button><button class="px-3.5 py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface transition-colors" type="button">Pausados (1)</button></div>
+</div>
+<!-- Primary CTA Button -->
+<div class="flex items-center gap-3">
+<button class="h-11 px-5 rounded-xl bg-primary-container text-on-primary font-label-lg text-label-lg font-medium flex items-center justify-center gap-2 hover:bg-[#3e1e38] active:bg-[#1f0e1c] transition-all shadow-sm" type="button">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>+ Añadir premio</span>
+</button>
+</div>
+</div>
+<!-- ========================================================================= -->
+<!-- LEDGER TABLE CONTAINER                                                    -->
+<!-- ========================================================================= -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<!-- Table Header -->
+<thead>
+<tr class="h-11 border-b border-outline-variant bg-[#fdfcfd]">
+<th class="px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold" scope="col">
+                  Premio / Servicio vinculado
+                </th>
+<th class="px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold" scope="col">
+                  Costo de canje
+                </th>
+<th class="px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold" scope="col">
+                  Disponibilidad
+                </th>
+<th class="px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold" scope="col">
+                  Estado
+                </th>
+<th class="px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold text-right" scope="col">
+                  Acciones
+                </th>
+</tr>
+</thead>
+<!-- Table Body -->
+<tbody class="divide-y divide-outline-variant/60 font-body-md text-body-md">
+<!-- ROW 1: Manicura semipermanente -->
+<tr class="hover:bg-[#fbfafb] transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3.5">
+<div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary-container shrink-0 border border-outline-variant/70">
+<span class="material-symbols-outlined text-[20px]">spa</span>
+</div>
+<div>
+<div class="font-title-md text-title-md text-on-surface font-medium group-hover:text-primary transition-colors">
+                        Manicura semipermanente
+                      </div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1.5 mt-0.5">
+<span>Precio base: L 350</span>
+<span>·</span>
+<span class="text-secondary font-medium">Gana 35 pts al pagar</span>
+</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-title-md text-title-md font-semibold text-primary-container tracking-tight">
+                    Canje por 500 pts
+                  </span>
+</td>
+<td class="px-6 py-4">
+<div class="text-on-surface font-medium">Ilimitada</div>
+<div class="text-body-sm text-on-surface-variant">Máx. 1 por clienta</div>
+</td>
+<td class="px-6 py-4">
+<!-- Confirmed / Active badge: Soft green/sage pill -->
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#eef4f0] text-[#274836] border border-[#d2e3d7]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#274836]"></span>
+                    Activo
+                  </span>
+</td>
+<td class="px-6 py-4 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" type="button">
+                      Editar
+                    </button>
+<button class="px-3 py-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-error font-label-md text-label-md transition-colors" type="button">
+                      Pausar
+                    </button>
+</div>
+</td>
+</tr>
+<!-- ROW 2: Spa de manos -->
+<tr class="hover:bg-[#fbfafb] transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3.5">
+<div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary-container shrink-0 border border-outline-variant/70">
+<span class="material-symbols-outlined text-[20px]">pan_tool_alt</span>
+</div>
+<div>
+<div class="font-title-md text-title-md text-on-surface font-medium group-hover:text-primary transition-colors">
+                        Spa de manos
+                      </div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1.5 mt-0.5">
+<span>Precio base: L 200</span>
+<span>·</span>
+<span class="text-secondary font-medium">Gana 20 pts al pagar</span>
+</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-title-md text-title-md font-semibold text-primary-container tracking-tight">
+                    Canje por 300 pts
+                  </span>
+</td>
+<td class="px-6 py-4">
+<div class="text-on-surface font-medium">10 cupos disponibles</div>
+<div class="text-body-sm text-on-surface-variant">Máx. 1 por clienta</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#eef4f0] text-[#274836] border border-[#d2e3d7]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#274836]"></span>
+                    Activo
+                  </span>
+</td>
+<td class="px-6 py-4 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" type="button">
+                      Editar
+                    </button>
+<button class="px-3 py-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-error font-label-md text-label-md transition-colors" type="button">
+                      Pausar
+                    </button>
+</div>
+</td>
+</tr>
+<!-- ROW 3: Pedicura spa -->
+<tr class="hover:bg-[#fbfafb] transition-colors group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3.5">
+<div class="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary-container shrink-0 border border-outline-variant/70">
+<span class="material-symbols-outlined text-[20px]">brush</span>
+</div>
+<div>
+<div class="font-title-md text-title-md text-on-surface font-medium group-hover:text-primary transition-colors">
+                        Pedicura spa
+                      </div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1.5 mt-0.5">
+<span>Precio base: L 450</span>
+<span>·</span>
+<span class="text-secondary font-medium">Gana 45 pts al pagar</span>
+</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-title-md text-title-md font-semibold text-primary-container tracking-tight">
+                    Canje por 700 pts
+                  </span>
+</td>
+<td class="px-6 py-4">
+<div class="text-on-surface font-medium">Ilimitada</div>
+<div class="text-body-sm text-on-surface-variant">Solo mes de cumpleaños</div>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#eef4f0] text-[#274836] border border-[#d2e3d7]">
+<span class="w-1.5 h-1.5 rounded-full bg-[#274836]"></span>
+                    Activo
+                  </span>
+</td>
+<td class="px-6 py-4 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" type="button">
+                      Editar
+                    </button>
+<button class="px-3 py-1.5 rounded-lg hover:bg-surface-container text-on-surface-variant hover:text-error font-label-md text-label-md transition-colors" type="button">
+                      Pausar
+                    </button>
+</div>
+</td>
+</tr>
+<!-- ROW 4: Retiro de acrílico express -->
+<tr class="hover:bg-[#fbfafb] transition-colors bg-[#fdfcfe] group">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3.5">
+<div class="w-10 h-10 rounded-xl bg-surface-container-high/60 flex items-center justify-center text-outline shrink-0 border border-outline-variant/70">
+<span class="material-symbols-outlined text-[20px]">content_cut</span>
+</div>
+<div>
+<div class="font-title-md text-title-md text-on-surface/80 font-medium">
+                        Retiro de acrílico express
+                      </div>
+<div class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1.5 mt-0.5">
+<span>Precio base: L 120</span>
+<span>·</span>
+<span class="text-secondary font-medium">Gana 12 pts al pagar</span>
+</div>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="font-title-md text-title-md font-semibold text-on-surface-variant tracking-tight">
+                    Canje por 180 pts
+                  </span>
+</td>
+<td class="px-6 py-4">
+<div class="text-error font-medium">Agotado (0 cupos)</div>
+<div class="text-body-sm text-on-surface-variant">Sin cupos asignados</div>
+</td>
+<td class="px-6 py-4">
+<!-- Pausado badge: muted gray/plum pill -->
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-container text-on-surface-variant border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
+                    Pausado
+                  </span>
+</td>
+<td class="px-6 py-4 text-right whitespace-nowrap">
+<div class="inline-flex items-center gap-1">
+<button class="px-3 py-1.5 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" type="button">
+                      Editar
+                    </button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary-container font-label-md text-label-md font-medium transition-colors" type="button">
+                      Reactivar
+                    </button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Footer -->
+<div class="px-6 py-4 border-t border-outline-variant bg-[#fdfcfd] flex items-center justify-between">
+<a class="font-label-md text-label-md text-secondary hover:text-primary-container font-medium flex items-center gap-1.5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">arrow_outward</span>
+<span>Ver configuración de servicios</span>
+</a>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+            Mostrando 1-4 de 4 premios
+          </span>
+</div>
+</div>
+</main>
+</div>
+</body></html>

@@ -227,3 +227,31 @@ Controls have gently curved 10px corners, common surfaces 16px, and overlays 20p
 ## Rejected Anti-Reference
 
 **Rejected direction: Soft Future Atelier.** Its deep-plum rail and floating fixed topbar made the workspace heavy; the topbar reserved vertical space and broke some views. Its nominal glass and neomorphism were too weak to carry a material point of view, producing a category-interchangeable SaaS shell. Pearl Ledger replaces that arrangement with clear glass navigation, in-flow context and tactile pearl surfaces. Do not reintroduce heavy dark navigation, fixed topbar offsets, generic card grids or decorative accent borders.
+
+## Customer portal: Liquid Glass
+
+The customer-facing portal intentionally uses a separate approved visual language from the light administrative workspace: deep plum backgrounds, pearlescent lavender and rose highlights, and translucent glass surfaces. Content remains high contrast, controls remain at least 44px, and the mobile navigation contains Inicio, Recompensas and Mi perfil. Progress distinguishes qualifying points from the balance available for redemption. Glass must not obscure text or feedback, and the personal QR is temporary.
+
+### Approved Stitch source and implementation boundary
+
+Customer screens are reproduced from project `11699267647439290883`; access screens from `17871643043561515677`. The immutable HTML exports are in `docs/design/stitch/`. Their utilities are compiled into screen-scoped CSS in `resources/css/stitch/`; no Tailwind CDN runs in the application. Actual client identity, points, rewards, eligibility and redemption states replace the synthetic examples. Personal portraits are never substituted with stock people. The profile QR is a real five-minute identification token, not a redemption voucher.
+
+The exact customer display face is **Syne** (500–800), with **Plus Jakarta Sans** (300–700) for UI. These faces are approved source requirements rather than alternatives to the administrative DM Sans / DM Serif system. The customer canvas is 390px for Inicio and Recompensas and up to 448px for profile/access, fluid down to 320px. Primary customer surfaces use `#1d0e21`, `#2d1236` at 45% opacity, and `#411a4e` at 55%. Foreground is `#f5daf6`; muted foreground `#d6c1ca`; primary rose `#ffaedc`; darker rose `#8a3b6e`; secondary lavender `#ccc2db`. Glass uses 28–36px backdrop blur, 16–22% pearl borders and inset highlights. Content radius is 32px, input wells 16px, navigation/actions pill-shaped. Access uses the exported `#16121a` / `#110d15` substrate, `#ffb1c3` / `#d88b9e` rose, `#e9dfec` text, 24px form cards, 52–56px inputs and Syne 26px/34px headings.
+
+The **administrative content only** follows the approved `95da17e80571469a92090e69813852c8` export: Noto Serif 32px/40px heading, DM Sans ledger, `#fcf9f5` canvas, white table, `#2a1426` primary, subtle `#d0c3c9` dividers. The existing application sidebar, navigation and surrounding screens must remain unchanged. Its existing role-aware Fidelidad y recompensas menu entry is retained. Do not replace the administrative application shell with the sidebar in the Stitch mockup.
+
+Reduced motion disables decorative transitions. Empty/error/processing/expired-QR states use the same visual grammar. Responsive layouts must never clip the navigation or make forms unusable.
+
+### Customer motion and lifecycle verification — 2026-10-30
+
+Preserve the approved Liquid Glass surfaces and the administrative shell. Customer motion uses native Web Animations, CSS, IntersectionObserver and finite point counters; no additional animation dependency. Reflected light and balance/progress reveals form the focal sequence, supported by touch feedback, reward-filter continuity, unlock masks and QR/confirmation entrances. Sequences finish within roughly 1.2 seconds; reduced-motion users see final values immediately and hidden tabs stop motion and reservation polling. Never animate the glass blur continuously.
+
+Active reservations are always returned independently of paginated history. Visible pages reconcile pending reservations at expiry and at most once per minute, with a 15-second retry cooldown. Reservation debits points/stock once; delivery does not debit twice; expiry/cancellation refunds once without changing qualifying points.
+
+Evidence and operational limits: `docs/audits/customer-motion/README.md`. Static Impeccable scan: no primary findings; 147 palette/type/radius advisories reviewed against the separately approved Stitch customer world rather than changing it to administrative tokens. These advisories are not a runtime accessibility certification.
+
+### Continuous customer motion — user-requested refinement
+
+The later explicit request for permanent customer animation supersedes the finite-only customer direction above (not the administrative no-loop rule). Slowly drifting rose/lavender ambient light, recurring glass reflections and QR-button light sweeps now continue while visible. The QR pass has an animated pearlescent perimeter; its code and white quiet zone remain stationary and unobstructed. Do not animate blur, QR modules or the entire reading surface. A visible pause/resume control persists the preference locally; hidden tabs, reduced motion and offscreen reflections suspend decoration. No new runtime dependency is required.
+
+At narrow widths, wrap reward filters rather than clipping the final category; stack the rewards summary header and the smallest reward cards; allow profile fields, customer names and membership details to expand. Keep bottom-navigation clearance and give the QR dialog an internal scroll region bounded by the dynamic viewport. Verification: `docs/audits/customer-motion/continuous/`.

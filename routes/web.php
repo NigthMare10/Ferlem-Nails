@@ -37,6 +37,12 @@ Route::middleware(['auth:web', 'active'])->group(function () {
     Route::post('/configuration/loyalty/rewards', [LoyaltyController::class, 'reward']);
     Route::put('/configuration/loyalty/rewards/{reward}', [LoyaltyController::class, 'reward']);
     Route::put('/configuration/loyalty/settings', [LoyaltyController::class, 'settings']);
+    Route::post('/configuration/loyalty/rewards/bulk-status', [LoyaltyController::class, 'bulkStatus']);
+    Route::get('/configuration/loyalty/gift-customers', [\App\Http\Controllers\LoyaltyGiftController::class, 'customers']);
+    Route::post('/configuration/loyalty/gifts', [\App\Http\Controllers\LoyaltyGiftController::class, 'store'])->middleware('throttle:30,1');
+    Route::get('/configuration/loyalty/gifts/{batch}', [\App\Http\Controllers\LoyaltyGiftController::class, 'show']);
+    Route::post('/configuration/loyalty/gifts/{batch}/retry', [\App\Http\Controllers\LoyaltyGiftController::class, 'retry'])->middleware('throttle:30,1');
+    Route::post('/configuration/loyalty/gift-recipients/{gift}', [\App\Http\Controllers\LoyaltyGiftController::class, 'resolve']);
     Route::post('/loyalty/qr/resolve', [LoyaltyController::class, 'resolve'])->middleware('throttle:20,1');
     Route::post('/sales/{sale}/loyalty-awards', [LoyaltyController::class, 'award'])->middleware('throttle:20,1');
     Route::post('/appointments/{appointment}/customer', [LoyaltyController::class, 'linkAppointment'])->middleware('throttle:20,1');

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>APROBACION 10 - Niveles del programa</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&amp;family=Noto+Serif:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "inverse-on-surface": "#ffebf7",
+          "on-surface": "#231820",
+          "on-primary": "#ffffff",
+          "inverse-surface": "#392d36",
+          "tertiary-fixed": "#ffd8ec",
+          "surface-dim": "#e9d5e0",
+          "surface-container": "#fde8f4",
+          "on-secondary-container": "#775268",
+          "inverse-primary": "#e0bcd5",
+          "surface-container-lowest": "#ffffff",
+          "on-primary-container": "#9a7b91",
+          "on-error-container": "#93000a",
+          "primary-fixed-dim": "#e0bcd5",
+          "on-tertiary-container": "#ad7295",
+          "on-secondary-fixed": "#2e1125",
+          "secondary-container": "#f9cae4",
+          "tertiary": "#010001",
+          "surface": "#fff7f9",
+          "surface-container-highest": "#f1dde9",
+          "on-background": "#231820",
+          "tertiary-container": "#350a29",
+          "surface-variant": "#f1dde9",
+          "background": "#fff7f9",
+          "surface-container-high": "#f7e3ef",
+          "outline-variant": "#d0c3ca",
+          "surface-container-low": "#ffeff7",
+          "secondary-fixed": "#ffd8ed",
+          "error-container": "#ffdad6",
+          "surface-bright": "#fff7f9",
+          "primary-fixed": "#fdd8f1",
+          "on-tertiary": "#ffffff",
+          "error": "#ba1a1a",
+          "on-primary-fixed": "#2a1426",
+          "tertiary-fixed-dim": "#f6b3d9",
+          "secondary": "#78536a",
+          "on-tertiary-fixed-variant": "#683656",
+          "on-secondary-fixed-variant": "#5e3c51",
+          "secondary-fixed-dim": "#e8b9d3",
+          "surface-tint": "#72566b",
+          "on-tertiary-fixed": "#350a29",
+          "on-error": "#ffffff",
+          "primary": "#010001",
+          "on-primary-fixed-variant": "#593e53",
+          "outline": "#7f747a",
+          "on-secondary": "#ffffff",
+          "primary-container": "#2a1426",
+          "on-surface-variant": "#4d444a"
+        },
+        "borderRadius": {
+          "DEFAULT": "0.25rem",
+          "lg": "0.5rem",
+          "xl": "0.75rem",
+          "full": "9999px"
+        },
+        "spacing": {
+          "space-sm": "0.5rem",
+          "space-lg": "1.5rem",
+          "margin-desktop": "2.5rem",
+          "space-xs": "0.25rem",
+          "space-xl": "2.5rem",
+          "space-md": "1rem",
+          "margin": "2rem",
+          "gutter": "1.5rem",
+          "gutter-desktop": "1.5rem",
+          "margin-mobile": "1rem",
+          "gutter-mobile": "1rem"
+        },
+        "fontFamily": {
+          "headline-lg": ["Noto Serif"],
+          "body-sm": ["DM Sans"],
+          "headline-md": ["Noto Serif"],
+          "label-md": ["DM Sans"],
+          "title-md": ["DM Sans"],
+          "label-sm": ["DM Sans"],
+          "headline-sm": ["Noto Serif"],
+          "label-lg": ["DM Sans"],
+          "body-lg": ["DM Sans"],
+          "display-lg": ["Noto Serif"],
+          "body-md": ["DM Sans"],
+          "headline-lg-mobile": ["Noto Serif"]
+        },
+        "fontSize": {
+          "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.015em", fontWeight: "400" }],
+          "body-sm": ["12px", { lineHeight: "16px", fontWeight: "400" }],
+          "headline-md": ["24px", { lineHeight: "32px", letterSpacing: "-0.01em", fontWeight: "500" }],
+          "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.02em", fontWeight: "500" }],
+          "title-md": ["16px", { lineHeight: "24px", letterSpacing: "0.01em", fontWeight: "600" }],
+          "label-sm": ["11px", { lineHeight: "14px", letterSpacing: "0.04em", fontWeight: "600" }],
+          "headline-sm": ["20px", { lineHeight: "28px", fontWeight: "500" }],
+          "label-lg": ["14px", { lineHeight: "20px", letterSpacing: "0.01em", fontWeight: "500" }],
+          "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+          "display-lg": ["40px", { lineHeight: "52px", letterSpacing: "-0.02em", fontWeight: "400" }],
+          "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+          "headline-lg-mobile": ["26px", { lineHeight: "34px", letterSpacing: "-0.01em", fontWeight: "500" }]
+        }
+      }
+    }
+  }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 350, 'GRAD' 0, 'opsz' 20;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #e9d5e0;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-[#f7f6f8] text-on-surface antialiased flex min-h-screen selection:bg-secondary-container selection:text-on-secondary-container">
+<!-- ============================================================ -->
+<!-- LEFT FIXED SIDEBAR (Shared Component: SideNavBar)            -->
+<!-- ============================================================ -->
+<aside class="fixed top-0 left-0 h-screen w-[272px] z-30 bg-surface-container-lowest border-r border-[#d0c3c9] flex flex-col justify-between p-space-md shadow-none select-none"><div class="flex flex-col gap-y-4"><div class="flex items-center gap-3 px-2 py-1"><div aria-label="LEMUS Atelier monogram icon" class="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center font-headline-md text-headline-sm font-medium tracking-tight shadow-sm">LA</div><div class="flex flex-col"><span class="font-headline-md text-[17px] leading-tight font-medium text-primary tracking-tight uppercase">LEMUS Atelier</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase font-semibold">Directorio Operativo</span></div></div><nav class="flex flex-col gap-0.5 mt-2 custom-scroll overflow-y-auto max-h-[calc(100vh-200px)] pr-1"><div class="px-3 pt-2 pb-1 text-[11px] font-semibold text-outline tracking-wider uppercase">Jornada</div><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors duration-150" href="#"><span class="material-symbols-outlined text-[18px]">home</span><span>Inicio</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors duration-150" href="#"><span class="material-symbols-outlined text-[18px]">calendar_today</span><span>Agenda</span></a><div class="px-3 pt-3 pb-1 text-[11px] font-semibold text-outline tracking-wider uppercase">Movimiento</div><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors duration-150" href="#"><span class="material-symbols-outlined text-[18px]">point_of_sale</span><span>Ventas y cobros</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors duration-150" href="#"><span class="material-symbols-outlined text-[18px]">receipt_long</span><span>Facturas</span></a><div class="px-3 pt-3 pb-1 text-[11px] font-semibold text-outline tracking-wider uppercase">El estudio</div><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors duration-150" href="#"><span class="material-symbols-outlined text-[18px]">spa</span><span>Servicios</span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors duration-150" href="#"><span class="material-symbols-outlined text-[18px]">badge</span><span>Equipo y roles</span></a><a class="bg-secondary-container text-on-secondary-fixed font-semibold rounded-lg px-space-md py-space-sm flex items-center justify-between font-label-md text-label-md" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">card_membership</span><span>Fidelidad y recompensas</span></div><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span></a><a class="text-on-surface-variant hover:text-on-surface hover:bg-surface-container/50 rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors duration-150" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span>Configuración</span></a></nav></div><div class="pt-3 border-t border-[#d0c3c9]"><button class="w-full text-on-surface-variant hover:text-error hover:bg-error-container/20 rounded-lg px-space-md py-space-sm flex items-center gap-space-sm font-label-md text-label-md transition-colors duration-150" type="button"><span class="material-symbols-outlined text-[18px]">logout</span><span>Cerrar sesión</span></button></div></aside>
+<!-- ============================================================ -->
+<!-- MAIN WORKSPACE CANVAS                                        -->
+<!-- ============================================================ -->
+<main class="ml-[272px] flex-1 flex flex-col min-w-0 pb-16">
+<!-- TOP FLOATING BAR (Shared Component: TopNavBar adapted) -->
+<header class="sticky top-0 z-20 mx-space-md my-space-sm bg-surface-container-lowest border border-[#d0c3c9] rounded-xl shadow-sm px-space-lg h-16 flex items-center justify-between"><nav aria-label="Breadcrumb" class="flex items-center gap-2 font-label-md text-label-md text-on-surface-variant"><span class="text-primary font-semibold">Configuración</span></nav><div class="flex items-center gap-3"><button aria-label="Notificaciones" class="w-9 h-9 rounded-lg hover:bg-surface-container text-on-surface-variant flex items-center justify-center transition-colors relative" type="button"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-secondary"></span></button><div class="flex items-center gap-2.5 pl-2 border-l border-outline-variant"><div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm text-label-sm font-semibold tracking-wider">SD</div><div class="flex flex-col text-left"><span class="font-label-md text-[13px] leading-tight font-medium text-on-surface">Sofía Durón</span><span class="font-label-sm text-[11px] leading-tight text-outline">Administradora</span></div></div></div></header>
+<!-- CONTENT WRAPPER -->
+<div class="px-space-xl max-w-[1300px] w-full mx-auto flex flex-col gap-6 mt-4">
+<!-- MODULE HEADER -->
+<div class="flex flex-col gap-1"><div class="flex items-center gap-3"><h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">APROBACION 10 - Niveles del programa</h1></div><p class="font-body-md text-body-md text-on-surface-variant">Define nombres, puntos calificables y beneficios informativos</p></div>
+<!-- NAVIGATION TABS CLUSTER -->
+<div class="border-b border-[#d0c3c9] flex items-center gap-8">
+<a class="text-on-surface-variant hover:text-on-surface font-label-lg text-label-lg pb-3 transition-colors flex items-center gap-1.5" href="#">
+<span>Premios</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface font-label-lg text-label-lg pb-3 transition-colors flex items-center gap-1.5" href="#">
+<span>Historial</span>
+</a>
+<a aria-current="page" class="border-b-2 border-primary-container text-primary-container font-label-lg text-label-lg font-medium pb-3 flex items-center gap-2" href="#">
+<span>Niveles</span>
+<span class="px-1.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-[11px] font-semibold">4</span>
+</a>
+<a class="text-on-surface-variant hover:text-on-surface font-label-lg text-label-lg pb-3 transition-colors flex items-center gap-1.5" href="#">
+<span>Regalos</span>
+</a>
+</div>
+<!-- EXPLANATORY & POLICY BANNER -->
+<div class="bg-[#fbf9fa] border-l-4 border-[#a37a92] border-y border-r border-[#d0c3c9] rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"><div class="flex items-start gap-3.5"><div class="mt-0.5 w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center text-primary-container shrink-0"><span class="material-symbols-outlined text-[18px]">verified</span></div><div class="flex flex-col gap-1"><div class="flex items-center gap-2 flex-wrap"><span class="font-title-md text-[14px] text-on-surface font-semibold">Política de preservación de nivel</span><span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide bg-[#faf4ec] text-[#734820] border border-[#d0c3c9]/60">Regla vigente 2026</span></div><p class="font-body-md text-body-md text-on-surface-variant">El nivel depende de puntos calificables; gastar puntos no baja de nivel. Beneficios únicamente informativos para el personal; no alteran automáticamente reglas de facturación ni acumulación de puntos.</p></div></div><div class="flex items-center gap-2 bg-surface-container-lowest px-3 py-1.5 rounded-lg border border-[#d0c3c9] shrink-0 self-start md:self-auto"><span class="material-symbols-outlined text-[17px] text-secondary">info</span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Los puntos de regalo no elevan el nivel</span></div></div>
+<!-- ACTION AREA & FILTER BAR -->
+<div class="flex items-center justify-between gap-4 mt-1">
+<!-- Search bar with subtle styling -->
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-outline">search</span>
+<input class="w-full h-11 pl-10 pr-4 bg-surface-container-lowest border border-[#d0c3c9] rounded-xl font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-[#a37a92]/20 transition-all" placeholder="Filtrar por nivel o beneficio..." type="text"/>
+</div>
+<!-- Primary Button: + Añadir nivel -->
+<button class="h-11 px-5 bg-primary-container hover:bg-[#3e1e38] active:bg-[#1f0e1c] text-on-primary rounded-xl font-label-lg text-label-lg font-medium flex items-center gap-2 transition-all shadow-sm" type="button"><span class="material-symbols-outlined text-[19px]">add</span><span>Añadir nivel</span></button>
+</div>
+<!-- ELEGANT ORDERED LEDGER TABLE (Surface Level 1) -->
+<div class="bg-surface-container-lowest border border-[#d0c3c9] rounded-2xl overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="h-11 bg-[#faf8f9] border-b border-[#d0c3c9]">
+<th class="py-2.5 px-6 font-label-sm text-label-sm text-[#6b5c66] uppercase tracking-wider font-semibold w-[220px]" scope="col">Nivel</th>
+<th class="py-2.5 px-6 font-label-sm text-label-sm text-[#6b5c66] uppercase tracking-wider font-semibold w-[200px]" scope="col">Umbral calificable</th>
+<th class="py-2.5 px-6 font-label-sm text-label-sm text-[#6b5c66] uppercase tracking-wider font-semibold" scope="col">Beneficios reconocidos (informativo)</th>
+<th class="py-2.5 px-6 font-label-sm text-label-sm text-[#6b5c66] uppercase tracking-wider font-semibold w-[190px]" scope="col">Clientas activas (ejemplo)</th>
+<th class="py-2.5 px-6 font-label-sm text-label-sm text-[#6b5c66] uppercase tracking-wider font-semibold w-[110px] text-right" scope="col">Acciones</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#d0c3c9]/60"><tr class="hover:bg-[#fbfafb] transition-colors group"><td class="py-4 px-6 align-top"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-[#fde8f4] text-primary-container flex items-center justify-center font-headline-sm text-headline-sm font-semibold">1</div><div class="flex flex-col"><span class="font-title-md text-title-md text-on-surface font-semibold">Brillo</span><span class="font-label-sm text-label-sm text-outline">Nivel inicial</span></div></div></td><td class="py-4 px-6 align-top"><div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f7f6f8] border border-[#d0c3c9]/60 text-on-surface font-label-md text-label-md font-medium"><span class="material-symbols-outlined text-[15px] text-secondary">award_star</span><span>Desde 0 pts calificables</span></div></td><td class="py-4 px-6 align-top"><p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">Reconocimiento de bienvenida al programa y acceso al catálogo de recompensas.</p></td><td class="py-4 px-6 align-top"><div class="flex items-center gap-2"><span class="font-title-md text-[14px] text-on-surface font-semibold">240 clientas</span><span class="inline-block w-2 h-2 rounded-full bg-secondary/40"></span></div></td><td class="py-4 px-6 align-top text-right"><button class="h-8 px-3 rounded-lg border border-[#d0c3c9] text-primary hover:border-primary-container hover:bg-secondary-container/20 font-label-md text-label-md font-medium transition-all" type="button">Editar</button></td></tr><tr class="hover:bg-[#fbfafb] transition-colors group"><td class="py-4 px-6 align-top"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-secondary-container/60 text-primary-container flex items-center justify-center font-headline-sm text-headline-sm font-semibold">2</div><div class="flex flex-col"><span class="font-title-md text-title-md text-on-surface font-semibold">Glow</span><span class="font-label-sm text-label-sm text-outline">Ascenso regular</span></div></div></td><td class="py-4 px-6 align-top"><div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f7f6f8] border border-[#d0c3c9]/60 text-on-surface font-label-md text-label-md font-medium"><span class="material-symbols-outlined text-[15px] text-secondary">award_star</span><span>Desde 100 pts calificables</span></div></td><td class="py-4 px-6 align-top"><p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">Acceso al catálogo de recompensas y atenciones de cortesía según disponibilidad del salón.</p></td><td class="py-4 px-6 align-top"><div class="flex items-center gap-2"><span class="font-title-md text-[14px] text-on-surface font-semibold">115 clientas</span><span class="inline-block w-2 h-2 rounded-full bg-secondary/60"></span></div></td><td class="py-4 px-6 align-top text-right"><button class="h-8 px-3 rounded-lg border border-[#d0c3c9] text-primary hover:border-primary-container hover:bg-secondary-container/20 font-label-md text-label-md font-medium transition-all" type="button">Editar</button></td></tr><tr class="hover:bg-[#fbfafb] transition-colors group"><td class="py-4 px-6 align-top"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-secondary-container text-on-secondary-fixed flex items-center justify-center font-headline-sm text-headline-sm font-semibold">3</div><div class="flex flex-col"><span class="font-title-md text-title-md text-on-surface font-semibold">Amatista</span><span class="font-label-sm text-label-sm text-secondary font-medium">Segmento selecto</span></div></div></td><td class="py-4 px-6 align-top"><div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#f7f6f8] border border-[#d0c3c9]/60 text-on-surface font-label-md text-label-md font-medium"><span class="material-symbols-outlined text-[15px] text-secondary">award_star</span><span>Desde 1,000 pts calificables</span></div></td><td class="py-4 px-6 align-top"><p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">Reconocimiento de fidelidad, acceso prioritario a consultas y atenciones especiales según disponibilidad.</p></td><td class="py-4 px-6 align-top"><div class="flex items-center gap-2"><span class="font-title-md text-[14px] text-on-surface font-semibold">48 clientas</span><span class="inline-block w-2 h-2 rounded-full bg-secondary"></span></div></td><td class="py-4 px-6 align-top text-right"><button class="h-8 px-3 rounded-lg border border-[#d0c3c9] text-primary hover:border-primary-container hover:bg-secondary-container/20 font-label-md text-label-md font-medium transition-all" type="button">Editar</button></td></tr><tr class="hover:bg-[#fbfafb] transition-colors group"><td class="py-4 px-6 align-top"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-primary-container text-on-primary flex items-center justify-center font-headline-sm text-headline-sm font-semibold shadow-sm">4</div><div class="flex flex-col"><div class="flex items-center gap-1.5"><span class="font-title-md text-title-md text-primary font-semibold">Diamante</span><span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#faf4ec] text-[#734820] border border-[#734820]/20">VIP ATELIER</span></div><span class="font-label-sm text-label-sm text-primary-container font-medium">Máxima distinción</span></div></div></td><td class="py-4 px-6 align-top"><div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#faf4ec] border border-[#734820]/30 text-[#734820] font-label-md text-label-md font-semibold"><span class="material-symbols-outlined text-[15px]">diamond</span><span>Desde 5,000 pts calificables</span></div></td><td class="py-4 px-6 align-top"><p class="font-body-md text-body-md text-on-surface font-medium leading-relaxed">Máxima distinción del atelier, atención preferencial y detalles de cortesía en visitas seleccionadas.</p></td><td class="py-4 px-6 align-top"><div class="flex items-center gap-2"><span class="font-title-md text-[14px] text-primary font-bold">12 clientas</span><span class="inline-block w-2.5 h-2.5 rounded-full bg-primary-container"></span></div></td><td class="py-4 px-6 align-top text-right"><button class="h-8 px-3 rounded-lg border border-[#d0c3c9] text-primary hover:border-primary-container hover:bg-secondary-container/20 font-label-md text-label-md font-medium transition-all" type="button">Editar</button></td></tr></tbody>
+</table>
+</div>
+<!-- FOOTER FOOTNOTE & OPERATIONAL INTEGRITY NOTE -->
+<div class="flex flex-col sm:flex-row items-center justify-between text-on-surface-variant font-label-sm text-label-sm px-2 gap-2"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span><span>Mostrando 4 niveles configurados (2026) • Reasignación automática por puntos históricos acumulados</span></div><div class="text-outline text-[11px] italic">Bitácora 2026: Beneficios son informativos para equipo de salón y preservan la integridad contable.</div></div>
+</div>
+</main>
+</body></html>

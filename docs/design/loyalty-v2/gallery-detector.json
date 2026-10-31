@@ -1,0 +1,62 @@
+﻿[
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\docs\\design\\loyalty-v2\\index.html",
+    "line": 14,
+    "snippet": "text color rgb(112, 53, 80) on a \"Abrir proyecto en Stitch\" is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "rgb(112, 53, 80)"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\docs\\design\\loyalty-v2\\index.html",
+    "line": 16,
+    "snippet": "border-top rgb(208, 195, 201) on div \"Solo dise├▒o para aprobaci├│n. No se modif\" is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "rgb(208, 195, 201)"
+  },
+  {
+    "antipattern": "design-system-color",
+    "name": "Color outside DESIGN.md",
+    "description": "A literal color is outside the DESIGN.md palette and sidecar tonal ramps. This may be legitimate, but it should be an intentional design-system addition rather than drift.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\docs\\design\\loyalty-v2\\index.html",
+    "line": 22,
+    "snippet": "text color rgb(102, 84, 96) on footer \"Las im├ígenes son maquetas est├íticas, no \" is outside DESIGN.md colors",
+    "advisory": true,
+    "ignoreValue": "rgb(102, 84, 96)"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\docs\\design\\loyalty-v2\\index.html",
+    "line": 11,
+    "snippet": "font-size: clamp(26px, 4vw, 40px) has fluid endpoints 26px and 40px off the DESIGN.md type ramp",
+    "advisory": true,
+    "ignoreValue": "26px"
+  },
+  {
+    "antipattern": "design-system-font-size",
+    "name": "Font size outside DESIGN.md",
+    "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
+    "severity": "advisory",
+    "category": "quality",
+    "file": "C:\\Users\\PC\\Desktop\\01 - Proyectos\\Amorcito\\docs\\design\\loyalty-v2\\index.html",
+    "line": 21,
+    "snippet": "font-size: 15px is off the DESIGN.md type ramp",
+    "advisory": true,
+    "ignoreValue": "15px"
+  }
+]

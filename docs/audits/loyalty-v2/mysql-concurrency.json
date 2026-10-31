@@ -1,0 +1,31 @@
+{
+  "database": "loyalty_qa_1793390553",
+  "reservations": [
+    {
+      "reserved": false,
+      "reason": "stock-or-limit"
+    },
+    {
+      "reserved": true
+    }
+  ],
+  "gifts": [
+    {
+      "batch": 1
+    },
+    {
+      "batch": 1
+    },
+    {
+      "batch": 1
+    }
+  ],
+  "report": {
+    "stock": 0,
+    "reservations": 1,
+    "gift_batches": 1,
+    "gift_entries": 1,
+    "balance": 175
+  },
+  "note": "Dedicated local QA schema retained; no production data touched. Two simultaneous stock requests and three simultaneous same-token gift sends; not a load benchmark."
+}

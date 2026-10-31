@@ -33,6 +33,8 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /storage/app/qa.sqlite*
+/storage/app/.old/
+/storage/app/*-qa.sqlite*
 /playwright-report/
 /test-results/
 .impeccable/config.local.json

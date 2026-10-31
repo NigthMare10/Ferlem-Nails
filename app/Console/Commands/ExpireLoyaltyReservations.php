@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Actions\Loyalty\LoyaltyService;
-use App\Models\LoyaltyRedemption;
 use Illuminate\Console\Command;
 
 class ExpireLoyaltyReservations extends Command
@@ -14,11 +13,8 @@ class ExpireLoyaltyReservations extends Command
 
     public function handle(LoyaltyService $service): int
     {
-        LoyaltyRedemption::where('status', 'reserved')->where('expires_at', '<=', now())->orderBy('id')->chunkById(100, function ($rows) use ($service) {
-            foreach ($rows as $row) {
-                $service->release($row, 'expired');
-            }
-        });
+        $service->expireDue();
+        app(\App\Actions\Loyalty\GiftService::class)->expireDue();
 
         return self::SUCCESS;
     }

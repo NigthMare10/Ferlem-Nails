@@ -86,6 +86,30 @@ class LoyaltyAdministrationTest extends TestCase
         $this->assertDatabaseCount('loyalty_redemptions', 0);
     }
 
+    public function test_portal_exposes_only_own_active_redemption_usage(): void
+    {
+        $customer = $this->customer();
+        $other = $this->customer();
+        $reward = LoyaltyReward::create(['name' => 'Beneficio', 'points_cost' => 20, 'stock' => null, 'per_customer_limit' => 2, 'is_active' => true]);
+        $service = app(LoyaltyService::class);
+        $reservation = $service->reserve($customer, $reward, (string) Str::uuid());
+        $service->reserve($other, $reward, (string) Str::uuid());
+
+        $this->actingAs($customer, 'customer')->get('/clientes/recompensas')->assertInertia(
+            fn (Assert $page) => $page->where('rewards.0.used_by_customer', 1)
+        );
+
+        $service->release($reservation);
+        $this->get('/clientes/recompensas')->assertInertia(
+            fn (Assert $page) => $page->where('rewards.0.used_by_customer', 0)
+        );
+    }
+
+    public function test_removed_customer_appointment_destination_redirects_to_home(): void
+    {
+        $this->actingAs($this->customer(), 'customer')->get('/clientes/citas')->assertRedirect('/clientes');
+    }
+
     public function test_search_matches_email_and_phone_and_paginates(): void
     {
         $c = $this->customer();
