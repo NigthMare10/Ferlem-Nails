@@ -20,6 +20,11 @@ class Appointment extends Model
 
     protected $guarded = ['*'];
 
+    public function loyaltyRedemption(): BelongsTo
+    {
+        return $this->belongsTo(LoyaltyRedemption::class);
+    }
+
     protected function casts(): array
     {
         return [

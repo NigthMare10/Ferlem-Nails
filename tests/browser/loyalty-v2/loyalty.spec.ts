@@ -38,6 +38,8 @@ async function selectRecipients(page: Page) {
     const d = page.getByRole('dialog', { name: 'Crear regalo', exact: true });
     await expect(d.getByLabel('Seleccionar Sofía Ramírez')).toBeVisible();
     await d.getByRole('button', { name: 'Seleccionar esta página', exact: true }).click();
+    await expect(d.getByLabel('Seleccionar Sinverificar de prueba')).toBeChecked();
+    await d.getByLabel('Seleccionar Sinverificar de prueba').uncheck();
     await expect(d.getByText('2 clientas seleccionadas', { exact: true })).toBeVisible();
     await d.getByRole('button', { name: 'Continuar', exact: true }).click();
     return d;

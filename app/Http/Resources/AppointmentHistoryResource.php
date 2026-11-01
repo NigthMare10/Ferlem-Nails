@@ -27,6 +27,7 @@ class AppointmentHistoryResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'is_reward' => (bool) $this->loyalty_redemption_id,
             'client_name' => $this->client_name,
             'status' => $this->status,
             'status_label' => $this->statusLabel($this->status),

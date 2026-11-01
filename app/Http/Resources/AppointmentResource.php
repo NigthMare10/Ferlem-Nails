@@ -38,13 +38,16 @@ class AppointmentResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'is_reward' => (bool) $this->loyalty_redemption_id,
+            'redemption_id' => $this->loyalty_redemption_id,
+            'can_complete_reward' => (bool) $this->loyalty_redemption_id && $this->status === 'scheduled' && ! $beforeStart && $user->can('loyalty.redeem') && ($viewAll || $this->items->every(fn ($i) => $i->assigned_to === $user->id)),
             'client_name' => $this->client_name,
             'client_phone' => $this->client_phone,
             'status' => $this->status,
             'status_label' => match ($this->status) {
                 'scheduled' => match ($operationalStatus) {
                     'in_service' => 'En atención',
-                    'pending_checkout' => 'Pendiente de cobro',
+                    'pending_checkout' => $this->loyalty_redemption_id ? 'Premio pendiente de atención' : 'Pendiente de cobro',
                     default => 'Programada',
                 },
                 'completed' => 'Completada',
@@ -72,10 +75,10 @@ class AppointmentResource extends JsonResource
                 && ($deposit?->status !== 'pending' || $canResolveDeposit),
             'can_mark_no_show_now' => $this->status === 'scheduled'
                 && ! $beforeStart,
-            'can_record_deposit' => $this->status === 'scheduled' && ! $deposit && $canManageDeposit,
+            'can_record_deposit' => ! $this->loyalty_redemption_id && $this->status === 'scheduled' && ! $deposit && $canManageDeposit,
             'has_pending_deposit' => $deposit?->status === 'pending',
             'can_resolve_deposit' => $deposit?->status === 'pending' && $canResolveDeposit,
-            'can_checkout' => $this->status === 'scheduled' && ! $this->sale && $canCheckout,
+            'can_checkout' => ! $this->loyalty_redemption_id && $this->status === 'scheduled' && ! $this->sale && $canCheckout,
             'operational_status' => $this->status === 'scheduled' ? $operationalStatus : $this->status,
             'status_reason' => match ($this->status) {
                 'canceled' => $this->cancellation_reason,

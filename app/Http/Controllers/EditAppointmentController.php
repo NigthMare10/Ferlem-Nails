@@ -15,6 +15,7 @@ class EditAppointmentController extends Controller
     {
         $actor = $request->user('web');
         $appointment->load('items');
+        abort_if($appointment->loyalty_redemption_id, 422, 'Usa Reprogramar para ajustar una cita de premio.');
         abort_unless($actor->can('appointments.edit_services') && ($actor->can('appointments.update_any') || $actor->hasPermissionTo('appointments.view_all') || $appointment->items->every(fn ($i) => $i->assigned_to === $actor->id)), 403);
         abort_unless($appointment->status === 'scheduled', 422);
         $revision = AppointmentRevision::of($appointment);

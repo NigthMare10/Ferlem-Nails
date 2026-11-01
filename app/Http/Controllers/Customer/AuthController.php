@@ -29,9 +29,8 @@ class AuthController extends Controller
         Auth::guard('customer')->login($customer);
         $request->session()->regenerate();
         $request->session()->put('customer_password_signature', hash('sha256', $customer->getAuthPassword()));
-        $customer->sendEmailVerificationNotification();
 
-        return redirect('/clientes')->with('success', 'Cuenta creada. Verifica tu correo para usar puntos y recompensas.');
+        return redirect('/clientes')->with('success', 'Cuenta creada. Ya puedes usar tu QR, puntos y recompensas.');
     }
 
     public function login(Request $request)

@@ -54,6 +54,9 @@ class CheckoutAppointmentAction
                 }
 
                 $locked = Appointment::query()->whereKey($appointment->getKey())->lockForUpdate()->firstOrFail();
+                if ($locked->loyalty_redemption_id) {
+                    throw ValidationException::withMessages(['appointment' => 'Esta cita es un premio gratuito. Usa Completar premio, sin cobro.']);
+                }
                 $originalItems = $locked->items()->orderBy('position')->orderBy('id')->lockForUpdate()->get();
                 $locked->setRelation('items', $originalItems);
                 $deposit = $locked->deposit()->lockForUpdate()->first();

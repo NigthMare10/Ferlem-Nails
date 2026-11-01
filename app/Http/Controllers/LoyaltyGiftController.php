@@ -6,8 +6,10 @@ use App\Actions\Loyalty\GiftService;
 use App\Models\Customer;
 use App\Models\LoyaltyGiftBatch;
 use App\Models\LoyaltyGiftRecipient;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class LoyaltyGiftController extends Controller
 {
@@ -19,7 +21,7 @@ class LoyaltyGiftController extends Controller
             ->when($request->search, fn ($q, $term) => $q->where(fn ($q) => $q->where('name', 'like', "%$term%")
                 ->orWhere('email', 'like', "%$term%")->orWhere('phone', 'like', "%$term%")))->orderBy('id');
         if ($request->boolean('all')) {
-            $customers = $query->where('is_active', true)->whereNotNull('email_verified_at')->limit(501)->get();
+            $customers = $query->where('is_active', true)->limit(501)->get();
             abort_if($customers->count() > 500, 422, 'Hay más de 500 clientas. Refina la búsqueda.');
 
             return response()->json(['ids' => $customers->pluck('id'), 'customers' => $customers])->header('Cache-Control', 'private, no-store');
@@ -41,9 +43,9 @@ class LoyaltyGiftController extends Controller
             'expires_at' => ['exclude_unless:type,service', 'nullable', 'date_format:Y-m-d\\TH:i'],
         ]);
         if (! empty($data['expires_at'])) {
-            $expiry = \Carbon\CarbonImmutable::parse($data['expires_at'], 'America/Tegucigalpa')->utc();
+            $expiry = CarbonImmutable::parse($data['expires_at'], 'America/Tegucigalpa')->utc();
             if (! $expiry->isFuture()) {
-                throw \Illuminate\Validation\ValidationException::withMessages(['expires_at' => 'La vigencia debe ser futura (hora de Honduras).']);
+                throw ValidationException::withMessages(['expires_at' => 'La vigencia debe ser futura (hora de Honduras).']);
             }
             $data['expires_at'] = $expiry->format('Y-m-d H:i:s');
         }

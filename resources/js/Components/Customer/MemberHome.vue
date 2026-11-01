@@ -51,7 +51,7 @@ const number = (n: number) => new Intl.NumberFormat('en-US').format(n);
             <button
                 class="w-full min-h-[58px] specular-pill rounded-lg p-4 flex items-center justify-between gap-3 text-left transition-all duration-200 active:scale-[0.98] border border-white/20 group cursor-pointer home-qr-trigger"
                 type="button"
-                :disabled="qrBusy || !customer.email_verified_at"
+                :disabled="qrBusy"
                 @click="$emit('qr')"
             >
                 <span data-motion-sheen aria-hidden="true" />
@@ -139,7 +139,12 @@ const number = (n: number) => new Intl.NumberFormat('en-US').format(n);
             </div>
             <div class="flex items-center gap-3.5">
                 <div class="w-14 h-14 rounded-DEFAULT overflow-hidden shrink-0 border border-outline-variant/50 bg-surface-container-high">
-                    <img class="w-full h-full object-cover" src="/images/stitch/home-1.webp" alt="" />
+                    <img v-if="reward.image_url" class="w-full h-full object-cover" :src="reward.image_url" alt="" /><span
+                        v-else
+                        class="material-symbols-outlined"
+                        aria-hidden="true"
+                        >card_giftcard</span
+                    >
                 </div>
                 <div class="space-y-0.5">
                     <h3 class="text-label-lg font-label-lg text-on-surface font-semibold">{{ reward.name }}</h3>

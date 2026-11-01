@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Actions\Appointments\CreateAppointmentAction;
 use App\Http\Resources\AppointmentResource;
 use App\Models\Appointment;
+use App\Models\LoyaltyRedemption;
 use App\Models\Service;
 use App\Models\User;
 use App\Support\LandingDestination;
@@ -55,6 +56,22 @@ class HomeController extends Controller
             ->when(! $viewAll, fn ($items) => $items->where('assigned_to', $request->user()->getKey()))->count());
 
         return Inertia::render('Home', [
+            'pendingRewardRedemptions' => function () use ($request) {
+                if (! $request->user()->can('loyalty.manage')) {
+                    return [];
+                }
+                $redemptions = LoyaltyRedemption::with('customer:id,name,phone')
+                    ->where('status', 'reserved')->where('expires_at', '>', now())->where('reward_snapshot->benefit_type', 'service')->orderBy('created_at')->limit(20)->get();
+                $services = Service::whereIn('id', $redemptions->map(fn ($r) => $r->reward_snapshot['service_id'] ?? null)->filter())->get(['id', 'is_active'])->keyBy('id');
+
+                return $redemptions->map(function ($r) use ($services) {
+                    $s = $services->get($r->reward_snapshot['service_id'] ?? null);
+
+                    return ['id' => $r->id, 'client_name' => $r->customer->name, 'client_phone' => $r->customer->phone, 'service_id' => $s?->id, 'service_name' => $r->reward_snapshot['name'], 'expires_at' => $r->expires_at->toIso8601String(), 'service_available' => (bool) $s?->is_active];
+                });
+            },
+            'rewardServices' => fn () => $request->user()->can('loyalty.manage') ? Service::where('is_active', true)->orderBy('name')->get(['id', 'name', 'description', 'price', 'duration_minutes']) : [],
+            'rewardAssignees' => fn () => $request->user()->can('loyalty.manage') ? User::where('is_active', true)->permission(Permissions::APPOINTMENTS_PERFORM)->when(! $request->user()->can(Permissions::APPOINTMENTS_ASSIGN), fn ($q) => $q->whereKey($request->user()->id))->orderBy('display_order')->orderBy('name')->get(['id', 'name']) : [],
             'metrics' => $metrics,
             'today' => $today->format('Y-m-d'),
             'todayAgenda' => ['appointments_count' => $allTodayAppointments->count(), 'services_count' => $scheduledServices],

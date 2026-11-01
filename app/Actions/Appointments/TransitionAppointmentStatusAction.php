@@ -2,6 +2,7 @@
 
 namespace App\Actions\Appointments;
 
+use App\Actions\Loyalty\LoyaltyService;
 use App\Actions\Notifications\PublishInternalNotificationAction;
 use App\Models\Appointment;
 use App\Models\AppointmentDeposit;
@@ -80,6 +81,9 @@ class TransitionAppointmentStatusAction
                 $locked->no_show_reason = $reason;
             }
             $locked->save();
+            if ($locked->loyalty_redemption_id) {
+                app(LoyaltyService::class)->release($locked->loyaltyRedemption, 'cancelled');
+            }
 
             $event = new AppointmentEvent;
             $event->appointment_id = $locked->getKey();

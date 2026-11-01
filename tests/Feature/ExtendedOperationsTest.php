@@ -181,13 +181,16 @@ class ExtendedOperationsTest extends TestCase
         $this->assertSame(1, $r->fresh()->stock);
     }
 
-    public function test_unverified_member_cannot_generate_qr_or_redeem(): void
+    public function test_email_confirmation_is_not_required_but_inactive_members_remain_blocked(): void
     {
         $c = $this->member();
         $c->forceFill(['email_verified_at' => null])->save();
         $r = LoyaltyReward::create(['name' => 'Gift', 'points_cost' => 1, 'is_active' => true]);
-        $this->actingAs($c, 'customer')->postJson('/clientes/qr')->assertForbidden();
-        $this->post('/clientes/recompensas/'.$r->id.'/canjes', ['operation_token' => (string) Str::uuid()])->assertForbidden();
+        LoyaltyEntry::create(['customer_id' => $c->id, 'points' => 1, 'type' => 'adjustment', 'source_key' => 'unverified-opening']);
+        $this->actingAs($c, 'customer')->postJson('/clientes/qr')->assertOk();
+        $this->post('/clientes/recompensas/'.$r->id.'/canjes', ['operation_token' => (string) Str::uuid()])->assertSessionHasNoErrors();
+        $c->forceFill(['is_active' => false])->save();
+        $this->postJson('/clientes/qr')->assertForbidden();
     }
 
     private function appointment(User $actor, User $performer, Service $service): Appointment

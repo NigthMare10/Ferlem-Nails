@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, onBeforeUnmount } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import Modal from './LoyaltyModal.vue';
 const props = defineProps<{ rewards: any[]; services: any[] }>();
@@ -26,6 +26,19 @@ const form = useForm<any>({
     starts_on: '',
     ends_on: '',
     version: 1,
+    image: null,
+    remove_image: false,
+});
+const storedImage = ref<string | null>(null),
+    preview = ref<string | null>(null);
+function chooseImage(event: Event) {
+    if (preview.value) URL.revokeObjectURL(preview.value);
+    form.image = (event.target as HTMLInputElement).files?.[0] ?? null;
+    preview.value = form.image ? URL.createObjectURL(form.image) : null;
+    form.remove_image = false;
+}
+onBeforeUnmount(() => {
+    if (preview.value) URL.revokeObjectURL(preview.value);
 });
 const bulk = useForm<any>({ items: [], is_active: false });
 const visible = computed(() =>
@@ -50,6 +63,11 @@ function edit(reward?: any) {
     serviceSearch.value = '';
     if (reward) Object.keys(form.data()).forEach((k) => (form[k] = reward[k] ?? (k.endsWith('_on') ? '' : null)));
     form.benefit_type = 'service';
+    form.image = null;
+    form.remove_image = false;
+    storedImage.value = reward?.image_url ?? null;
+    if (preview.value) URL.revokeObjectURL(preview.value);
+    preview.value = null;
     original.value = JSON.stringify(form.data());
     editing.value = true;
 }
@@ -67,7 +85,10 @@ function save() {
             form.reset();
         },
     };
-    id.value ? form.put(`/configuration/loyalty/rewards/${id.value}`, options) : form.post('/configuration/loyalty/rewards', options);
+    form.transform((data: any) => ({ ...data, ...(id.value ? { _method: 'put' } : {}) })).post(
+        id.value ? `/configuration/loyalty/rewards/${id.value}` : '/configuration/loyalty/rewards',
+        { ...options, forceFormData: true },
+    );
 }
 function changeStatus(rows: any[], active: boolean) {
     bulk.items = rows.map((r) => ({ id: r.id, version: r.version }));
@@ -136,6 +157,7 @@ function changeStatus(rows: any[], active: boolean) {
                 <tr v-for="r in visible" :key="r.id">
                     <td><input v-model="selected" type="checkbox" :value="r.id" :aria-label="`Seleccionar ${r.name}`" /></td>
                     <td data-label="Premio / servicio">
+                        <img v-if="r.image_url" :src="r.image_url" alt="" width="64" height="64" style="object-fit: cover; border-radius: 8px" />
                         <strong>{{ r.service?.name ?? r.name }}</strong
                         ><small v-if="r.service">L {{ r.service.price }} · Gana {{ r.service.loyalty_points }} pts al pagar</small
                         ><small v-else>Premio anterior: vincula un servicio al editar</small>
@@ -186,6 +208,20 @@ function changeStatus(rows: any[], active: boolean) {
                 </dl>
                 <label>Puntos necesarios para canjear<input v-model.number="form.points_cost" type="number" min="1" max="1000000" required /></label>
                 <label>Descripción pública para clientas<textarea v-model="form.description" maxlength="2000" /></label>
+                <label
+                    >Imagen del premio<input type="file" accept="image/jpeg,image/png,image/webp" @change="chooseImage" /><small
+                        >JPG, PNG o WebP, máximo 2 MB. Si no subes una imagen, se mostrará un icono de premio.</small
+                    ></label
+                >
+                <img
+                    v-if="!form.remove_image && (preview || storedImage)"
+                    :src="preview || storedImage!"
+                    alt="Vista previa del premio"
+                    style="width: 100%; max-height: 220px; object-fit: contain"
+                />
+                <label v-if="storedImage || preview" class="check"
+                    ><input v-model="form.remove_image" type="checkbox" @change="form.remove_image && (form.image = null)" />Quitar imagen</label
+                >
                 <label class="check"
                     ><input type="checkbox" :checked="form.stock === null" @change="form.stock = ($event.target as HTMLInputElement).checked ? null : 0" />Cupos
                     ilimitados</label

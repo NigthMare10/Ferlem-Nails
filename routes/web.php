@@ -14,7 +14,10 @@ use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LoyaltyController;
+use App\Http\Controllers\LoyaltyCustomerController;
+use App\Http\Controllers\LoyaltyGiftController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\RewardAppointmentController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\UserController;
@@ -28,21 +31,24 @@ Route::middleware('guest:web')->group(function () {
 });
 
 require __DIR__.'/customer.php';
+Route::get('/rewards/{reward}/image', [LoyaltyController::class, 'image']);
 
 Route::middleware(['auth:web', 'active'])->group(function () {
+    Route::post('/loyalty/redemptions/{redemption}/appointment', [RewardAppointmentController::class, 'store']);
+    Route::post('/appointments/{appointment}/complete-reward', [RewardAppointmentController::class, 'complete']);
     Route::get('/configuration/loyalty/rewards', [LoyaltyController::class, 'index']);
-    Route::get('/configuration/loyalty/customers', [\App\Http\Controllers\LoyaltyCustomerController::class,'index']);
-    Route::get('/configuration/loyalty/customers/{customer}', [\App\Http\Controllers\LoyaltyCustomerController::class,'show']);
-    Route::post('/configuration/loyalty/customers/{customer}/rewards/{reward}/reserve', [\App\Http\Controllers\LoyaltyCustomerController::class,'reserve']);
+    Route::get('/configuration/loyalty/customers', [LoyaltyCustomerController::class, 'index']);
+    Route::get('/configuration/loyalty/customers/{customer}', [LoyaltyCustomerController::class, 'show']);
+    Route::post('/configuration/loyalty/customers/{customer}/rewards/{reward}/reserve', [LoyaltyCustomerController::class, 'reserve']);
     Route::post('/configuration/loyalty/rewards', [LoyaltyController::class, 'reward']);
     Route::put('/configuration/loyalty/rewards/{reward}', [LoyaltyController::class, 'reward']);
     Route::put('/configuration/loyalty/settings', [LoyaltyController::class, 'settings']);
     Route::post('/configuration/loyalty/rewards/bulk-status', [LoyaltyController::class, 'bulkStatus']);
-    Route::get('/configuration/loyalty/gift-customers', [\App\Http\Controllers\LoyaltyGiftController::class, 'customers']);
-    Route::post('/configuration/loyalty/gifts', [\App\Http\Controllers\LoyaltyGiftController::class, 'store'])->middleware('throttle:30,1');
-    Route::get('/configuration/loyalty/gifts/{batch}', [\App\Http\Controllers\LoyaltyGiftController::class, 'show']);
-    Route::post('/configuration/loyalty/gifts/{batch}/retry', [\App\Http\Controllers\LoyaltyGiftController::class, 'retry'])->middleware('throttle:30,1');
-    Route::post('/configuration/loyalty/gift-recipients/{gift}', [\App\Http\Controllers\LoyaltyGiftController::class, 'resolve']);
+    Route::get('/configuration/loyalty/gift-customers', [LoyaltyGiftController::class, 'customers']);
+    Route::post('/configuration/loyalty/gifts', [LoyaltyGiftController::class, 'store'])->middleware('throttle:30,1');
+    Route::get('/configuration/loyalty/gifts/{batch}', [LoyaltyGiftController::class, 'show']);
+    Route::post('/configuration/loyalty/gifts/{batch}/retry', [LoyaltyGiftController::class, 'retry'])->middleware('throttle:30,1');
+    Route::post('/configuration/loyalty/gift-recipients/{gift}', [LoyaltyGiftController::class, 'resolve']);
     Route::post('/loyalty/qr/resolve', [LoyaltyController::class, 'resolve'])->middleware('throttle:20,1');
     Route::post('/sales/{sale}/loyalty-awards', [LoyaltyController::class, 'award'])->middleware('throttle:20,1');
     Route::post('/appointments/{appointment}/customer', [LoyaltyController::class, 'linkAppointment'])->middleware('throttle:20,1');

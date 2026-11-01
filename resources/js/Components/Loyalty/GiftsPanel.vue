@@ -236,12 +236,7 @@ function finish() {
                             type="button"
                             :disabled="loading"
                             @click="
-                                form.customer_ids = [
-                                    ...new Set([
-                                        ...form.customer_ids,
-                                        ...clients.data.filter((c: any) => c.is_active && c.email_verified_at).map((c: any) => c.id),
-                                    ]),
-                                ]
+                                form.customer_ids = [...new Set([...form.customer_ids, ...clients.data.filter((c: any) => c.is_active).map((c: any) => c.id)])]
                             "
                         >
                             Seleccionar esta página</button
@@ -249,17 +244,11 @@ function finish() {
                         ><button type="button" @click="form.customer_ids = []">Quitar selección</button>
                     </div>
                     <label v-for="c in clients.data" :key="c.id" class="client-row"
-                        ><input
-                            v-model="form.customer_ids"
-                            type="checkbox"
-                            :value="c.id"
-                            :disabled="!c.is_active || !c.email_verified_at"
-                            :aria-label="`Seleccionar ${c.name}`"
-                        />
+                        ><input v-model="form.customer_ids" type="checkbox" :value="c.id" :disabled="!c.is_active" :aria-label="`Seleccionar ${c.name}`" />
                         <div>
                             <strong>{{ c.name }}</strong
                             ><small>{{ c.email }}</small
-                            ><small v-if="!c.is_active || !c.email_verified_at">{{ !c.is_active ? 'Cuenta inactiva' : 'Correo no verificado' }}</small>
+                            ><small v-if="!c.is_active">Cuenta inactiva</small>
                         </div></label
                     >
                     <p v-if="!clients.data.length && !loading">No hay clientas con esta búsqueda.</p>

@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Loyalty\GiftService;
 use App\Actions\Loyalty\LoyaltyService;
 use App\Models\Appointment;
 use App\Models\Customer;
 use App\Models\LoyaltyEntry;
+use App\Models\LoyaltyGiftBatch;
 use App\Models\LoyaltyRedemption;
 use App\Models\LoyaltyReward;
-use App\Models\LoyaltyGiftBatch;
-use App\Actions\Loyalty\GiftService;
 use App\Models\Sale;
 use App\Models\Service;
+use App\Support\RewardImageStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -34,8 +36,8 @@ class LoyaltyController extends Controller
             'rewards' => fn () => LoyaltyReward::with('service:id,name,price,duration_minutes,loyalty_points,is_active')->orderBy('points_cost')->get(),
             'levels' => json_decode(DB::table('loyalty_settings')->where('id', 1)->value('levels'), true),
             'customers' => Customer::query()->when($request->search, fn ($q, $term) => $q->where('name', 'like', '%'.$term.'%'))->select('id', 'name', 'email')->paginate(20),
-            'redemptions' => fn () => LoyaltyRedemption::with('customer:id,name,email', 'reservedBy:id,name', 'confirmedBy:id,name')
-                ->when(in_array($request->query('status'), ['reserved', 'confirmed', 'cancelled', 'expired'], true), fn ($q) => $q->where('status', $request->query('status')))
+            'redemptions' => fn () => LoyaltyRedemption::with('customer:id,name,email', 'reservedBy:id,name', 'confirmedBy:id,name', 'appointment:id,loyalty_redemption_id,scheduled_start,status')
+                ->when(in_array($request->query('status'), ['reserved', 'scheduled', 'confirmed', 'cancelled', 'expired'], true), fn ($q) => $q->where('status', $request->query('status')))
                 ->when($request->query('history_search'), fn ($q, $s) => $q->where(fn ($q) => $q->where('id', $s)->orWhereHas('customer', fn ($q) => $q->where('name', 'like', "%$s%")->orWhere('email', 'like', "%$s%"))))
                 ->latest('id')->paginate(20, ['*'], 'canjes')->withQueryString(),
             'status' => $request->query('status', ''),
@@ -52,6 +54,7 @@ class LoyaltyController extends Controller
     public function reward(Request $request, ?LoyaltyReward $reward = null)
     {
         abort_unless($request->user('web')->can('loyalty.manage'), 403);
+        $request->validate(['image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048', 'dimensions:max_width=4096,max_height=4096'], 'remove_image' => ['nullable', 'boolean']]);
         if ($request->input('benefit_type') === 'service' && $service = Service::find($request->input('service_id'))) {
             $request->merge(['name' => mb_substr($service->name, 0, 120)]);
             if ($request->boolean('is_active') && ! $service->is_active) {
@@ -65,21 +68,47 @@ class LoyaltyController extends Controller
         if ($data['benefit_type'] !== 'discount') {
             $data['discount_percent'] = null;
         }
-        DB::transaction(function () use ($request, $reward, $data) {
-            $before = $reward?->toArray();
-            if ($reward) {
-                $reward = LoyaltyReward::whereKey($reward->id)->lockForUpdate()->firstOrFail();
-                if ($request->has('version') && (int) $request->version !== $reward->version) {
-                    throw ValidationException::withMessages(['version' => 'Otra persona modificó este premio. Recarga y vuelve a revisarlo.']);
+        $newImage = $request->hasFile('image') ? app(RewardImageStorage::class)->store($request->file('image')) : null;
+        $oldImage = null;
+        try {
+            DB::transaction(function () use ($request, $reward, $data, $newImage, &$oldImage) {
+                $before = $reward?->toArray();
+                if ($reward) {
+                    $reward = LoyaltyReward::whereKey($reward->id)->lockForUpdate()->firstOrFail();
+                    if ($request->has('version') && (int) $request->version !== $reward->version) {
+                        throw ValidationException::withMessages(['version' => 'Otra persona modificó este premio. Recarga y vuelve a revisarlo.']);
+                    }
+                    $oldImage = $reward->image_path;
+                    if ($newImage || $request->boolean('remove_image')) {
+                        $data['image_path'] = $newImage;
+                    }
+                    $reward->update([...$data, 'version' => $reward->version + 1]);
+                } else {
+                    if ($newImage) {
+                        $data['image_path'] = $newImage;
+                    }
+                    $reward = LoyaltyReward::create($data);
                 }
-                $reward->update([...$data, 'version' => $reward->version + 1]);
-            } else {
-                $reward = LoyaltyReward::create($data);
-            }
-            $this->audit($request, 'reward.saved', 'reward', $reward->id, $before, $data);
-        });
+                $this->audit($request, 'reward.saved', 'reward', $reward->id, $before, $data);
+            });
+        } catch (\Throwable $e) {
+            if ($newImage) {
+                Storage::disk('local')->delete($newImage);
+            }throw $e;
+        }
+        if ($oldImage && ($newImage || $request->boolean('remove_image'))) {
+            Storage::disk('local')->delete($oldImage);
+        }
 
         return back()->with('success', 'Recompensa guardada.');
+    }
+
+    public function image(LoyaltyReward $reward)
+    {
+        abort_unless(auth('web')->user()?->is_active || auth('customer')->user()?->is_active, 403);
+        abort_unless($reward->image_path && Storage::disk('local')->exists($reward->image_path), 404);
+
+        return response(Storage::disk('local')->get($reward->image_path))->header('Content-Type', 'image/webp')->header('Cache-Control', 'private, max-age=3600')->header('X-Content-Type-Options', 'nosniff');
     }
 
     public function settings(Request $request)
@@ -135,7 +164,7 @@ class LoyaltyController extends Controller
             if ($locked->status === 'confirmed') {
                 return;
             }
-            if ($locked->status !== 'reserved' || ! $locked->expires_at->isFuture() || ! $customer->is_active || ! $customer->hasVerifiedEmail() || $loyalty->balance($customer) < 0) {
+            if ($locked->status !== 'reserved' || ! $locked->expires_at->isFuture() || ! $customer->is_active || $loyalty->balance($customer) < 0) {
                 throw ValidationException::withMessages(['redemption' => 'El canje ya no está pendiente, venció o la cuenta no es elegible. Recarga el historial.']);
             }
             $locked->update(['status' => 'confirmed', 'confirmed_by' => $request->user('web')->id, 'resolved_at' => now()]);
@@ -154,7 +183,7 @@ class LoyaltyController extends Controller
             $qr = DB::table('customer_qr_tokens')->where('token_hash', hash('sha256', $data['token']))->whereNull('used_at')->where('expires_at', '>', now())->lockForUpdate()->first();
             abort_unless($qr, 422, 'QR inválido o vencido.');
             $customer = Customer::whereKey($qr->customer_id)->lockForUpdate()->firstOrFail();
-            abort_unless($customer->is_active && $customer->hasVerifiedEmail(), 403);
+            abort_unless($customer->is_active, 403);
             $locked = Appointment::whereKey($appointment->id)->lockForUpdate()->firstOrFail();
             abort_unless($actor->can('sales.checkout_any') || $actor->hasPermissionTo('appointments.view_all') || $locked->items->every(fn ($i) => $i->assigned_to === $actor->id), 403);
             abort_unless($locked->status === 'scheduled' && (! $locked->customer_id || $locked->customer_id === $customer->id), 422, 'La cita no es elegible o pertenece a otra clienta.');
@@ -176,7 +205,9 @@ class LoyaltyController extends Controller
             $loyalty->release($redemption);
             if ($wasPending && $request->filled('note')) {
                 $redemption->refresh();
-                if ($redemption->status === 'cancelled') $redemption->update(['resolution_note' => $request->note]);
+                if ($redemption->status === 'cancelled') {
+                    $redemption->update(['resolution_note' => $request->note]);
+                }
             }
             $this->audit($request, 'redemption.cancelled', 'redemption', $redemption->id, null, $redemption->fresh()->toArray());
         });

@@ -46,6 +46,7 @@ function submit() {
             >
                 <option value="">Todos los estados</option>
                 <option value="reserved">Pendientes</option>
+                <option value="scheduled">Cita agendada</option>
                 <option value="confirmed">Entregados</option>
                 <option value="cancelled">Cancelados</option>
                 <option value="expired">Vencidos</option></select
@@ -81,7 +82,10 @@ function submit() {
                         {{ r.customer?.name }}<small>{{ r.customer?.email }}</small>
                     </td>
                     <td data-label="Puntos">{{ r.points_cost }} pts<small v-if="['expired', 'cancelled'].includes(r.status)">Reintegrados</small></td>
-                    <td data-label="Vigencia">{{ loyaltyDate(r.expires_at) }}<small>Reserva de 24 horas</small></td>
+                    <td data-label="Vigencia">
+                        {{ loyaltyDate(r.appointment?.scheduled_start || r.expires_at)
+                        }}<small>{{ r.appointment ? 'Fecha de la cita' : 'Reserva de 24 horas' }}</small>
+                    </td>
                     <td data-label="Estado">
                         <span class="badge" :class="{ good: r.status === 'confirmed' }">{{ redemptionLabels[r.status] }}</span>
                     </td>

@@ -8,6 +8,7 @@ use App\Models\LoyaltyGiftBatch;
 use App\Models\LoyaltyGiftRecipient;
 use App\Models\Service;
 use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -32,41 +33,43 @@ class GiftService
         ];
         $hash = hash('sha256', json_encode($payload));
         try {
-        $batch = DB::transaction(function () use ($actor, $data, $payload, $hash, $ids) {
-            User::whereKey($actor->id)->lockForUpdate()->firstOrFail();
-            $existing = LoyaltyGiftBatch::where('operation_token', $data['operation_token'])->first();
-            if ($existing) {
-                abort_unless($existing->actor_id === $actor->id && hash_equals($existing->payload_hash, $hash), 422, 'La operación ya existe con otro contenido. Recarga antes de crear otro regalo.');
+            $batch = DB::transaction(function () use ($actor, $data, $payload, $hash, $ids) {
+                User::whereKey($actor->id)->lockForUpdate()->firstOrFail();
+                $existing = LoyaltyGiftBatch::where('operation_token', $data['operation_token'])->first();
+                if ($existing) {
+                    abort_unless($existing->actor_id === $actor->id && hash_equals($existing->payload_hash, $hash), 422, 'La operación ya existe con otro contenido. Recarga antes de crear otro regalo.');
 
-                return $existing;
-            }
-            $snapshot = null;
-            if ($payload['type'] === 'service') {
-                $service = Service::whereKey($payload['service_id'])->lockForUpdate()->firstOrFail();
-                if (! $service->is_active) {
-                    throw ValidationException::withMessages(['service_id' => 'El servicio está inactivo. Elige uno disponible.']);
+                    return $existing;
                 }
-                $snapshot = $service->only('id', 'name', 'description', 'duration_minutes', 'price');
-            }
-            // A unique token and immutable payload protect retries across lost responses.
-            $batch = LoyaltyGiftBatch::firstOrCreate(['operation_token' => $data['operation_token']], [
-                'actor_id' => $actor->id, 'payload_hash' => $hash, 'type' => $payload['type'],
-                'points' => $payload['points'], 'service_id' => $payload['service_id'], 'service_snapshot' => $snapshot,
-                'reason' => $payload['reason'], 'message' => $payload['message'], 'expires_at' => $payload['expires_at'],
-            ]);
-            abort_unless($batch->actor_id === $actor->id && hash_equals($batch->payload_hash, $hash), 422);
-            foreach ($ids as $id) {
-                $batch->recipients()->firstOrCreate(['customer_id' => $id]);
-            }
-            $this->audit($actor, 'gift.created', $batch->id, ['type' => $batch->type, 'recipients' => count($ids)]);
+                $snapshot = null;
+                if ($payload['type'] === 'service') {
+                    $service = Service::whereKey($payload['service_id'])->lockForUpdate()->firstOrFail();
+                    if (! $service->is_active) {
+                        throw ValidationException::withMessages(['service_id' => 'El servicio está inactivo. Elige uno disponible.']);
+                    }
+                    $snapshot = $service->only('id', 'name', 'description', 'duration_minutes', 'price');
+                }
+                // A unique token and immutable payload protect retries across lost responses.
+                $batch = LoyaltyGiftBatch::firstOrCreate(['operation_token' => $data['operation_token']], [
+                    'actor_id' => $actor->id, 'payload_hash' => $hash, 'type' => $payload['type'],
+                    'points' => $payload['points'], 'service_id' => $payload['service_id'], 'service_snapshot' => $snapshot,
+                    'reason' => $payload['reason'], 'message' => $payload['message'], 'expires_at' => $payload['expires_at'],
+                ]);
+                abort_unless($batch->actor_id === $actor->id && hash_equals($batch->payload_hash, $hash), 422);
+                foreach ($ids as $id) {
+                    $batch->recipients()->firstOrCreate(['customer_id' => $id]);
+                }
+                $this->audit($actor, 'gift.created', $batch->id, ['type' => $batch->type, 'recipients' => count($ids)]);
 
-            return $batch;
-        }, 3);
-        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                return $batch;
+            }, 3);
+        } catch (UniqueConstraintViolationException $e) {
             // A competing transaction can commit after our consistent-read snapshot.
             // Re-read outside that transaction rather than treating a retry as a 500.
             $batch = LoyaltyGiftBatch::where('operation_token', $data['operation_token'])->first();
-            if (! $batch) throw $e;
+            if (! $batch) {
+                throw $e;
+            }
             abort_unless($batch->actor_id === $actor->id && hash_equals($batch->payload_hash, $hash), 422, 'Este identificador ya pertenece a otra operación.');
         }
         $this->process($actor, $batch);
@@ -86,8 +89,8 @@ class GiftService
                     return;
                 }
                 $customer = Customer::whereKey($recipient->customer_id)->lockForUpdate()->firstOrFail();
-                if (! $customer->is_active || ! $customer->hasVerifiedEmail()) {
-                    $recipient->update(['status' => 'failed', 'error' => 'La cuenta debe estar activa y tener el correo verificado.']);
+                if (! $customer->is_active) {
+                    $recipient->update(['status' => 'failed', 'error' => 'La cuenta debe estar activa.']);
 
                     return;
                 }
@@ -129,8 +132,8 @@ class GiftService
                 throw ValidationException::withMessages(['gift' => 'El regalo ya fue entregado, cancelado o venció. Recarga el detalle.']);
             }
             $customer = Customer::whereKey($locked->customer_id)->lockForUpdate()->firstOrFail();
-            if ($action === 'confirmed' && (! $customer->is_active || ! $customer->hasVerifiedEmail())) {
-                throw ValidationException::withMessages(['gift' => 'La cuenta no está activa o verificada. No se puede entregar.']);
+            if ($action === 'confirmed' && ! $customer->is_active) {
+                throw ValidationException::withMessages(['gift' => 'La cuenta no está activa. No se puede entregar.']);
             }
             $locked->update(['status' => $action, 'resolved_by' => $actor->id, 'resolved_at' => now(), 'resolution_note' => $note]);
             $this->audit($actor, 'gift.'.$action, $locked->id, ['batch_id' => $batch->id, 'note' => $note]);

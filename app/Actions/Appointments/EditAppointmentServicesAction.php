@@ -23,6 +23,9 @@ class EditAppointmentServicesAction
 
         return DB::transaction(function () use ($actor, $appointment, $data) {
             $locked = Appointment::whereKey($appointment->id)->lockForUpdate()->firstOrFail();
+            if ($locked->loyalty_redemption_id) {
+                throw ValidationException::withMessages(['appointment' => 'No se puede cambiar el servicio de un premio. Usa Reprogramar para ajustar fecha, hora o persona.']);
+            }
             $items = $locked->items()->orderBy('position')->lockForUpdate()->get()->keyBy('id');
             if (! hash_equals(AppointmentRevision::of($locked), $data['expected_revision'])) {
                 throw ValidationException::withMessages(['appointment' => 'Otra persona cambió esta cita. Recarga antes de continuar.']);

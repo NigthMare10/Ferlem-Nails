@@ -140,7 +140,7 @@ class AppointmentDialogStructureTest extends TestCase
         $this->assertStringContainsString('v-model:menu="servicesMenuOpen"', $component);
         $this->assertStringContainsString('@update:model-value="closeServicesMenu"', $component);
         $this->assertStringContainsString('servicesMenuOpen.value = false', $component);
-        $this->assertStringContainsString('multiple chips closable-chips', $component);
+        $this->assertMatchesRegularExpression('/multiple\s+chips\s+closable-chips/', $component);
     }
 
     public function test_phase_four_c_deposits_share_the_existing_dialog_shell_without_later_features(): void

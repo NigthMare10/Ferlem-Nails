@@ -1,4 +1,5 @@
 export const redemptionLabels: Record<string, string> = {
+    scheduled: 'Cita agendada',
     reserved: 'Pendiente de entrega',
     confirmed: 'Entregada',
     cancelled: 'Cancelada',

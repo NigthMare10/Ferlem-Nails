@@ -4,7 +4,13 @@ namespace Tests\Feature;
 
 use App\Actions\Loyalty\GiftService;
 use App\Actions\Loyalty\LoyaltyService;
-use App\Models\{Customer, LoyaltyEntry, LoyaltyGiftBatch, LoyaltyGiftRecipient, LoyaltyReward, Service, User};
+use App\Models\Customer;
+use App\Models\LoyaltyEntry;
+use App\Models\LoyaltyGiftBatch;
+use App\Models\LoyaltyReward;
+use App\Models\Service;
+use App\Models\User;
+use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +23,9 @@ class LoyaltyV2Test extends TestCase
     use RefreshDatabase;
 
     private User $owner;
+
     private Customer $client;
+
     private Service $service;
 
     protected function setUp(): void
@@ -47,14 +55,30 @@ class LoyaltyV2Test extends TestCase
     public static function invalidGifts(): array
     {
         $cases = [];
-        foreach ([0, -1, 100001, 1.5, 'abc', null] as $i => $value) $cases['points '.$i] = [['points' => $value]];
-        foreach (['gift', '', null] as $i => $value) $cases['type '.$i] = [['type' => $value]];
-        foreach ([[], 'all', [999999], ['abc']] as $i => $value) $cases['recipients '.$i] = [['customer_ids' => $value]];
-        foreach (['bad', null, ''] as $i => $value) $cases['token '.$i] = [['operation_token' => $value]];
-        foreach (['x', str_repeat('x', 501), null, ''] as $i => $value) $cases['reason '.$i] = [['reason' => $value]];
-        foreach ([str_repeat('x', 501), ['array']] as $i => $value) $cases['message '.$i] = [['message' => $value]];
-        foreach ([null, 999999, 'abc'] as $i => $value) $cases['service '.$i] = [['type' => 'service', 'service_id' => $value]];
-        foreach (['yesterday', '2020-01-01T12:00', '2026-99-99T99:99'] as $i => $value) $cases['expiry '.$i] = [['type' => 'service', 'service_id' => 'existing', 'expires_at' => $value]];
+        foreach ([0, -1, 100001, 1.5, 'abc', null] as $i => $value) {
+            $cases['points '.$i] = [['points' => $value]];
+        }
+        foreach (['gift', '', null] as $i => $value) {
+            $cases['type '.$i] = [['type' => $value]];
+        }
+        foreach ([[], 'all', [999999], ['abc']] as $i => $value) {
+            $cases['recipients '.$i] = [['customer_ids' => $value]];
+        }
+        foreach (['bad', null, ''] as $i => $value) {
+            $cases['token '.$i] = [['operation_token' => $value]];
+        }
+        foreach (['x', str_repeat('x', 501), null, ''] as $i => $value) {
+            $cases['reason '.$i] = [['reason' => $value]];
+        }
+        foreach ([str_repeat('x', 501), ['array']] as $i => $value) {
+            $cases['message '.$i] = [['message' => $value]];
+        }
+        foreach ([null, 999999, 'abc'] as $i => $value) {
+            $cases['service '.$i] = [['type' => 'service', 'service_id' => $value]];
+        }
+        foreach (['yesterday', '2020-01-01T12:00', '2026-99-99T99:99'] as $i => $value) {
+            $cases['expiry '.$i] = [['type' => 'service', 'service_id' => 'existing', 'expires_at' => $value]];
+        }
 
         return $cases;
     }
@@ -62,7 +86,9 @@ class LoyaltyV2Test extends TestCase
     #[DataProvider('invalidGifts')]
     public function test_invalid_gift_does_not_create_partial_ledger(array $changes): void
     {
-        if (($changes['service_id'] ?? '') === 'existing') $changes['service_id'] = $this->service->id;
+        if (($changes['service_id'] ?? '') === 'existing') {
+            $changes['service_id'] = $this->service->id;
+        }
         $this->actingAs($this->owner)->postJson('/configuration/loyalty/gifts', $this->payload($changes))->assertUnprocessable();
         $this->assertDatabaseCount('loyalty_gift_batches', 0);
         $this->assertSame(1000, app(LoyaltyService::class)->balance($this->client));
@@ -72,7 +98,9 @@ class LoyaltyV2Test extends TestCase
     {
         $cases = [];
         foreach ([1, 2, 3, 20] as $count) {
-            foreach ([1, 200, 100000] as $points) $cases["$count clients $points pts"] = ['points', $count, $points];
+            foreach ([1, 200, 100000] as $points) {
+                $cases["$count clients $points pts"] = ['points', $count, $points];
+            }
             $cases["$count clients service"] = ['service', $count, 0];
         }
 
@@ -83,7 +111,9 @@ class LoyaltyV2Test extends TestCase
     public function test_gift_matrix_is_idempotent_and_never_changes_level_or_sales(string $type, int $count, int $points): void
     {
         $clients = collect([$this->client]);
-        for ($i = 1; $i < $count; $i++) $clients->push($this->client());
+        for ($i = 1; $i < $count; $i++) {
+            $clients->push($this->client());
+        }
         $payload = $this->payload(['type' => $type, 'points' => $points, 'service_id' => $this->service->id, 'customer_ids' => $clients->pluck('id')->all()]);
         $this->actingAs($this->owner)->post('/configuration/loyalty/gifts', $payload)->assertSessionHasNoErrors()->assertRedirect();
         $this->post('/configuration/loyalty/gifts', $payload)->assertSessionHasNoErrors();
@@ -104,7 +134,9 @@ class LoyaltyV2Test extends TestCase
     {
         $cases = [];
         foreach (['owner', 'administrator', 'employee'] as $role) {
-            foreach (['create', 'retry', 'customers', 'detail', 'resolve', 'levels', 'bulk', 'index'] as $endpoint) $cases["$role $endpoint"] = [$role, $endpoint];
+            foreach (['create', 'retry', 'customers', 'detail', 'resolve', 'levels', 'bulk', 'index'] as $endpoint) {
+                $cases["$role $endpoint"] = [$role, $endpoint];
+            }
         }
 
         return $cases;
@@ -130,15 +162,20 @@ class LoyaltyV2Test extends TestCase
             'index' => $this->get('/configuration/loyalty/rewards'),
         };
         $allowed = $role === 'owner' || $role === 'administrator' && in_array($endpoint, ['detail', 'resolve', 'bulk', 'index']);
-        if ($allowed) $this->assertTrue($response->status() < 400, $response->getContent());
-        else $response->assertForbidden();
+        if ($allowed) {
+            $this->assertTrue($response->status() < 400, $response->getContent());
+        } else {
+            $response->assertForbidden();
+        }
     }
 
     public static function lifecycle(): array
     {
         $cases = [];
         foreach (['available', 'confirmed', 'cancelled', 'expired'] as $status) {
-            foreach (['confirmed', 'cancelled', 'expire'] as $action) $cases["$status to $action"] = [$status, $action];
+            foreach (['confirmed', 'cancelled', 'expire'] as $action) {
+                $cases["$status to $action"] = [$status, $action];
+            }
         }
 
         return $cases;
@@ -252,7 +289,8 @@ class LoyaltyV2Test extends TestCase
 
     public function test_bulk_change_is_atomic_and_detects_stale_versions(): void
     {
-        $a = $this->reward(); $b = $this->reward();
+        $a = $this->reward();
+        $b = $this->reward();
         $items = [['id' => $a->id, 'version' => 1], ['id' => $b->id, 'version' => 99]];
         $this->actingAs($this->owner)->postJson('/configuration/loyalty/rewards/bulk-status', ['items' => $items, 'is_active' => false])->assertUnprocessable();
         $this->assertTrue($a->fresh()->is_active);
@@ -284,16 +322,23 @@ class LoyaltyV2Test extends TestCase
     public function test_maximum_level_does_not_drop_when_redeeming_multiple_rewards(): void
     {
         LoyaltyEntry::create(['customer_id' => $this->client->id, 'points' => 0, 'qualifying_points' => 10000, 'type' => 'award', 'source_key' => (string) Str::uuid()]);
-        for ($i = 0; $i < 3; $i++) app(LoyaltyService::class)->reserve($this->client, $this->reward(), (string) Str::uuid());
+        for ($i = 0; $i < 3; $i++) {
+            app(LoyaltyService::class)->reserve($this->client, $this->reward(), (string) Str::uuid());
+        }
         $this->assertSame(10200, (int) $this->client->entries()->sum('qualifying_points'));
         $this->assertSame(850, app(LoyaltyService::class)->balance($this->client));
     }
 
-    public function test_all_filter_selection_excludes_disabled_and_unverified_accounts(): void
+    public function test_all_filter_selection_excludes_disabled_but_includes_active_unverified_accounts(): void
     {
-        $inactive = $this->client(); $inactive->forceFill(['is_active' => false])->save();
-        $unverified = $this->client(); $unverified->forceFill(['email_verified_at' => null])->save();
-        $this->actingAs($this->owner)->getJson('/configuration/loyalty/gift-customers?all=1')->assertOk()->assertJsonCount(1, 'ids')->assertJsonPath('ids.0', $this->client->id);
+        $inactive = $this->client();
+        $inactive->forceFill(['is_active' => false])->save();
+        $unverified = $this->client();
+        $unverified->forceFill(['email_verified_at' => null])->save();
+        $response = $this->actingAs($this->owner)->getJson('/configuration/loyalty/gift-customers?all=1')->assertOk()->assertJsonCount(2, 'ids');
+        $this->assertContains($this->client->id, $response->json('ids'));
+        $this->assertContains($unverified->id, $response->json('ids'));
+        $this->assertNotContains($inactive->id, $response->json('ids'));
     }
 
     public function test_duplicate_recipients_are_rejected_instead_of_sending_twice(): void
@@ -310,7 +355,7 @@ class LoyaltyV2Test extends TestCase
 
     public function test_service_expiry_uses_honduras_and_rejects_delivery_at_exact_boundary(): void
     {
-        $this->travelTo(\Carbon\CarbonImmutable::parse('2030-01-01 18:00:00', 'UTC'));
+        $this->travelTo(CarbonImmutable::parse('2030-01-01 18:00:00', 'UTC'));
         $this->actingAs($this->owner)->post('/configuration/loyalty/gifts', $this->payload(['type' => 'service', 'service_id' => $this->service->id, 'expires_at' => '2030-01-01T12:01']))->assertSessionHasNoErrors();
         $batch = LoyaltyGiftBatch::sole();
         $this->assertSame('2030-01-01 18:01:00', $batch->expires_at->format('Y-m-d H:i:s'));
@@ -325,7 +370,8 @@ class LoyaltyV2Test extends TestCase
     {
         $payload = $this->payload();
         $this->actingAs($this->owner)->post('/configuration/loyalty/gifts', $payload)->assertSessionHasNoErrors();
-        $other = User::factory()->create(['is_active' => true]); $other->assignRole('owner');
+        $other = User::factory()->create(['is_active' => true]);
+        $other->assignRole('owner');
         $this->actingAs($other)->postJson('/configuration/loyalty/gifts', $payload)->assertUnprocessable();
         $this->assertSame(1, LoyaltyEntry::where('type', 'gift')->count());
     }
@@ -368,7 +414,9 @@ class LoyaltyV2Test extends TestCase
     public function test_available_gift_is_never_hidden_behind_paginated_credited_gifts(): void
     {
         $available = app(GiftService::class)->send($this->owner, $this->payload(['type' => 'service', 'service_id' => $this->service->id]));
-        for ($i = 0; $i < 25; $i++) app(GiftService::class)->send($this->owner, $this->payload(['points' => 1]));
+        for ($i = 0; $i < 25; $i++) {
+            app(GiftService::class)->send($this->owner, $this->payload(['points' => 1]));
+        }
         $this->actingAs($this->client, 'customer')->get('/clientes/recompensas?obsequios=2')->assertInertia(fn ($p) => $p->has('gifts.data', 6)->where('gifts.data.0.batch.id', $available->id));
     }
 

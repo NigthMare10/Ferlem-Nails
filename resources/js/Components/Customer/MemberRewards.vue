@@ -12,8 +12,8 @@ const filters = [
     { value: 'gift', label: 'Regalos' },
 ];
 const visible = computed(() => props.rewards.filter((r) => !filter.value || r.benefit_type === filter.value));
-const active = computed(() => props.redemptions.filter((r) => r.status === 'reserved'));
-const history = computed(() => props.redemptions.filter((r) => r.status !== 'reserved'));
+const active = computed(() => props.redemptions.filter((r) => ['reserved', 'scheduled'].includes(r.status)));
+const history = computed(() => props.redemptions.filter((r) => !['reserved', 'scheduled'].includes(r.status)));
 const form = useForm<{ operation_token: string }>({ operation_token: crypto.randomUUID() });
 const operationTokens = new Map<number, string>();
 const recentlyReserved = ref<number | null>(null);
@@ -21,24 +21,10 @@ let feedbackTimer: ReturnType<typeof setTimeout> | undefined;
 onUnmounted(() => clearTimeout(feedbackTimer));
 const number = (n: number) => new Intl.NumberFormat('en-US').format(n);
 const category = (r: any) => filters.find((f) => f.value === r.benefit_type)?.label ?? 'Recompensa';
-const imageFor = (r: any) =>
-    `/images/stitch/rewards-${
-        r.benefit_type === 'gift'
-            ? 4
-            : r.benefit_type === 'discount'
-              ? 3
-              : 2 +
-                (Math.max(
-                    0,
-                    props.rewards.findIndex((item) => item.id === r.id),
-                ) %
-                    4)
-    }.webp`;
+const imageFor = (r: any) => r.image_url || null;
 const redemptionImage = (r: any) => {
     const reward = props.rewards.find((item) => item.id === r.loyalty_reward_id);
-    return reward
-        ? imageFor(reward)
-        : `/images/stitch/rewards-${r.reward_snapshot.benefit_type === 'service' ? 2 : r.reward_snapshot.benefit_type === 'discount' ? 3 : 1}.webp`;
+    return reward ? imageFor(reward) : null;
 };
 const dayFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Tegucigalpa' });
 const today = ref(dayFormatter.format(new Date()));
@@ -50,7 +36,6 @@ watch(
 );
 const expiry = (v: string) => new Intl.DateTimeFormat('es-HN', { dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Tegucigalpa' }).format(new Date(v));
 function reason(r: any) {
-    if (!props.customer.email_verified_at) return 'Verifica tu correo para reservar';
     if (r.per_customer_limit && r.used_by_customer >= r.per_customer_limit) return 'Ya alcanzaste el límite de canjes';
     if (r.stock !== null && r.stock < 1) return 'Sin existencias disponibles';
     if (r.starts_on && r.starts_on.slice(0, 10) > today.value) return 'Disponible próximamente';
@@ -127,13 +112,18 @@ function reserve(r: any) {
             <div v-for="r in active" :key="r.id" class="liquid-glass-card-interactive specular-rim rounded-lg p-4 relative overflow-hidden" data-motion-reveal>
                 <div class="flex gap-3.5">
                     <div class="w-20 h-20 rounded-DEFAULT overflow-hidden shrink-0 bg-surface-container-high border border-outline-variant/40 relative">
-                        <img class="w-full h-full object-cover" :src="redemptionImage(r)" alt="" />
+                        <img v-if="redemptionImage(r)" class="w-full h-full object-cover" :src="redemptionImage(r)" alt="" /><span
+                            v-else
+                            class="material-symbols-outlined"
+                            aria-hidden="true"
+                            >card_giftcard</span
+                        >
                     </div>
                     <div class="flex-1 flex flex-col justify-between">
                         <div>
                             <span
                                 class="text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-primary-container/50 text-on-primary-container border border-primary/20"
-                                >Reservado - Pendiente de entrega</span
+                                >{{ r.status === 'scheduled' ? 'Cita agendada · Premio gratuito' : 'Reservado - Pendiente de entrega' }}</span
                             >
                             <h3 class="text-body-lg font-body-lg font-semibold text-on-surface mt-1 tracking-tight">{{ r.reward_snapshot.name }}</h3>
                             <span class="text-label-md font-label-md text-primary font-medium"
@@ -146,7 +136,10 @@ function reserve(r: any) {
                     <div class="flex items-center gap-1.5 text-secondary">
                         <span class="material-symbols-outlined text-[16px] text-primary">schedule</span
                         ><span class="text-label-sm font-label-sm font-medium"
-                            >Vence: <strong class="text-on-surface font-semibold">{{ expiry(r.expires_at) }}</strong></span
+                            >{{ r.status === 'scheduled' ? 'Cita agendada' : 'Vence:' }}
+                            <strong class="text-on-surface font-semibold">{{
+                                r.status === 'scheduled' ? (r.appointment ? expiry(r.appointment.scheduled_start) : 'Consulta Mis citas') : expiry(r.expires_at)
+                            }}</strong></span
                         >
                     </div>
                 </div>
@@ -184,7 +177,16 @@ function reserve(r: any) {
                 <article v-for="r in visible" :key="r.id" class="liquid-glass-card specular-rim rounded-lg p-4 relative overflow-hidden" data-motion-reveal>
                     <div class="flex gap-4">
                         <div class="w-24 h-28 rounded-DEFAULT overflow-hidden shrink-0 relative bg-surface-container-high border border-outline-variant/40">
-                            <img class="w-full h-full object-cover" :src="imageFor(r)" alt="" loading="lazy" decoding="async" width="96" height="112" />
+                            <img
+                                v-if="imageFor(r)"
+                                class="w-full h-full object-cover"
+                                :src="imageFor(r)"
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                width="96"
+                                height="112"
+                            /><span v-else class="material-symbols-outlined" aria-hidden="true">card_giftcard</span>
                             <div v-if="reason(r)" class="absolute inset-0 bg-surface-container-lowest/50 flex items-center justify-center">
                                 <span class="material-symbols-outlined text-on-surface-variant text-[22px]">lock</span>
                             </div>

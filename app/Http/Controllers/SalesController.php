@@ -180,6 +180,7 @@ class SalesController extends Controller
 
     private function authorizeAppointmentCheckout(User $user, Appointment $appointment): void
     {
+        abort_if($appointment->loyalty_redemption_id, 403, 'Las citas de premio no se cobran.');
         $canView = $user->is_active
             && $user->hasPermissionTo(Permissions::APPOINTMENTS_ACCESS)
             && $user->hasPermissionTo(Permissions::APPOINTMENTS_CONVERT_TO_SALE)

@@ -41,6 +41,9 @@ export interface AppointmentItem {
 }
 
 export interface Appointment {
+    is_reward?: boolean;
+    redemption_id?: number | null;
+    can_complete_reward?: boolean;
     id: number;
     client_name: string;
     client_phone: string | null;

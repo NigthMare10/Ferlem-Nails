@@ -34,7 +34,7 @@ const links = [
                             ><img v-if="page.props.has_avatar" src="/clientes/foto" alt="" /><span v-else>{{ customer.name.slice(0, 1) }}</span
                             ><i /></span
                         ><span v-if="section === 'home'"
-                            ><small>Atelier Member</small><strong>{{ customer.name }}</strong></span
+                            ><small>Studio Lemus</small><strong :title="customer.name">{{ customer.name }}</strong></span
                         ><span v-else><small>ATELIER PRIVÉ</small><b>Studio Lemus</b></span></Link
                     >
                     <div class="header-trailing">
@@ -156,6 +156,27 @@ const links = [
     align-items: center;
     gap: 12px;
     min-width: 0;
+    flex: 1;
+}
+.header-member > span:last-child {
+    min-width: 0;
+}
+.stitch-home .header-brand {
+    display: none;
+}
+.stitch-home .header-member strong {
+    max-width: none;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+.header-trailing {
+    flex-shrink: 0;
 }
 .mini-avatar {
     position: relative;
@@ -369,11 +390,13 @@ const links = [
         padding-inline: 16px;
     }
     .stitch-home .header-member {
-        flex: 1 1 100%;
+        flex: 1 1 0;
     }
     .stitch-home .header-trailing {
-        width: 100%;
-        justify-content: space-between;
+        width: auto;
+    }
+    .stitch-home .customer-header {
+        flex-wrap: nowrap;
     }
     .stitch-profile .profile-logo {
         font-size: 20px;

@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Customer;
 
+use App\Actions\Loyalty\GiftService;
 use App\Actions\Loyalty\LoyaltyService;
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Customer;
+use App\Models\LoyaltyGiftRecipient;
 use App\Models\LoyaltyRedemption;
 use App\Models\LoyaltyReward;
-use App\Models\LoyaltyGiftRecipient;
 use App\Models\Sale;
 use App\Models\Service;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class PortalController extends Controller
     {
         $customer = auth('customer')->user();
         $loyalty->expireDue();
-        app(\App\Actions\Loyalty\GiftService::class)->expireDue();
+        app(GiftService::class)->expireDue();
         DB::transaction(function () use ($customer, $loyalty) {
             Customer::whereKey($customer->id)->lockForUpdate()->firstOrFail();
             $loyalty->expire($customer);
@@ -34,7 +35,7 @@ class PortalController extends Controller
         };
         $history = null;
         $redemptionHistory = function () use ($customer, &$history) {
-            return $history ??= LoyaltyRedemption::where('customer_id', $customer->id)->where('status', '!=', 'reserved')
+            return $history ??= LoyaltyRedemption::where('customer_id', $customer->id)->whereNotIn('status', ['reserved', 'scheduled'])
                 ->latest('id')->paginate(20, ['*'], 'canjes')->withQueryString();
         };
 
@@ -45,14 +46,14 @@ class PortalController extends Controller
             'visits' => fn () => Sale::where('customer_id', $customer->id)->where('status', 'completed')->count(),
             'entries' => fn () => $customer->entries()->latest('id')->paginate(15),
             'rewards' => function () use ($customer) {
-                $usage = LoyaltyRedemption::where('customer_id', $customer->id)->whereIn('status', ['reserved', 'confirmed'])
+                $usage = LoyaltyRedemption::where('customer_id', $customer->id)->whereIn('status', ['reserved', 'scheduled', 'confirmed'])
                     ->selectRaw('loyalty_reward_id, COUNT(*) as used')->groupBy('loyalty_reward_id')->pluck('used', 'loyalty_reward_id');
 
                 return LoyaltyReward::with('service:id,name')->where('is_active', true)->where(fn ($q) => $q->where('benefit_type', '!=', 'service')->orWhereHas('service', fn ($q) => $q->where('is_active', true)))->orderBy('points_cost')->get()
                     ->map(fn ($reward) => [...$reward->attributesToArray(), 'name' => $reward->service?->name ?? $reward->name, 'used_by_customer' => (int) ($usage[$reward->id] ?? 0)]);
             },
             // Pending reservations must never disappear behind a truncated history.
-            'redemptions' => fn () => LoyaltyRedemption::where('customer_id', $customer->id)->where('status', 'reserved')->latest('id')->get()
+            'redemptions' => fn () => LoyaltyRedemption::with('appointment:id,loyalty_redemption_id,scheduled_start,status')->where('customer_id', $customer->id)->whereIn('status', ['reserved', 'scheduled'])->latest('id')->get()
                 ->concat($redemptionHistory()->items())->values(),
             'redemption_history' => fn () => [
                 'current_page' => $redemptionHistory()->currentPage(),
@@ -94,7 +95,6 @@ class PortalController extends Controller
     public function qr()
     {
         $customer = auth('customer')->user();
-        abort_unless($customer->hasVerifiedEmail(), 403);
         $token = Str::random(64);
         DB::transaction(function () use ($customer, $token) {
             Customer::whereKey($customer->id)->lockForUpdate()->firstOrFail();

@@ -28,29 +28,17 @@ function select(r: any) {
     reserve.clearErrors();
 }
 function paginate(key: string, page: number) {
-    router.get(
-        `/configuration/loyalty/customers/${props.customer.id}`,
-        { [key]: page },
-        { preserveState: true, preserveScroll: true },
-    );
+    router.get(`/configuration/loyalty/customers/${props.customer.id}`, { [key]: page }, { preserveState: true, preserveScroll: true });
 }
 </script>
 <template>
     <Head :title="customer.name" /><ConfigurationLayout>
-        <VBtn href="/configuration/loyalty/customers" variant="text" prepend-icon="mdi-arrow-left" class="mb-4"
-            >Todas las clientas</VBtn
-        >
+        <VBtn href="/configuration/loyalty/customers" variant="text" prepend-icon="mdi-arrow-left" class="mb-4">Todas las clientas</VBtn>
         <header class="profile-header">
             <div>
                 <h1>{{ customer.name }}</h1>
                 <p>{{ customer.email }} · {{ customer.phone || 'Sin teléfono' }}</p>
-                <VChip class="mt-3" :color="customer.is_active && customer.email_verified_at ? 'success' : 'warning'">{{
-                    !customer.is_active
-                        ? 'Cuenta inactiva'
-                        : customer.email_verified_at
-                          ? 'Cuenta verificada'
-                          : 'Correo no verificado'
-                }}</VChip>
+                <VChip class="mt-3" :color="customer.is_active ? 'success' : 'warning'">{{ customer.is_active ? 'Cuenta activa' : 'Cuenta inactiva' }}</VChip>
             </div>
             <VBtn v-if="can('loyalty.adjust')" variant="tonal" @click="adjustOpen = true">Ajustar puntos</VBtn>
         </header>
@@ -69,8 +57,8 @@ function paginate(key: string, page: number) {
             >La cuenta tiene saldo negativo. Revisa las anulaciones y ajustes antes de un nuevo canje.</VAlert
         >
         <VTabs v-model="tab" class="mb-5"
-            ><VTab value="redemptions">Canjes</VTab><VTab value="rewards">Canjear recompensa</VTab
-            ><VTab value="entries">Movimientos</VTab><VTab value="appointments">Citas</VTab></VTabs
+            ><VTab value="redemptions">Canjes</VTab><VTab value="rewards">Canjear recompensa</VTab><VTab value="entries">Movimientos</VTab
+            ><VTab value="appointments">Citas</VTab></VTabs
         >
         <section v-if="tab === 'redemptions'">
             <h2>Historial de canjes</h2>
@@ -83,12 +71,8 @@ function paginate(key: string, page: number) {
         </section>
         <section v-if="tab === 'rewards'">
             <h2>Reservar en nombre de {{ customer.name }}</h2>
-            <p class="mb-5">
-                Los puntos se descuentan al reservar. Confirma después la entrega desde la pestaña Canjes.
-            </p>
-            <VAlert v-if="!customer.email_verified_at || !customer.is_active" type="warning"
-                >La cuenta debe estar activa y verificada para canjear.</VAlert
-            >
+            <p class="mb-5">Los puntos se descuentan al reservar. Confirma después la entrega desde la pestaña Canjes.</p>
+            <VAlert v-if="!customer.is_active" type="warning">La cuenta debe estar activa para canjear.</VAlert>
             <div class="reward-list">
                 <VCard v-for="r in rewards" :key="r.id" variant="outlined" class="pa-5"
                     ><h3>{{ r.name }}</h3>
@@ -101,12 +85,7 @@ function paginate(key: string, page: number) {
                         v-if="can('loyalty.redeem')"
                         color="primary"
                         variant="tonal"
-                        :disabled="
-                            balance < r.points_cost ||
-                            !customer.is_active ||
-                            !customer.email_verified_at ||
-                            r.stock === 0
-                        "
+                        :disabled="balance < r.points_cost || !customer.is_active || r.stock === 0"
                         @click="select(r)"
                         >Reservar para clienta</VBtn
                     ></VCard
@@ -139,11 +118,7 @@ function paginate(key: string, page: number) {
             </article>
             <p v-if="!appointments.length">No hay citas vinculadas con identificación verificada.</p>
         </section>
-        <VDialog
-            :model-value="!!reward"
-            max-width="480"
-            :persistent="reserve.processing"
-            @update:model-value="!reserve.processing && (reward = null)"
+        <VDialog :model-value="!!reward" max-width="480" :persistent="reserve.processing" @update:model-value="!reserve.processing && (reward = null)"
             ><VCard class="pa-5"
                 ><h2>Confirmar reserva</h2>
                 <p class="my-4">{{ reward?.name }} para {{ customer.name }}</p>
@@ -155,16 +130,13 @@ function paginate(key: string, page: number) {
                         color="primary"
                         :loading="reserve.processing"
                         @click="
-                            reserve.post(
-                                `/configuration/loyalty/customers/${customer.id}/rewards/${reward.id}/reserve`,
-                                {
-                                    preserveScroll: true,
-                                    onSuccess: () => {
-                                        reward = null;
-                                        tab = 'redemptions';
-                                    },
+                            reserve.post(`/configuration/loyalty/customers/${customer.id}/rewards/${reward.id}/reserve`, {
+                                preserveScroll: true,
+                                onSuccess: () => {
+                                    reward = null;
+                                    tab = 'redemptions';
                                 },
-                            )
+                            })
                         "
                         >Confirmar reserva</VBtn
                     ></VCardActions
@@ -186,14 +158,10 @@ function paginate(key: string, page: number) {
                             },
                         })
                     "
-                    ><VTextField
-                        v-model.number="adjustment.points"
-                        type="number"
-                        label="Puntos (positivo o negativo)"
-                    /><VTextarea v-model="adjustment.note" label="Motivo obligatorio" /><VAlert
-                        v-if="adjustment.hasErrors"
-                        type="error"
-                        >{{ Object.values(adjustment.errors).join(' ') }}</VAlert
+                    ><VTextField v-model.number="adjustment.points" type="number" label="Puntos (positivo o negativo)" /><VTextarea
+                        v-model="adjustment.note"
+                        label="Motivo obligatorio"
+                    /><VAlert v-if="adjustment.hasErrors" type="error">{{ Object.values(adjustment.errors).join(' ') }}</VAlert
                     ><VCardActions
                         ><VBtn :disabled="adjustment.processing" @click="adjustOpen = false">Cancelar</VBtn
                         ><VBtn type="submit" :loading="adjustment.processing">Registrar ajuste</VBtn></VCardActions

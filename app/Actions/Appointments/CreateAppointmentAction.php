@@ -28,7 +28,7 @@ class CreateAppointmentAction
         private PublishInternalNotificationAction $publishNotification,
     ) {}
 
-    public function execute(User $user, array $data): Appointment
+    public function execute(User $user, array $data, bool $complimentary = false): Appointment
     {
         if (! $user->is_active || ! $user->hasPermissionTo(Permissions::APPOINTMENTS_ACCESS) || ! $user->hasPermissionTo(Permissions::APPOINTMENTS_CREATE)) {
             throw new AuthorizationException;
@@ -41,7 +41,7 @@ class CreateAppointmentAction
 
         $scheduledStart = $this->parseScheduledStart($data['date'], $data['start_time']);
 
-        return DB::transaction(function () use ($user, $data, $items, $scheduledStart) {
+        return DB::transaction(function () use ($user, $data, $items, $scheduledStart, $complimentary) {
             $assigneeIds = collect($items)->pluck('assigned_to')->map(fn ($id) => (int) $id)->unique()->sort()->values();
             $assignees = User::query()->whereKey($assigneeIds->all())->orderBy('id')->lockForUpdate()->get()->keyBy('id');
             foreach ($assigneeIds as $id) {
@@ -63,7 +63,7 @@ class CreateAppointmentAction
                     throw ValidationException::withMessages(['items' => 'Uno de los servicios ya no está disponible.']);
                 }
 
-                $unitPriceCents = $this->decimalToCents($service->price);
+                $unitPriceCents = $complimentary ? 0 : $this->decimalToCents($service->price);
                 if ($unitPriceCents > self::MAX_AMOUNT_CENTS || $totalCents + ($unitPriceCents * (int) $selected['quantity']) > self::MAX_AMOUNT_CENTS) {
                     throw ValidationException::withMessages(['items' => 'El total estimado de la cita excede el monto permitido.']);
                 }

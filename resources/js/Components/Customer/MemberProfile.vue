@@ -135,7 +135,7 @@ const birthday = (value: string) =>
                 <button
                     class="w-full liquid-sheen-pill text-on-primary py-3 px-5 rounded-full flex items-center justify-center gap-2.5 font-label-lg text-label-lg tracking-wide profile-qr-trigger"
                     type="button"
-                    :disabled="qrBusy || !customer.email_verified_at"
+                    :disabled="qrBusy"
                     @click="$emit('qr')"
                 >
                     <span data-motion-sheen aria-hidden="true" />

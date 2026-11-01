@@ -23,6 +23,9 @@ class RecordAppointmentDepositAction
 
         return DB::transaction(function () use ($user, $appointment, $data) {
             $locked = Appointment::query()->whereKey($appointment->getKey())->lockForUpdate()->firstOrFail();
+            if ($locked->loyalty_redemption_id) {
+                throw ValidationException::withMessages(['appointment' => 'Los premios gratuitos no admiten adelantos.']);
+            }
             $this->authorize($user, $locked);
 
             if ($locked->status !== Appointment::STATUS_SCHEDULED) {

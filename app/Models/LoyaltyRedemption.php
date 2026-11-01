@@ -8,6 +8,11 @@ class LoyaltyRedemption extends Model
 {
     protected $guarded = ['id'];
 
+    public function appointment()
+    {
+        return $this->hasOne(Appointment::class);
+    }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);

@@ -97,7 +97,7 @@ async function qr() {
         qrDialog.value?.showModal();
     } catch {
         qrDialog.value?.close();
-        qrError.value = 'No pudimos generar tu QR. Verifica tu correo y vuelve a intentarlo.';
+        qrError.value = 'No pudimos generar tu QR. Vuelve a intentarlo o inicia sesión de nuevo.';
     } finally {
         qrBusy.value = false;
     }
@@ -107,10 +107,6 @@ const date = (value: string) => new Intl.DateTimeFormat('es-HN', { dateStyle: 'm
 <template>
     <Head :title="section === 'rewards' ? 'Recompensas' : section === 'profile' ? 'Mi perfil' : 'Mi espacio Lemus'" />
     <CustomerLayout>
-        <div v-if="!customer.email_verified_at" class="feedback" role="status">
-            Verifica tu correo para mostrar tu QR y reservar recompensas.
-            <button type="button" class="verification-button" @click="router.post('/clientes/verificar-email')">Reenviar correo</button>
-        </div>
         <p v-if="qrError" class="feedback feedback-error" role="alert">{{ qrError }}</p>
         <MemberGifts v-if="section === 'rewards'" :gifts="gifts" />
         <p v-if="section === 'home' && gifts?.data?.length" class="feedback">
