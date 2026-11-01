@@ -22,4 +22,12 @@ Resultado final de navegador: **19/19 correctas**, incluyendo recuperación segu
 
 Revisión estática Impeccable sobre todos los destinos visuales modificados: 107 avisos del sistema visual y 4 advertencias. Las 4 advertencias corresponden a estilos preexistentes en `Appointments/Index.vue` (bordes laterales y jerarquía tipográfica) y `Home.vue` (jerarquía tipográfica). Los avisos de paleta/tipo del portal se revisaron frente al mundo Stitch aprobado en `DESIGN.md`; no se reemplazó por el tema administrativo. Este detector no certifica accesibilidad en tiempo de ejecución.
 
-Estas modificaciones no se han publicado en producción. Las credenciales y los datos QA no deben desplegarse.
+## Publicación
+
+Implementación `db6e477` subida a `main` y desplegada en Hostinger el 2026-11-01 UTC, con autorización del usuario. Se aplicó `2026_11_01_000000_add_reward_images_and_appointments`; los conteos de datos existentes permanecieron iguales. No se desplegaron credenciales ni datos QA.
+
+- Respaldo privado verificado: `/home/u357586881/lemus-releases/release-20261101003515/backup`.
+- Comprobación pública de solo lectura: **153/153 assets HTTP 200**.
+- Login administrativo, login/registro/recuperación de clientas y `/up`: HTTP 200 sin trazas de depuración.
+- `/clientes` y `/appointments` sin sesión: redirección HTTP 302; `/.env`: HTTP 403.
+- No se crearon cuentas, canjes, citas ni ventas de prueba en producción.
